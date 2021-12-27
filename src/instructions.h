@@ -7,10 +7,11 @@
 #define NMI_ADDR 0xFFFA
 
 // None of these should be inlined, as we need them to be addressable.
-// All except no_op and interrupts return the number of additional cycles
-// possibly needed.
+// All except interrupts return the number of additional cycles possibly needed.
 
-void no_op();
+uint8_t op_nop(CPU *);
+
+uint8_t ill_op();
 
 
 // address modes
@@ -93,6 +94,15 @@ uint8_t op_cli(CPU *);
 // Clear overflow bit
 uint8_t op_clv(CPU *);
 
+// Set carry bit
+uint8_t op_sec(CPU *);
+
+// Set decimal mode bit
+uint8_t op_sed(CPU *);
+
+// Set disable interrupts bit
+uint8_t op_sei(CPU *);
+
 
 // interrupts
 
@@ -105,22 +115,56 @@ void op_irq(CPU *);
 // Non-maskable interrupt
 void op_nmi(CPU *);
 
-// Restore from interrupt
+// Return from interrupt
 uint8_t op_rti(CPU *);
 
-// accumulator register manipulation
+// Return from subroutine
+uint8_t op_rts(CPU *);
+
+
+// pushing/popping
 
 // Push accumulator to stack
 uint8_t op_pha(CPU *);
 
+// Push status to stack
+uint8_t op_php(CPU *);
+
 // Pop accumulator from stack
 uint8_t op_pla(CPU *);
 
+// Pop status from stack
+uint8_t op_plp(CPU *);
 
-// arithmetic / bitwise
+
+// arithmetic
 
 // Add with carry
 uint8_t op_adc(CPU *);
+
+// Decrement value at location
+uint8_t op_dec(CPU *);
+
+// Decrement X register
+uint8_t op_dex(CPU *);
+
+// Decrement Y register
+uint8_t op_dey(CPU *);
+
+// Increment value at location
+uint8_t op_inc(CPU *);
+
+// Increment X register
+uint8_t op_inx(CPU *);
+
+// Increment Y register
+uint8_t op_iny(CPU *);
+
+// Subtract with carry
+uint8_t op_sdc(CPU *);
+
+
+// bitwise
 
 // Bitwise AND
 uint8_t op_and(CPU *);
@@ -128,7 +172,85 @@ uint8_t op_and(CPU *);
 // Arithmetical shift left
 uint8_t op_asl(CPU *);
 
-// Subtract with carry
-uint8_t op_sdc(CPU *);
+// Logical shift right
+uint8_t op_lsr(CPU *);
+
+// Exclusive OR
+uint8_t op_eor(CPU *);
+
+// Bitwise OR
+uint8_t op_ora(CPU *);
+
+// Rotate left
+uint8_t op_rol(CPU *);
+
+// Rotate right
+uint8_t op_ror(CPU *);
+
+
+// comparison
+
+// Compare accumulator
+uint8_t op_cmp(CPU *);
+
+// Compare X register
+uint8_t op_cpx(CPU *);
+
+// Compare Y register
+uint8_t op_cpy(CPU *);
+
+
+// jumping
+
+// jump to location
+uint8_t op_jmp(CPU *);
+
+// jump to subroutine
+uint8_t op_jsr(CPU *);
+
+
+// loading
+
+// load accumulator
+uint8_t op_lda(CPU *);
+
+// load X register
+uint8_t op_ldx(CPU *);
+
+// load Y register
+uint8_t op_ldy(CPU *);
+
+
+// storing
+
+// store accumulator at address
+uint8_t op_sta(CPU *);
+
+// store X register at address
+uint8_t op_stx(CPU *);
+
+// store Y register at address
+uint8_t op_sty(CPU *);
+
+
+// transferring
+
+// transfer accumulator to X register
+uint8_t op_tax(CPU *);
+
+// transfer accumulator to Y register
+uint8_t op_tay(CPU *);
+
+// transfer stack pointer to X register
+uint8_t op_tsx(CPU *);
+
+// transfer X register to accumulator
+uint8_t op_txa(CPU *);
+
+// transfer X register to stack pointer
+uint8_t op_txs(CPU *);
+
+// transfer Y register to accumulator
+uint8_t op_tya(CPU *);
 
 #endif // _INSTRUCTIONS_H

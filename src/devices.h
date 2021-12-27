@@ -12,21 +12,35 @@
 
 #define ABS_HI(x) ((x) & 0xFF00)
 
+// Bus device tree node
 typedef struct _DEV {
-	void *data;
+	void *data; // Actual device pointer
 	_DEV *next;
 } DEV;
 
+// The bus is responsible for making available data to various devices
 typedef struct _BUS {
 	uint8_t ram[RAM_SIZE];
-	DEV *dev_list; // devices
+	DEV *dev_list;
 } BUS;
 
+// Allocate a new bus.
 BUS * bus_alloc();
+
+// Add a device to a bus.
 void bus_add_device(BUS *, void *);
+
+// Get a device from bus's device tree at given index
 void * bus_device(BUS *, size_t);
+
+// Deallocate bus
 void bus_free(BUS *);
+
+// Remove device from bus device tree
 void bus_free_device(BUS *, void *);
+
+// Dump bus RAM to file
+int bus_ram_dump(BUS *, size_t);
 
 // Register status flags
 typedef struct _STATUS {
@@ -41,7 +55,7 @@ typedef struct _STATUS {
 		n : 1; // negative
 } STATUS;
 
-// Registers
+// CPU registers
 typedef struct _REGS {
 	uint8_t a; // accumulator
 	uint8_t x;
@@ -53,11 +67,11 @@ typedef struct _REGS {
 
 typedef struct _OPC OPC;
 
-// CPU
+// The CPU processes data available via its bus
 typedef struct _CPU {
 	uint8_t cache;
+	uint8_t cycles; // remaining cycles for current operation
 	uint8_t last_op;
-	uint8_t next_cycles;
 	uint16_t last_abs_addr;
 	uint16_t last_rel_addr;
 	BUS *bus;
@@ -65,20 +79,30 @@ typedef struct _CPU {
 	OPC ops[OPCODE_TABLE_SZE];
 } CPU;
 
-// Opcodes
+// Metadata for the CPU's various operations
 typedef struct _OPC {
 	uint8_t cycles;
-	char *sym;
+	char *sym; // mneumonic for (dis)assembly
 	uint8_t (*addr_mode)(CPU *);
 	uint8_t (*op)(CPU *);
 };
 
+// Allocate a new CPU, given a parent bus
 CPU * cpu_alloc(BUS *);
+
+// CPU clock operation
 void cpu_clock(CPU *);
+
+// Fetch and cache a byte from the cached absolute address
 uint8_t cpu_fetch(CPU *);
+
+// Deallocate CPU
 void cpu_free(CPU *);
+
+// Reset CPU state
 void cpu_reset(CPU *);
 
+// Common functionality for branch instructions
 inline void cpu_branch(CPU *cpu)
 {
 	cpu->cycles++;
@@ -92,63 +116,96 @@ inline void cpu_branch(CPU *cpu)
 	cpu->regs.pc = cpu->last_abs_addr;
 }
 
-inline uint8_t cpu_read(CPU *cpu, uint16_t addr)
+// Read byte from RAM address
+inline uint8_t cpu_read(const CPU *cpu, uint16_t addr)
 {
 	return cpu->bus->ram[addr];
 }
 
-inline uint16_t cpu_read_addr(CPU *cpu, uint16_t addr)
+// Read address from RAM address
+inline uint16_t cpu_read_addr(const CPU *cpu, uint16_t addr)
 {
 	return cpu_read(cpu, addr) | (cpu_read(cpu, addr) << 8);
 }
 
+// Read byte from ROM
 inline uint8_t cpu_read_rom(CPU *cpu)
 {
 	return cpu_read(cpu, cpu->regs.pc++);
 }
 
+// Read address from ROM
 inline uint16_t cpu_read_rom_addr(CPU *cpu)
 {
 	return (cpu_read_rom(cpu) << 8) | cpu_read_rom(cpu);
 }
 
+// Write byte to RAM address
 inline void cpu_write(CPU *cpu, uint16_t addr, uint8_t data)
 {
 	cpu->bus->ram[addr] = data;
 }
 
-inline uint16_t cpu_fetch_addr(CPU *cpu)
+// Read address from RAM
+inline uint16_t cpu_fetch_addr(const CPU *cpu)
 {
 	return (cpu_read(cpu, cpu->last_abs_addr) << 8) |  cpu_read(cpu, cpu->last_abs_addr + 1);
 }
 
+// Return status flags register as a byte
+inline uint8_t cpu_flags(const CPU *cpu)
+{
+	return *(uint8_t *)&cpu->regs.flags;
+}
+
+// (Re)initialise status flags register
 inline void cpu_flags_init(CPU *cpu)
 {
 	memset(&cpu->regs.flags, 0, sizeof(STATUS));
 	cpu->regs.flags.u = 1;
 }
 
-inline void cpu_stack_read(CPU *cpu)
+// Set carry, negative, and/or zero bits of status flags register, given a 16-bit value
+inline void cpu_flags_cnz(CPU *cpu, uint16_t value)
 {
-	cpu_read(cpu, STACK_BASE_ADDR + (++cpu->regs.sp));
+	cpu->regs.flags.c = value > 255 ? 1 : 0;
+	cpu->regs.flags.z = value & 255 == 0 ? 1 : 0;
+	cpu->regs.flags.n = value & 128 ? 1 : 0;
 }
 
+// Set negative and/or zero bits of status flags register, given a value
+inline void cpu_flags_nz(CPU *cpu, uint16_t value)
+{
+	cpu->regs.flags.z = (value & 255) == 0 ? 1 : 0;
+	cpu->regs.flags.n = value & 128 ? 1 : 0;
+}
+
+// Read byte from stack
+inline uint8_t cpu_stack_read(CPU *cpu)
+{
+	return cpu_read(cpu, STACK_BASE_ADDR + (++cpu->regs.sp));
+}
+
+// Read address from stack
 inline uint16_t cpu_stack_read_addr(CPU *cpu)
 {
 	return cpu_stack_read(cpu) | (cpu_stack_read(cpu) << 8);
 }
 
+// Write byte to stack
 inline void cpu_stack_write(CPU *cpu, uint8_t data)
 {
 	cpu_write(cpu, STACK_BASE_ADDR + (cpu->regs.sp--), data);
 }
 
+// Write address to stack
 inline void cpu_stack_write_addr(CPU *cpu, uint16_t addr)
 {
 	cpu_stack_write(cpu, (addr >> 8) & 255);
 	cpu_stack_write(cpu, addr & 255);
 }
 
+// Common functionality for interrupt operations
 inline void cpu_interrupt(CPU *cpu, uint16_t new_abs_addr, uint8_t new_cycles)
 {
 	// write the counter's current value to stack
@@ -158,7 +215,7 @@ inline void cpu_interrupt(CPU *cpu, uint16_t new_abs_addr, uint8_t new_cycles)
 	cpu->regs.flags.b = 0;
 	cpu->regs.flags.u = 1;
 	cpu->regs.flags.i = 1;
-	cpu_stack_write(cpu, *(uint8_t *)&cpu->regs.flags);
+	cpu_stack_write(cpu, cpu_flags(cpu));
 
 	// get a new counter
 	cpu->last_abs_addr = new_abs_addr;

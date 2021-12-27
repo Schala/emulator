@@ -1,7 +1,24 @@
 #include "instructions.h"
 
-void no_op()
+uint8_t op_nop(CPU *cpu)
 {
+	switch (cpu->last_op)
+	{
+		case 0x1C:
+		case 0x3C:
+		case 0x5C:
+		case 0x7C:
+		case 0xDC:
+		case 0xFC:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+uint8_t ill_op()
+{
+	return 0;
 }
 
 
@@ -54,11 +71,7 @@ uint8_t op_ind(CPU *cpu)
 
 uint8_t op_izx(CPU *cpu)
 {
-	uint16_t t = cpu_read_rom(cpu);
-	uint16_t lo = cpu_read(cpu, (t + cpu->regs.x) & 255);
-	uint16_t hi = cpu_read(cpu, (t + cpu->regs.x + 1) & 255);
-
-	cpu->last_abs_addr = (hi << 8) | lo;
+	cpu->last_abs_addr = cpu_read_addr(cpu, (cpu_read_rom(cpu) + cpu->regs.x) & 255);
 	return 0;
 }
 
@@ -188,6 +201,24 @@ uint8_t op_clv(CPU *cpu)
 	return 0;
 }
 
+uint8_t op_sec(CPU *cpu)
+{
+	cpu->regs.flags.c = 1;
+	return 0;
+}
+
+uint8_t op_sed(CPU *cpu)
+{
+	cpu->regs.flags.d = 1;
+	return 0;
+}
+
+uint8_t op_sei(CPU *cpu)
+{
+	cpu->regs.flags.i = 1;
+	return 0;
+}
+
 
 // interrupts
 
@@ -235,8 +266,16 @@ uint8_t op_rti(CPU *cpu)
 	return 0;
 }
 
+uint8_t op_rts(CPU *cpu)
+{
+	cpu->regs.pc = cpu_stack_read_addr();
+	cpu->regs.pc++;
 
-// accumulator manipulation
+	return 0;
+}
+
+
+// pushing/popping
 
 uint8_t op_pha(CPU *cpu)
 {
@@ -244,26 +283,39 @@ uint8_t op_pha(CPU *cpu)
 	return 0;
 }
 
+uint8_t op_php(CPU *cpu)
+{
+	cpu->regs.flags.b = 1;
+	cpu->regs.flags.u = 1;
+	cpu_stack_write(cpu_flags(cpu));
+	cpu->regs.flags.b = 0;
+	cpu->regs.flags.u = 0;
+	return 0;
+}
+
 uint8_t op_pla(CPU *cpu)
 {
 	cpu->regs.a = cpu_stack_read(cpu);
-	cpu->regs.flags.z = cpu->regs.a == 0 ? 1 : 0;
-	cpu->regs.flags.n = cpu->regs.a & 128 ? 1 : 0;
+	cpu_flags_nz(cpu, cpu->regs.a);
 
 	return 0;
 }
 
+uint8_t op_plp(CPU *cpu)
+{
+	cpu_stack_read(cpu);
+	cpu->regs.flags.u = 1;
+	return 0;
+}
 
-// arith / bitwise
+
+// arith
 
 uint8_t op_adc(CPU *cpu)
 {
-	cpu_fetch(cpu);
-	uint16_t tmp = cpu->regs.a + cpu->cache + cpu->regs.flags.c;
+	uint16_t tmp = cpu->regs.a + cpu_fetch(cpu) + cpu->regs.flags.c;
 
-	cpu->regs.flags.c = tmp > 255 ? 1 : 0;
-	cpu->regs.flags.z = tmp & 255 == 0 ? 1 : 0;
-	cpu->regs.flags.n = tmp & 128 ? 1 : 0;
+	cpu_flags_cnz(cpu, tmp);
 	cpu->regs.flags.v = ~(((cpu->regs.a ^ cpu->cache) & (cpu->regs.a ^ tmp) & 128);
 
 	cpu->regs.a = tmp & 255;
@@ -271,24 +323,77 @@ uint8_t op_adc(CPU *cpu)
 	return 1;
 }
 
+uint8_t op_dec(CPU *cpu)
+{
+	uint8_t tmp = cpu_fetch(cpu) - 1;
+	cpu_write(cpu->last_abs_addr, tmp);
+	cpu_flags_nz(cpu, cpu->regs.x);
+
+	return 0;
+}
+
+uint8_t op_dex(CPU *cpu)
+{
+	cpu_flags_nz(cpu, --cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_dey(CPU *cpu)
+{
+	cpu_flags_nz(cpu, --cpu->regs.y);
+	return 0;
+}
+
+uint8_t op_inc(CPU *cpu)
+{
+	uint8_t tmp = cpu_fetch(cpu) + 1;
+	cpu_write(cpu->last_abs_addr, tmp);
+	cpu_flags_nz(cpu, tmp);
+
+	return 0;
+}
+
+uint8_t op_inx(CPU *cpu)
+{
+	cpu_flags_nz(cpu, ++cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_iny(CPU *cpu)
+{
+	cpu_flags_nz(cpu, ++cpu->regs.y);
+	return 0;
+}
+
+uint8_t op_sdc(CPU *cpu)
+{
+	uint16_t value = cpu_fetch(cpu) ^ 255; // invert the value
+	uint16_t tmp = cpu->regs.a + value + cpu->regs.flags.c;
+
+	cpu_flags_cnz(cpu, tmp);
+	cpu->regs.flags.v = (tmp ^ cpu->regs.a) & ((tmp ^ value) & 128);
+
+	cpu->regs.a = tmp & 255;
+
+	return 1;
+}
+
+
+// bitwise
+
 uint8_t op_and(CPU *cpu)
 {
-	cpu_fetch(cpu);
-	cpu->regs.a &= cpu->cache;
-	cpu->regs.flags.z = cpu->regs.a == 0 ? 1 : 0;
-	cpu->regs.flags.n = cpu->regs.a & 128 ? 1 : 0;
+	cpu->regs.a &= cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.a);
 
 	return 1;
 }
 
 uint8_t op_asl(CPU *cpu)
 {
-	cpu_fetch(cpu);
-	uint16_t tmp = cpu->cache << 1;
+	uint16_t tmp = cpu_fetch(cpu) << 1;
 
-	cpu->regs.flags.c = tmp & 255 > 0 ? 1 : 0;
-	cpu->regs.flags.z = tmp & 255 == 0 ? 1 : 0;
-	cpu->regs.flags.n = tmp & 128 ? 1 : 0;
+	cpu_flags_cnz(cpu, tmp);
 
 	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
 		cpu->regs.a = tmp & 255;
@@ -298,18 +403,202 @@ uint8_t op_asl(CPU *cpu)
 	return 0;
 }
 
-uint8_t op_sdc(CPU *cpu)
+uint8_t op_eor(CPU *cpu)
 {
-	cpu_fetch(cpu);
-	uint16_t value = cpu->cache ^ 255; // invert the value
-	uint16_t tmp = cpu->regs.a + value + cpu->regs.flags.c;
-
-	cpu->regs.flags.c = tmp & 0xFF00 ? 1 : 0;
-	cpu->regs.flags.z = tmp & 255 == 0 ? 1 : 0;
-	cpu->regs.flags.n = tmp & 128 ? 1 : 0;
-	cpu->regs.flags.v = (tmp ^ cpu->regs.a) & ((tmp ^ value) & 128);
-
-	cpu->regs.a = tmp & 255;
+	cpu->regs.a ^= cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.a);
 
 	return 1;
+}
+
+uint8_t op_lsr(CPU *cpu)
+{
+	cpu->regs.flags.c = cpu_fetch(cpu) & 1 ? 1 : 0;
+	uint16_t tmp = cpu->cache >> 1;
+	cpu_flags_nz(cpu, tmp);
+
+	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
+		cpu->regs.a = tmp & 255;
+	else
+		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+
+	return 0;
+}
+
+uint8_t op_ora(CPU *cpu)
+{
+	cpu->regs.a |= cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.a);
+
+	return 1;
+}
+
+uint8_t op_rol(CPU *cpu)
+{
+	uint16_t tmp = (cpu_fetch(cpu) << 1) | cpu->regs.flags.c;
+	cpu_flags_cnz(cpu, tmp);
+
+	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
+		cpu->regs.a = tmp & 255;
+	else
+		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+
+	return 0;
+}
+
+uint8_t op_ror(CPU *cpu)
+{
+	cpu_fetch(cpu);
+	uint16_t tmp = (cpu->cache << 7) | (cpu->cache >> 1);
+	cpu->regs.flags.c = cpu->cache & 1 ? 1 : 0;
+	cpu_flags_nz(cpu, tmp);
+
+	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
+		cpu->regs.a = tmp & 255;
+	else
+		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+
+	return 0;
+}
+
+
+// comparison
+
+uint8_t op_cmp(CPU *cpu)
+{
+	uint16_t tmp = cpu->regs.a - cpu_fetch(cpu);
+	cpu->regs.flags.c = cpu->regs.a >= cpu->cache ? 1 : 0;
+	cpu_flags_nz(cpu, tmp);
+
+	return 1;
+}
+
+uint8_t op_cpx(CPU *cpu)
+{
+	uint16_t tmp = cpu->regs.x - cpu_fetch(cpu);
+	cpu->regs.flags.c = cpu->regs.x >= cpu->cache ? 1 : 0;
+	cpu_flags_nz(cpu, tmp);
+
+	return 1;
+}
+
+uint8_t op_cpy(CPU *cpu)
+{
+	uint16_t tmp = cpu->regs.y - cpu_fetch(cpu);
+	cpu->regs.flags.c = cpu->regs.y >= cpu->cache ? 1 : 0;
+	cpu_flags_nz(cpu, tmp);
+
+	return 1;
+}
+
+
+// jumping
+
+uint8_t op_jmp(CPU *cpu)
+{
+	cpu->regs.pc = cpu->last_abs_addr;
+	return 0;
+}
+
+uint8_t op_jsr(CPU *cpu)
+{
+	cpu_stack_write_addr(cpu->regs.pc);
+	cpu->regs.pc = cpu->last_abs_addr;
+	return 0;
+}
+
+
+// loading
+
+uint8_t op_lda(CPU *cpu)
+{
+	cpu->regs.a = cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.a);
+	return 1;
+}
+
+uint8_t op_ldx(CPU *cpu)
+{
+	cpu->regs.x = cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.x);
+	return 1;
+}
+
+uint8_t op_ldy(CPU *cpu)
+{
+	cpu->regs.y = cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.y);
+	return 1;
+}
+
+
+// storing
+
+uint8_t op_sta(CPU *cpu)
+{
+	cpu_write(cpu->last_abs_addr, cpu->regs.a);
+	return 0;
+}
+
+uint8_t op_stx(CPU *cpu)
+{
+	cpu_write(cpu->last_abs_addr, cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_sty(CPU *cpu)
+{
+	cpu_write(cpu->last_abs_addr, cpu->regs.y);
+	return 0;
+}
+
+
+// transferring
+
+uint8_t op_tax(CPU *cpu)
+{
+	cpu->regs.x = cpu->regs.a;
+	cpu_flags_nz(cpu, cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_tax(CPU *cpu)
+{
+	cpu->regs.x = cpu->regs.a;
+	cpu_flags_nz(cpu, cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_tay(CPU *cpu)
+{
+	cpu->regs.y = cpu->regs.a;
+	cpu_flags_nz(cpu, cpu->regs.y);
+	return 0;
+}
+
+uint8_t op_tsx(CPU *cpu)
+{
+	cpu->regs.x = cpu->regs.sp;
+	cpu_flags_nz(cpu, cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_txa(CPU *cpu)
+{
+	cpu->regs.a = cpu->regs.x;
+	cpu_flags_nz(cpu, cpu->regs.a);
+	return 0;
+}
+
+uint8_t op_txs(CPU *cpu)
+{
+	cpu->regs.sp = cpu->regs.x;
+	return 0;
+}
+
+uint8_t op_tya(CPU *cpu)
+{
+	cpu->regs.a = cpu->regs.y;
+	cpu_flags_nz(cpu, cpu->regs.a);
+	return 0;
 }

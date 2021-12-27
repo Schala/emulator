@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "instructions.h"
@@ -76,6 +77,18 @@ void bus_free_device(BUS *bus, void *dev)
 	}
 }
 
+int bus_ram_dump(BUS *bus, size_t iter)
+{
+	char fmt[BUFSIZ];
+	memset(&fmt, 0, BUFSIZ);
+	sprintf(&fmt, "6502.%u.dmp", iter);
+
+	FILE *dump = fopen(&fmt, "wb");
+	fwrite(&bus->ram, 1, RAM_SIZE, dump);
+
+	return fclose(dump);
+}
+
 CPU * cpu_alloc(BUS *bus)
 {
 	CPU *cpu = (CPU *)calloc(0, sizeof(CPU));
@@ -118,7 +131,7 @@ void cpu_free(CPU *cpu)
 
 void cpu_reset(CPU *cpu)
 {
-	cpu->regs.a = cpu->regs.x = cpu->regs.y 0;
+	cpu->regs.a = cpu->regs.x = cpu->regs.y = 0;
 	cpu_flags_init(cpu);
 	cpu->regs.sp = STACK_PTR_INIT;
 
