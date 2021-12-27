@@ -9,6 +9,7 @@
 #define OPCODE_TABLE_SZE 256
 #define STACK_PTR_INIT 254
 #define RESET_ADDR 0xFFFC
+#define MAGIC_VAL 255
 
 #define ABS_HI(x) ((x) & 0xFF00)
 
@@ -39,7 +40,7 @@ void bus_free(BUS *);
 // Remove device from bus device tree
 void bus_free_device(BUS *, void *);
 
-// Dump bus RAM to file
+// Dump bus RAM to file with iteration appended to filename
 int bus_ram_dump(BUS *, size_t);
 
 // Register status flags
@@ -146,6 +147,12 @@ inline void cpu_write(CPU *cpu, uint16_t addr, uint8_t data)
 	cpu->bus->ram[addr] = data;
 }
 
+// Write byte to last used address
+inline void cpu_write_last(CPU *cpu, uint8_t data)
+{
+	cpu_write(cpu->last_abs_addr, data);
+}
+
 // Read address from RAM
 inline uint16_t cpu_fetch_addr(const CPU *cpu)
 {
@@ -178,6 +185,12 @@ inline void cpu_flags_nz(CPU *cpu, uint16_t value)
 {
 	cpu->regs.flags.z = (value & 255) == 0 ? 1 : 0;
 	cpu->regs.flags.n = value & 128 ? 1 : 0;
+}
+
+// Unstable magic value equation for some illegal opcodes
+inline uint8_t cpu_magic(CPU *cpu)
+{
+	return (cpu->regs.a | MAGIC_VAL);
 }
 
 // Read byte from stack

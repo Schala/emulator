@@ -9,10 +9,6 @@
 // None of these should be inlined, as we need them to be addressable.
 // All except interrupts return the number of additional cycles possibly needed.
 
-uint8_t op_nop(CPU *);
-
-uint8_t ill_op();
-
 
 // address modes
 
@@ -190,6 +186,9 @@ uint8_t op_ror(CPU *);
 
 // comparison
 
+// bit test
+uint8_t op_bit(CPU *);
+
 // Compare accumulator
 uint8_t op_cmp(CPU *);
 
@@ -252,5 +251,74 @@ uint8_t op_txs(CPU *);
 
 // transfer Y register to accumulator
 uint8_t op_tya(CPU *);
+
+
+// illegal opcodes
+
+// AND + LSR
+uint8_t op_alr(CPU *);
+
+// AND + carry set
+uint8_t op_anc(CPU *);
+
+// cpu_magic AND X AND oper
+uint8_t op_ane(CPU *);
+
+// AND + ROR
+uint8_t op_arr(CPU *);
+
+// DEC + CMP
+uint8_t op_dcp(CPU *);
+
+// INC + SBC
+uint8_t op_isc(CPU *);
+
+// Jams the CPU into a freeze, requiring a reset
+uint8_t op_jam(CPU *);
+
+// LDA / TSX oper
+uint8_t op_las(CPU *);
+
+// LDA + LDX
+uint8_t op_lax(CPU *);
+
+// store cpu_magic AND oper in accumulator and X
+uint8_t op_lxa(CPU *);
+
+// no operation
+uint8_t op_nop(CPU *);
+
+// ROL + AND
+uint8_t op_rla(CPU *);
+
+// ROR + ADC
+uint8_t op_rra(CPU *);
+
+// store accumulator AND X
+uint8_t op_sax(CPU *);
+
+// (X = accumulator AND X) + SBC
+uint8_t op_sbx(CPU *);
+
+// store accumulator AND X AND hi-addr + 1
+uint8_t op_sha(CPU *);
+
+// store X register AND hi-addr + 1
+uint8_t op_shx(CPU *);
+
+// store Y register AND hi-addr + 1
+uint8_t op_shy(CPU *);
+
+// store ASL + ORA
+uint8_t op_slo(CPU *);
+
+// store LSR + EOR
+uint8_t op_sre(CPU *);
+
+// transfer accumulator AND X to stack pointer
+uint8_t op_tas(CPU *);
+
+// SBC + NOP
+uint8_t op_usbc(CPU *);
 
 #endif // _INSTRUCTIONS_H

@@ -94,6 +94,20 @@ CPU * cpu_alloc(BUS *bus)
 	CPU *cpu = (CPU *)calloc(0, sizeof(CPU));
 	cpu->bus = bus;
 
+	cpu->ops = {
+		{ 7, "BRK", &op_imp, &op_brk },
+		{ 6, "ORA", &op_izx, &op_ora },
+		{ 2, "???", &op_imp, &ill_op },
+		{ 8, "???", &op_imp, &ill_op },
+		{ 2, "???", &op_imp, &ill_op },
+		{ 3, "ORA", &op_zp, &op_ora },
+		{ 5, "ASL", &op_zp, &op_asl },
+		{ 4, "???", &op_imp, &ill_op },
+		{ 3, "PHP", &op_imp, &op_php },
+		{ 2, "ORA", &op_imm, &op_ora },
+		{ 5, "ASL", &op_zp, &op_asl },
+	};
+
 	bus_add_device(bus, cpu);
 
 	return cpu;

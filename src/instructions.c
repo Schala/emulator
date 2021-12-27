@@ -1,27 +1,5 @@
 #include "instructions.h"
 
-uint8_t op_nop(CPU *cpu)
-{
-	switch (cpu->last_op)
-	{
-		case 0x1C:
-		case 0x3C:
-		case 0x5C:
-		case 0x7C:
-		case 0xDC:
-		case 0xFC:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-uint8_t ill_op()
-{
-	return 0;
-}
-
-
 // address modes
 
 uint8_t op_abs(CPU *cpu)
@@ -326,7 +304,7 @@ uint8_t op_adc(CPU *cpu)
 uint8_t op_dec(CPU *cpu)
 {
 	uint8_t tmp = cpu_fetch(cpu) - 1;
-	cpu_write(cpu->last_abs_addr, tmp);
+	cpu_write_last(cpu, tmp);
 	cpu_flags_nz(cpu, cpu->regs.x);
 
 	return 0;
@@ -347,7 +325,7 @@ uint8_t op_dey(CPU *cpu)
 uint8_t op_inc(CPU *cpu)
 {
 	uint8_t tmp = cpu_fetch(cpu) + 1;
-	cpu_write(cpu->last_abs_addr, tmp);
+	cpu_write_last(cpu, tmp);
 	cpu_flags_nz(cpu, tmp);
 
 	return 0;
@@ -398,7 +376,7 @@ uint8_t op_asl(CPU *cpu)
 	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
 		cpu->regs.a = tmp & 255;
 	else
-		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+		cpu_write_last(cpu, tmp & 255);
 
 	return 0;
 }
@@ -420,7 +398,7 @@ uint8_t op_lsr(CPU *cpu)
 	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
 		cpu->regs.a = tmp & 255;
 	else
-		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+		cpu_write_last(cpu, tmp & 255);
 
 	return 0;
 }
@@ -441,7 +419,7 @@ uint8_t op_rol(CPU *cpu)
 	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
 		cpu->regs.a = tmp & 255;
 	else
-		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+		cpu_write_last(cpu, tmp & 255);
 
 	return 0;
 }
@@ -456,7 +434,7 @@ uint8_t op_ror(CPU *cpu)
 	if (cpu->ops[cpu->last_op].addr_mode == &op_imp)
 		cpu->regs.a = tmp & 255;
 	else
-		cpu_write(cpu, cpu->last_abs_addr, tmp & 255);
+		cpu_write_last(cpu, tmp & 255);
 
 	return 0;
 }
@@ -536,19 +514,19 @@ uint8_t op_ldy(CPU *cpu)
 
 uint8_t op_sta(CPU *cpu)
 {
-	cpu_write(cpu->last_abs_addr, cpu->regs.a);
+	cpu_write_last(cpu, cpu->regs.a);
 	return 0;
 }
 
 uint8_t op_stx(CPU *cpu)
 {
-	cpu_write(cpu->last_abs_addr, cpu->regs.x);
+	cpu_write_last(cpu, cpu->regs.x);
 	return 0;
 }
 
 uint8_t op_sty(CPU *cpu)
 {
-	cpu_write(cpu->last_abs_addr, cpu->regs.y);
+	cpu_write_last(cpu, cpu->regs.y);
 	return 0;
 }
 
@@ -601,4 +579,141 @@ uint8_t op_tya(CPU *cpu)
 	cpu->regs.a = cpu->regs.y;
 	cpu_flags_nz(cpu, cpu->regs.a);
 	return 0;
+}
+
+
+// illegal opcodes
+
+uint8_t op_alr(CPU *cpu)
+{
+	return op_and(cpu) + op_lsr(cpu);
+}
+
+uint8_t op_anc(CPU *cpu)
+{
+	return op_and(cpu) + op_sec(cpu);
+}
+
+uint8_t op_ane(CPU *cpu)
+{
+	cpu->regs.a = cpu_magic(cpu) & cpu->regs.x & cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.a);
+
+	return 0;
+}
+
+uint8_t op_arr(CPU *cpu)
+{
+	return op_and(cpu) + op_ror(cpu);
+}
+
+uint8_t op_dcp(CPU *cpu)
+{
+	return op_dec(cpu) + op_cmp(cpu);
+}
+
+uint8_t op_isc(CPU *cpu)
+{
+	return op_inc(cpu) + op_sbc(cpu);
+}
+
+uint8_t op_jam(CPU *cpu)
+{
+	cpu->regs.pc = 0xFFFF;
+	memset(&cpu->regs.flags, 0, sizeof(STATUS));
+	return 0;
+}
+
+uint8_t op_las(CPU *cpu)
+{
+	return 0;
+}
+
+uint8_t op_lax(CPU *cpu)
+{
+	return op_lda(cpu) + op_ldx(cpu);
+}
+
+uint8_t op_lxa(CPU *cpu)
+{
+	cpu->regs.x = cpu->regs.a = cpu_magic(cpu) & cpu_fetch(cpu);
+	cpu_flags_nz(cpu, cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_nop(CPU *cpu)
+{
+	switch (cpu->last_op)
+	{
+		case 0x1C:
+		case 0x3C:
+		case 0x5C:
+		case 0x7C:
+		case 0xDC:
+		case 0xFC:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+uint8_t op_rla(CPU *cpu)
+{
+	return op_rol(cpu) + op_and(cpu);
+}
+
+uint8_t op_rra(CPU *cpu)
+{
+	return op_ror(cpu) + op_adc(cpu);
+}
+
+uint8_t op_sax(CPU *cpu)
+{
+	cpu_write_last(cpu, cpu->regs.a & cpu->regs.x);
+	return 0;
+}
+
+uint8_t op_sbx(CPU *cpu)
+{
+	cpu->regs.x &= cpu->regs.a;
+	return op_sbc(cpu);
+}
+
+uint8_t op_sha(CPU *cpu)
+{
+	cpu_write_last(cpu, cpu->regs.a & cpu->regs.x & (ABS_HI(cpu->last_abs_addr) + 1));
+	return 0;
+}
+
+uint8_t op_shx(CPU *cpu)
+{
+	cpu_write_last(cpu, cpu->regs.x & (ABS_HI(cpu->last_abs_addr) + 1));
+	return 0;
+}
+
+uint8_t op_shy(CPU *cpu)
+{
+	cpu_write_last(cpu, cpu->regs.y & (ABS_HI(cpu->last_abs_addr) + 1));
+	return 0;
+}
+
+uint8_t op_slo(CPU *cpu)
+{
+	return op_asl(cpu) + op_ora(cpu);
+}
+
+uint8_t op_sre(CPU *cpu)
+{
+	return op_lsr(cpu) + op_eor(cpu);
+}
+
+uint8_t op_tas(CPU *cpu)
+{
+	cpu->regs.sp = cpu->regs.a & cpu->regs.x;
+	cpu_write_last(cpu, cpu->regs.a & cpu->regs.x & (ABS_HI(cpu->last_abs_addr) + 1));
+}
+
+uint8_t op_usbc(CPU *cpu)
+{
+	return op_sbc(cpu) + op_nop(cpu);
 }
