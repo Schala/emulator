@@ -2,12 +2,12 @@
 #define _DEVICES_H
 
 #include <stdint.h>
+#include <string.h>
 
 #define RAM_SIZE 65536
 #define STACK_BASE_ADDR 256
 #define OPCODE_TABLE_SZE 256
-#define IRQ_ADDR 0xFFFE
-#define NMI_ADDR 0xFFFA
+#define STACK_PTR_INIT 254
 #define RESET_ADDR 0xFFFC
 
 #define ABS_HI(x) ((x) & 0xFF00)
@@ -25,6 +25,8 @@ typedef struct _BUS {
 BUS * bus_alloc();
 void bus_add_device(BUS *, void *);
 void * bus_device(BUS *, size_t);
+void bus_free(BUS *);
+void bus_free_device(BUS *, void *);
 
 // Register status flags
 typedef struct _STATUS {
@@ -49,6 +51,8 @@ typedef struct _REGS {
 	uint16_t pc; // program counter
 } REGS;
 
+typedef struct _OPC OPC;
+
 // CPU
 typedef struct _CPU {
 	uint8_t cache;
@@ -58,6 +62,7 @@ typedef struct _CPU {
 	uint16_t last_rel_addr;
 	BUS *bus;
 	REGS regs;
+	OPC ops[OPCODE_TABLE_SZE];
 } CPU;
 
 // Opcodes
@@ -66,13 +71,45 @@ typedef struct _OPC {
 	char *sym;
 	uint8_t (*addr_mode)(CPU *);
 	uint8_t (*op)(CPU *);
-} OPC;
+};
 
 CPU * cpu_alloc(BUS *);
+void cpu_clock(CPU *);
+uint8_t cpu_fetch(CPU *);
+void cpu_free(CPU *);
+void cpu_reset(CPU *);
+
+inline void cpu_branch(CPU *cpu)
+{
+	cpu->cycles++;
+	cpu->last_abs_addr = cpu->regs.pc + cpu->last_rel_addr;
+
+	// need an additional cycle if different page
+	if (ABS_HI(cpu->last_abs_addr) != ABS_HI(cpu->regs.pc))
+		cpu->cycles++;
+
+	// jump to address
+	cpu->regs.pc = cpu->last_abs_addr;
+}
 
 inline uint8_t cpu_read(CPU *cpu, uint16_t addr)
 {
 	return cpu->bus->ram[addr];
+}
+
+inline uint16_t cpu_read_addr(CPU *cpu, uint16_t addr)
+{
+	return cpu_read(cpu, addr) | (cpu_read(cpu, addr) << 8);
+}
+
+inline uint8_t cpu_read_rom(CPU *cpu)
+{
+	return cpu_read(cpu, cpu->regs.pc++);
+}
+
+inline uint16_t cpu_read_rom_addr(CPU *cpu)
+{
+	return (cpu_read_rom(cpu) << 8) | cpu_read_rom(cpu);
 }
 
 inline void cpu_write(CPU *cpu, uint16_t addr, uint8_t data)
@@ -83,6 +120,12 @@ inline void cpu_write(CPU *cpu, uint16_t addr, uint8_t data)
 inline uint16_t cpu_fetch_addr(CPU *cpu)
 {
 	return (cpu_read(cpu, cpu->last_abs_addr) << 8) |  cpu_read(cpu, cpu->last_abs_addr + 1);
+}
+
+inline void cpu_flags_init(CPU *cpu)
+{
+	memset(&cpu->regs.flags, 0, sizeof(STATUS));
+	cpu->regs.flags.u = 1;
 }
 
 inline void cpu_stack_read(CPU *cpu)
