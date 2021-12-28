@@ -6,18 +6,19 @@
 
 #define RAM_SIZE 65536
 #define STACK_BASE_ADDR 256
-#define OPCODE_TABLE_SZE 256
 #define STACK_PTR_INIT 254
 #define RESET_ADDR 0xFFFC
 #define MAGIC_VAL 255
 
 #define ABS_HI(x) ((x) & 0xFF00)
 
+typedef struct _DEV DEV;
+
 // Bus device tree node
-typedef struct _DEV {
+struct _DEV {
 	void *data; // Actual device pointer
-	_DEV *next;
-} DEV;
+	DEV *next;
+};
 
 // The bus is responsible for making available data to various devices
 typedef struct _BUS {
@@ -66,19 +67,7 @@ typedef struct _REGS {
 	uint16_t pc; // program counter
 } REGS;
 
-typedef struct _OPC OPC;
-
-// The CPU processes data available via its bus
-typedef struct _CPU {
-	uint8_t cache;
-	uint8_t cycles; // remaining cycles for current operation
-	uint8_t last_op;
-	uint16_t last_abs_addr;
-	uint16_t last_rel_addr;
-	BUS *bus;
-	REGS regs;
-	OPC ops[OPCODE_TABLE_SZE];
-} CPU;
+typedef struct _CPU CPU;
 
 // Metadata for the CPU's various operations
 typedef struct _OPC {
@@ -86,6 +75,18 @@ typedef struct _OPC {
 	char *sym; // mneumonic for (dis)assembly
 	uint8_t (*addr_mode)(CPU *);
 	uint8_t (*op)(CPU *);
+} OPC;
+
+// The CPU processes data available via its bus
+struct _CPU {
+	uint8_t cache;
+	uint8_t cycles; // remaining cycles for current operation
+	uint8_t last_op;
+	uint16_t last_abs_addr;
+	uint16_t last_rel_addr;
+	BUS *bus;
+	const OPC *ops;
+	REGS regs;
 };
 
 // Allocate a new CPU, given a parent bus
@@ -104,7 +105,7 @@ void cpu_free(CPU *);
 void cpu_reset(CPU *);
 
 // Common functionality for branch instructions
-inline void cpu_branch(CPU *cpu)
+static inline void cpu_branch(CPU *cpu)
 {
 	cpu->cycles++;
 	cpu->last_abs_addr = cpu->regs.pc + cpu->last_rel_addr;
@@ -118,62 +119,62 @@ inline void cpu_branch(CPU *cpu)
 }
 
 // Read byte from RAM address
-inline uint8_t cpu_read(const CPU *cpu, uint16_t addr)
+static inline uint8_t cpu_read(const CPU *cpu, uint16_t addr)
 {
 	return cpu->bus->ram[addr];
 }
 
 // Read address from RAM address
-inline uint16_t cpu_read_addr(const CPU *cpu, uint16_t addr)
+static inline uint16_t cpu_read_addr(const CPU *cpu, uint16_t addr)
 {
 	return cpu_read(cpu, addr) | (cpu_read(cpu, addr) << 8);
 }
 
 // Read byte from ROM
-inline uint8_t cpu_read_rom(CPU *cpu)
+static inline uint8_t cpu_read_rom(CPU *cpu)
 {
 	return cpu_read(cpu, cpu->regs.pc++);
 }
 
 // Read address from ROM
-inline uint16_t cpu_read_rom_addr(CPU *cpu)
+static inline uint16_t cpu_read_rom_addr(CPU *cpu)
 {
 	return (cpu_read_rom(cpu) << 8) | cpu_read_rom(cpu);
 }
 
 // Write byte to RAM address
-inline void cpu_write(CPU *cpu, uint16_t addr, uint8_t data)
+static inline void cpu_write(CPU *cpu, uint16_t addr, uint8_t data)
 {
 	cpu->bus->ram[addr] = data;
 }
 
 // Write byte to last used address
-inline void cpu_write_last(CPU *cpu, uint8_t data)
+static inline void cpu_write_last(CPU *cpu, uint8_t data)
 {
-	cpu_write(cpu->last_abs_addr, data);
+	cpu_write(cpu, cpu->last_abs_addr, data);
 }
 
 // Read address from RAM
-inline uint16_t cpu_fetch_addr(const CPU *cpu)
+static inline uint16_t cpu_fetch_addr(const CPU *cpu)
 {
 	return (cpu_read(cpu, cpu->last_abs_addr) << 8) |  cpu_read(cpu, cpu->last_abs_addr + 1);
 }
 
 // Return status flags register as a byte
-inline uint8_t cpu_flags(const CPU *cpu)
+static inline uint8_t cpu_flags(const CPU *cpu)
 {
 	return *(uint8_t *)&cpu->regs.flags;
 }
 
 // (Re)initialise status flags register
-inline void cpu_flags_init(CPU *cpu)
+static inline void cpu_flags_init(CPU *cpu)
 {
 	memset(&cpu->regs.flags, 0, sizeof(STATUS));
 	cpu->regs.flags.u = 1;
 }
 
 // Set carry, negative, and/or zero bits of status flags register, given a 16-bit value
-inline void cpu_flags_cnz(CPU *cpu, uint16_t value)
+static inline void cpu_flags_cnz(CPU *cpu, uint16_t value)
 {
 	cpu->regs.flags.c = value > 255 ? 1 : 0;
 	cpu->regs.flags.z = value & 255 == 0 ? 1 : 0;
@@ -181,48 +182,48 @@ inline void cpu_flags_cnz(CPU *cpu, uint16_t value)
 }
 
 // Set negative and/or zero bits of status flags register, given a value
-inline void cpu_flags_nz(CPU *cpu, uint16_t value)
+static inline void cpu_flags_nz(CPU *cpu, uint16_t value)
 {
 	cpu->regs.flags.z = (value & 255) == 0 ? 1 : 0;
 	cpu->regs.flags.n = value & 128 ? 1 : 0;
 }
 
 // Unstable magic value equation for some illegal opcodes
-inline uint8_t cpu_magic(CPU *cpu)
+static inline uint8_t cpu_magic(CPU *cpu)
 {
 	return (cpu->regs.a | MAGIC_VAL);
 }
 
 // Read byte from stack
-inline uint8_t cpu_stack_read(CPU *cpu)
+static inline uint8_t cpu_stack_read(CPU *cpu)
 {
 	return cpu_read(cpu, STACK_BASE_ADDR + (++cpu->regs.sp));
 }
 
 // Read address from stack
-inline uint16_t cpu_stack_read_addr(CPU *cpu)
+static inline uint16_t cpu_stack_read_addr(CPU *cpu)
 {
 	return cpu_stack_read(cpu) | (cpu_stack_read(cpu) << 8);
 }
 
 // Write byte to stack
-inline void cpu_stack_write(CPU *cpu, uint8_t data)
+static inline void cpu_stack_write(CPU *cpu, uint8_t data)
 {
 	cpu_write(cpu, STACK_BASE_ADDR + (cpu->regs.sp--), data);
 }
 
 // Write address to stack
-inline void cpu_stack_write_addr(CPU *cpu, uint16_t addr)
+static inline void cpu_stack_write_addr(CPU *cpu, uint16_t addr)
 {
 	cpu_stack_write(cpu, (addr >> 8) & 255);
 	cpu_stack_write(cpu, addr & 255);
 }
 
 // Common functionality for interrupt operations
-inline void cpu_interrupt(CPU *cpu, uint16_t new_abs_addr, uint8_t new_cycles)
+static inline void cpu_interrupt(CPU *cpu, uint16_t new_abs_addr, uint8_t new_cycles)
 {
 	// write the counter's current value to stack
-	cpu_stack_write_addr(cpu->regs.pc);
+	cpu_stack_write_addr(cpu, cpu->regs.pc);
 
 	// set and write flags register to stack too
 	cpu->regs.flags.b = 0;

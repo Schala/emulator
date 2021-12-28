@@ -24,12 +24,18 @@ uint8_t op_aby(CPU *cpu)
 	uint16_t addr = cpu_read_rom_addr(cpu) + cpu->regs.y;
 	cpu->last_abs_addr = addr;
 
-	return ABS_HI(cpu->last_abs_addr) != ABS_HI(addr)) ? 1 : 0;
+	return ABS_HI(cpu->last_abs_addr) != ABS_HI(addr) ? 1 : 0;
 }
 
 uint8_t op_imm(CPU *cpu)
 {
 	cpu->last_abs_addr = ++cpu->regs.pc;
+	return 0;
+}
+
+uint8_t op_imp(CPU *cpu)
+{
+	cpu->cache = cpu->regs.a;
 	return 0;
 }
 
@@ -207,7 +213,7 @@ uint8_t op_brk(CPU *cpu)
 	cpu->regs.pc++;
 
 	cpu->regs.flags.i = 1;
-	cpu_stack_write_addr(cpu->regs.pc);
+	cpu_stack_write_addr(cpu, cpu->regs.pc);
 
 	cpu->regs.flags.b = 1;
 	cpu_stack_write(cpu, *(uint8_t *)&cpu->regs.flags);
@@ -246,9 +252,7 @@ uint8_t op_rti(CPU *cpu)
 
 uint8_t op_rts(CPU *cpu)
 {
-	cpu->regs.pc = cpu_stack_read_addr();
-	cpu->regs.pc++;
-
+	cpu->regs.pc = cpu_stack_read_addr(cpu);
 	return 0;
 }
 
@@ -257,7 +261,7 @@ uint8_t op_rts(CPU *cpu)
 
 uint8_t op_pha(CPU *cpu)
 {
-	cpu_stack_write(cpu->regs.a);
+	cpu_stack_write(cpu, cpu->regs.a);
 	return 0;
 }
 
@@ -265,7 +269,7 @@ uint8_t op_php(CPU *cpu)
 {
 	cpu->regs.flags.b = 1;
 	cpu->regs.flags.u = 1;
-	cpu_stack_write(cpu_flags(cpu));
+	cpu_stack_write(cpu, cpu_flags(cpu));
 	cpu->regs.flags.b = 0;
 	cpu->regs.flags.u = 0;
 	return 0;
@@ -294,7 +298,7 @@ uint8_t op_adc(CPU *cpu)
 	uint16_t tmp = cpu->regs.a + cpu_fetch(cpu) + cpu->regs.flags.c;
 
 	cpu_flags_cnz(cpu, tmp);
-	cpu->regs.flags.v = ~(((cpu->regs.a ^ cpu->cache) & (cpu->regs.a ^ tmp) & 128);
+	cpu->regs.flags.v = ~((cpu->regs.a ^ cpu->cache) & (cpu->regs.a ^ tmp) & 128);
 
 	cpu->regs.a = tmp & 255;
 
@@ -343,7 +347,7 @@ uint8_t op_iny(CPU *cpu)
 	return 0;
 }
 
-uint8_t op_sdc(CPU *cpu)
+uint8_t op_sbc(CPU *cpu)
 {
 	uint16_t value = cpu_fetch(cpu) ^ 255; // invert the value
 	uint16_t tmp = cpu->regs.a + value + cpu->regs.flags.c;
@@ -490,7 +494,7 @@ uint8_t op_jmp(CPU *cpu)
 
 uint8_t op_jsr(CPU *cpu)
 {
-	cpu_stack_write_addr(cpu->regs.pc);
+	cpu_stack_write_addr(cpu, cpu->regs.pc);
 	cpu->regs.pc = cpu->last_abs_addr;
 	return 0;
 }
@@ -542,13 +546,6 @@ uint8_t op_sty(CPU *cpu)
 
 
 // transferring
-
-uint8_t op_tax(CPU *cpu)
-{
-	cpu->regs.x = cpu->regs.a;
-	cpu_flags_nz(cpu, cpu->regs.x);
-	return 0;
-}
 
 uint8_t op_tax(CPU *cpu)
 {

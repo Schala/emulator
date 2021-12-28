@@ -157,7 +157,7 @@ uint8_t op_inx(CPU *);
 uint8_t op_iny(CPU *);
 
 // Subtract with carry
-uint8_t op_sdc(CPU *);
+uint8_t op_sbc(CPU *);
 
 
 // bitwise
