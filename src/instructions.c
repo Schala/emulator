@@ -442,6 +442,16 @@ uint8_t op_ror(CPU *cpu)
 
 // comparison
 
+uint8_t op_bit(CPU *cpu)
+{
+	uint16_t tmp = cpu->regs.a & cpu_fetch(cpu);
+	cpu->regs.flags.z = tmp & 255 == 0 ? 1 : 0;
+	cpu->regs.flags.n = cpu->cache & 128 ? 1 : 0;
+	cpu->regs.flags.v = cpu->cache & 64 ? 1 : 0;
+
+	return 0;
+}
+
 uint8_t op_cmp(CPU *cpu)
 {
 	uint16_t tmp = cpu->regs.a - cpu_fetch(cpu);
