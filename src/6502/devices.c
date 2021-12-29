@@ -439,6 +439,32 @@ void cpu6502_disasm(const CPU_6502 *cpu)
 
 	printf("%s ", op->sym);
 
+	if (op->addr_mode == &op_imp)
+		printf(" ");
+	else if (op->addr_mode == &op_imm)
+		printf("#$%02X", cpu6502_read_last(cpu));
+	else if (op->addr_mode == &op_zp)
+		printf("$%02X", cpu6502_read_last(cpu));
+	else if (op->addr_mode == &op_zpx)
+		printf("$%02X, X", cpu6502_read_last(cpu));
+	else if (op->addr_mode == &op_zpy)
+		printf("$%02X, Y", cpu6502_read_last(cpu));
+	else if (op->addr_mode == &op_izx)
+		printf("($%02X, X)", cpu6502_read_last(cpu));
+	else if (op->addr_mode == &op_izy)
+		printf("($%02X, Y)", cpu6502_read_last(cpu));
+	else if (op->addr_mode == &op_abs)
+		printf("$%04X", cpu->last_abs_addr);
+	else if (op->addr_mode == &op_abx)
+		printf("$%04X, X", cpu->last_abs_addr);
+	else if (op->addr_mode == &op_aby)
+		printf("$%04X, Y", cpu->last_abs_addr);
+	else if (op->addr_mode == &op_ind)
+		printf("($%04X)", cpu->last_abs_addr);
+	else if (op->addr_mode == &op_rel)
+		printf("$%02X [$%04X]", cpu6502_read_last(cpu), cpu->last_abs_addr);
+
+	printf("\n");
 }
 
 uint8_t cpu6502_fetch(CPU_6502 *cpu)
@@ -459,7 +485,7 @@ void cpu6502_free(CPU_6502 *cpu)
 void cpu6502_print_regs(const CPU_6502 *cpu)
 {
 	printf("A: %u\tX: %u\tY: %u\n", cpu->regs.a, cpu->regs.x, cpu->regs.y);
-	printf("SP: %04X\tPC: %04X\n", cpu->regs.sp, cpu->regs.pc);
+	printf("SP: $%04X\tPC: $%04X\n", cpu->regs.sp, cpu->regs.pc);
 
 	printf("FLAGS: ");
 	if (cpu->regs.flags.c) printf("C"); else printf("x");

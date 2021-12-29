@@ -29,16 +29,11 @@ int main(int argc, char **argv)
 
 	while (1)
 	{
-		switch (toupper(getchar()))
+		char c = 0;
+		scanf("%c", &c);
+
+		switch (toupper(c))
 		{
-			case '\n':
-				do
-				{
-					cpu6502_clock(cpu);
-					//cpu6502_disasm(cpu);
-				} while (cpu->cycles != 0);
-				printf("Offset %04X\n", cpu->regs.pc);
-				break;
 			case 'D':
 				printf("\n");
 				//bus6502_ram_dump(bus);
@@ -54,8 +49,8 @@ int main(int argc, char **argv)
 				printf("\n");
 				break;
 			default:
-				printf("Unknown input, ignored\n");
-				continue;
+				do cpu6502_clock(cpu); while (cpu->cycles != 0);
+				cpu6502_disasm(cpu);
 		}
 	}
 

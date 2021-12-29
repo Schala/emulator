@@ -161,10 +161,16 @@ static inline uint8_t cpu6502_read(const CPU_6502 *cpu, uint16_t addr)
 	return cpu->bus->ram[addr];
 }
 
+// Read value from last used RAM address
+static inline uint8_t cpu6502_read_last(const CPU_6502 *cpu)
+{
+	return cpu6502_read(cpu, cpu->last_abs_addr);
+}
+
 // Read address from RAM address
 static inline uint16_t cpu6502_read_addr(const CPU_6502 *cpu, uint16_t addr)
 {
-	return cpu6502_read(cpu, addr) | (cpu6502_read(cpu, addr) << 8);
+	return cpu6502_read(cpu, addr) | (cpu6502_read(cpu, addr + 1) << 8);
 }
 
 // Read byte from ROM
