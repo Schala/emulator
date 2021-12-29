@@ -7,12 +7,12 @@
 #define NES_ROM_ADDR 0x8000
 
 typedef struct _NES_PPU {
-	BUS *bus;
+	BUS_6502 *bus;
 } NES_PPU;
 
 enum NES_ERROR
 {
-	INVALID_ROM = -1
+	INVALID_NES_ROM = -1
 };
 
 typedef struct _NES_ROM_MAPPER {
@@ -37,9 +37,9 @@ typedef struct _NES_ROM_HEADER {
 	uint8_t reserved[6];
 } NES_ROM_HEADER;
 
-NES_PPU * nes_ppu_alloc(BUS *);
+NES_PPU * nes_ppu_alloc(BUS_6502 *);
 void nes_ppu_free(NES_PPU *);
 
-int nes_load_rom(BUS *, const char *);
+int nes_load_rom(BUS_6502 *, const char *);
 
 #endif // _NES_H

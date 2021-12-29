@@ -3,7 +3,7 @@
 
 #include "instructions.h"
 
-static const OPC OPCODES[] = {
+static const OPC_6502 OPCODES[] = {
 	// 0X
 	{ 7, "BRK", &op_imp, &op_brk },
 	{ 6, "ORA", &op_izx, &op_ora },
@@ -293,41 +293,41 @@ static const OPC OPCODES[] = {
 	{ 7, "ISC", &op_abx, &op_isc },
 };
 
-BUS * bus_alloc()
+BUS_6502 * bus6502_alloc()
 {
-	BUS *bus = (BUS *)calloc(0, sizeof(BUS));
+	BUS_6502 *bus = (BUS_6502 *)calloc(0, sizeof(BUS_6502));
 
 	return bus;
 }
 
 
-void bus_add_device(BUS *bus, void *dev)
+void bus6502_add_device(BUS_6502 *bus, void *dev)
 {
 	if (!bus->dev_list)
-		bus->dev_list = (DEV *)calloc(0, sizeof(DEV));
+		bus->dev_list = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
 
-	DEV *it = bus->dev_list;
+	DEV_6502 *it = bus->dev_list;
 	while (it->next)
 		it = it->next;
 
-	it = (DEV *)calloc(0, sizeof(DEV));
+	it = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
 	it->data = dev;
 }
 
 
-void * bus_device(BUS *bus, size_t index)
+void * bus6502_device(BUS_6502 *bus, size_t index)
 {
-	DEV *it = bus->dev_list;
+	DEV_6502 *it = bus->dev_list;
 	while (index--)
 		it = it->next;
 
 	return it->data;
 }
 
-void bus_free(BUS *bus)
+void bus6502_free(BUS_6502 *bus)
 {
-	DEV *it = NULL;
-	DEV *next = bus->dev_list;
+	DEV_6502 *it = NULL;
+	DEV_6502 *next = bus->dev_list;
 
 	while (next)
 	{
@@ -339,10 +339,10 @@ void bus_free(BUS *bus)
 	free(bus);
 }
 
-void bus_free_device(BUS *bus, void *dev)
+void bus6502_free_device(BUS_6502 *bus, void *dev)
 {
-	DEV *it = bus->dev_list;
-	DEV *prev = NULL;
+	DEV_6502 *it = bus->dev_list;
+	DEV_6502 *prev = NULL;
 
 	while (dev != it->data)
 	{
@@ -358,7 +358,7 @@ void bus_free_device(BUS *bus, void *dev)
 	{
 		if (prev)
 		{
-			DEV *next = it->next;
+			DEV_6502 *next = it->next;
 			free(it);
 			prev->next = next;
 		}
@@ -367,36 +367,36 @@ void bus_free_device(BUS *bus, void *dev)
 	}
 }
 
-int bus_ram_dump(BUS *bus, size_t iter)
+int bus6502_ram_dump(BUS_6502 *bus, size_t iter)
 {
 	char fmt[BUFSIZ];
 	memset((char *)&fmt, 0, BUFSIZ);
 	sprintf((char *)&fmt, "6502.%u.dmp", iter);
 
 	FILE *dump = fopen((char *)&fmt, "wb");
-	fwrite(&bus->ram, 1, RAM_SIZE, dump);
+	fwrite(&bus->ram, 1, RAM_SIZE_6502, dump);
 
 	return fclose(dump);
 }
 
-CPU * cpu_alloc(BUS *bus)
+CPU_6502 * cpu6502_alloc(BUS_6502 *bus)
 {
-	CPU *cpu = (CPU *)calloc(0, sizeof(CPU));
+	CPU_6502 *cpu = (CPU_6502 *)calloc(0, sizeof(CPU_6502));
 	cpu->bus = bus;
 
 	cpu->ops = OPCODES;
 
-	bus_add_device(bus, cpu);
+	bus6502_add_device(bus, cpu);
 
 	return cpu;
 }
 
-void cpu_clock(CPU *cpu)
+void cpu6502_clock(CPU_6502 *cpu)
 {
 	if (cpu->cycles == 0)
 	{
 		// get and increment the counter
-		cpu->last_op = cpu_read_rom(cpu);
+		cpu->last_op = cpu6502_read_rom(cpu);
 
 		// set cycles, see if any additional cycles are needed
 		cpu->cycles = cpu->ops[cpu->last_op].cycles;
@@ -407,28 +407,28 @@ void cpu_clock(CPU *cpu)
 	cpu->cycles--;
 }
 
-uint8_t cpu_fetch(CPU *cpu)
+uint8_t cpu6502_fetch(CPU_6502 *cpu)
 {
 	if (!cpu->ops[cpu->last_op].addr_mode == &op_imp)
-		cpu->cache = cpu_read(cpu, cpu->last_abs_addr);
+		cpu->cache = cpu6502_read(cpu, cpu->last_abs_addr);
 
 	return cpu->cache;
 }
 
-void cpu_free(CPU *cpu)
+void cpu6502_free(CPU_6502 *cpu)
 {
-	bus_free_device(cpu->bus, cpu);
+	bus6502_free_device(cpu->bus, cpu);
 	free(cpu);
 }
 
-void cpu_reset(CPU *cpu)
+void cpu6502_reset(CPU_6502 *cpu)
 {
 	cpu->regs.a = cpu->regs.x = cpu->regs.y = 0;
-	cpu_flags_init(cpu);
-	cpu->regs.sp = STACK_PTR_INIT;
+	cpu6502_flags_init(cpu);
+	cpu->regs.sp = STACK_PTR_INIT_6502;
 
-	cpu->last_abs_addr = RESET_ADDR;
-	cpu->regs.pc = cpu_fetch_addr(cpu);
+	cpu->last_abs_addr = RESET_ADDR_6502;
+	cpu->regs.pc = cpu6502_fetch_addr(cpu);
 
 	cpu->last_rel_addr = 0;
 	cpu->last_abs_addr = 0;

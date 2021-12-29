@@ -3,7 +3,7 @@
 
 #include "nes.h"
 
-NES_PPU * nes_ppu_alloc(BUS *bus)
+NES_PPU * nes_ppu_alloc(BUS_6502 *bus)
 {
 	NES_PPU *ppu = (NES_PPU *)malloc(sizeof(NES_PPU));
 	ppu->bus = bus;
@@ -16,7 +16,7 @@ void nes_ppu_free(NES_PPU *ppu)
 	free(ppu);
 }
 
-int nes_load_rom(BUS *bus, const char *filepath)
+int nes_load_rom(BUS_6502 *bus, const char *filepath)
 {
 	FILE *rom = fopen(filepath, "rb");
 	NES_ROM_HEADER header;
@@ -24,7 +24,7 @@ int nes_load_rom(BUS *bus, const char *filepath)
 	fread(&header, sizeof(NES_ROM_HEADER), 1, rom);
 
 	if (strncmp(header.magic, NES_ROM_MAGIC, 4) != 0 || !filepath)
-		return INVALID_ROM;
+		return INVALID_NES_ROM;
 
 	printf("Magic: %c%c%c\\x%2X\n", header.magic[0], header.magic[1], header.magic[2], header.magic[3]);
 	printf("PRG pages: %u\n", header.prg_pages);
