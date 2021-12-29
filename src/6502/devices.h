@@ -4,12 +4,22 @@
 #include <stdint.h>
 #include <string.h>
 
+// total allowable RAM bytes
 #define RAM_SIZE_6502 65536
+
+// stack offset in RAM
 #define STACK_BASE_ADDR_6502 256
-#define STACK_PTR_INIT_6502 254
+
+// stack pointer initial offset
+#define STACK_PTR_INIT_6502 253
+
+// Absolute address when cpu_reset is called
 #define RESET_ADDR_6502 0xFFFC
+
+// for some unstable illegal opcodes
 #define MAGIC_VAL_6502 255
 
+// High bytes of a 16-bit absolute address
 #define ABS16_HI(x) ((x) & 0xFF00)
 
 typedef struct _DEV_6502 DEV_6502;
@@ -24,7 +34,7 @@ struct _DEV_6502
 // The bus is responsible for making available data to various devices
 typedef struct _BUS_6502
 {
-	uint8_t ram[RAM_SIZE];
+	uint8_t ram[RAM_SIZE_6502];
 	DEV_6502 *dev_list;
 } BUS_6502;
 
@@ -43,8 +53,23 @@ void bus6502_free(BUS_6502 *);
 // Remove device from bus device tree
 void bus6502_free_device(BUS_6502 *, void *);
 
+// Loads into RAM
+static inline uint8_t * bus6502_load(BUS_6502 *bus, const uint8_t *data, size_t length, uint16_t addr)
+{
+	return (uint8_t *)memcpy(&bus->ram[addr], data, length);
+}
+
+// Print RAM to stdout
+void bus6502_print_ram(const BUS_6502 *);
+
 // Dump bus RAM to file with iteration appended to filename
-int bus6502_ram_dump(BUS_6502 *, size_t);
+int bus6502_ram_dump(const BUS_6502 *, size_t);
+
+// Sets the reset vector in RAM
+static inline uint8_t * bus6502_reset_vec(BUS_6502 *bus, uint16_t addr)
+{
+	return (uint8_t *)memcpy(&bus->ram[RESET_ADDR_6502], &addr, 2);
+}
 
 // Register status flags
 typedef struct _STATUS_6502
@@ -98,14 +123,20 @@ struct _CPU_6502
 // Allocate a new CPU, given a parent bus
 CPU_6502 * cpu6502_alloc(BUS_6502 *);
 
-// CPU clock operation
+// CPU clock operation (execute one instruction)
 void cpu6502_clock(CPU_6502 *);
+
+// Disassemble (and print, for now) the last operation
+void cpu6502_disasm(const CPU_6502 *);
 
 // Fetch and cache a byte from the cached absolute address
 uint8_t cpu6502_fetch(CPU_6502 *);
 
 // Deallocate CPU
 void cpu6502_free(CPU_6502 *);
+
+// Prints the CPU's register states
+void cpu6502_print_regs(const CPU_6502 *);
 
 // Reset CPU state
 void cpu6502_reset(CPU_6502 *);
@@ -117,7 +148,7 @@ static inline void cpu6502_branch(CPU_6502 *cpu)
 	cpu->last_abs_addr = cpu->regs.pc + cpu->last_rel_addr;
 
 	// need an additional cycle if different page
-	if (ABS_HI(cpu->last_abs_addr) != ABS_HI(cpu->regs.pc))
+	if (ABS16_HI(cpu->last_abs_addr) != ABS16_HI(cpu->regs.pc))
 		cpu->cycles++;
 
 	// jump to address
@@ -163,7 +194,7 @@ static inline void cpu6502_write_last(CPU_6502 *cpu, uint8_t data)
 // Read address from RAM
 static inline uint16_t cpu6502_fetch_addr(const CPU_6502 *cpu)
 {
-	return (cpu6502_read(cpu, cpu->last_abs_addr) << 8) |  cpu6502_read(cpu, cpu->last_abs_addr + 1);
+	return cpu6502_read(cpu, cpu->last_abs_addr) | (cpu6502_read(cpu, cpu->last_abs_addr + 1) << 8);
 }
 
 // Return status flags register as a byte

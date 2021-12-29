@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -295,8 +296,7 @@ static const OPC_6502 OPCODES[] = {
 
 BUS_6502 * bus6502_alloc()
 {
-	BUS_6502 *bus = (BUS_6502 *)calloc(0, sizeof(BUS_6502));
-
+	BUS_6502 *bus = (BUS_6502 *)calloc(1, sizeof(BUS_6502));
 	return bus;
 }
 
@@ -304,7 +304,7 @@ BUS_6502 * bus6502_alloc()
 void bus6502_add_device(BUS_6502 *bus, void *dev)
 {
 	if (!bus->dev_list)
-		bus->dev_list = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
+		bus->dev_list = (DEV_6502 *)calloc(1, sizeof(DEV_6502));
 
 	DEV_6502 *it = bus->dev_list;
 	while (it->next)
@@ -337,6 +337,7 @@ void bus6502_free(BUS_6502 *bus)
 	}
 
 	free(bus);
+	bus = NULL;
 }
 
 void bus6502_free_device(BUS_6502 *bus, void *dev)
@@ -367,7 +368,31 @@ void bus6502_free_device(BUS_6502 *bus, void *dev)
 	}
 }
 
-int bus6502_ram_dump(BUS_6502 *bus, size_t iter)
+void bus6502_print_ram(const BUS_6502 *bus)
+{
+	for (int y = 0; y < 4096; y++)
+	{
+		// offset
+		printf("%04X: ", y * 16);
+
+		// hex
+		for (int x = 0; x < 16; x++)
+			printf("%02X ", bus->ram[(y * 16) + x]);
+
+		printf("\t");
+
+		// ASCII
+		for (int x = 0; x < 16; x++)
+		{
+			char c = bus->ram[(y * 16) + x];
+			printf("%c", isgraph(c) ? c : '.');
+		}
+
+		printf("\n");
+	}
+}
+
+int bus6502_ram_dump(const BUS_6502 *bus, size_t iter)
 {
 	char fmt[BUFSIZ];
 	memset((char *)&fmt, 0, BUFSIZ);
@@ -381,10 +406,11 @@ int bus6502_ram_dump(BUS_6502 *bus, size_t iter)
 
 CPU_6502 * cpu6502_alloc(BUS_6502 *bus)
 {
-	CPU_6502 *cpu = (CPU_6502 *)calloc(0, sizeof(CPU_6502));
+	CPU_6502 *cpu = (CPU_6502 *)calloc(1, sizeof(CPU_6502));
 	cpu->bus = bus;
-
 	cpu->ops = OPCODES;
+	cpu->regs.flags.u = 1;
+	cpu->regs.sp = STACK_PTR_INIT_6502;
 
 	bus6502_add_device(bus, cpu);
 
@@ -407,9 +433,17 @@ void cpu6502_clock(CPU_6502 *cpu)
 	cpu->cycles--;
 }
 
+void cpu6502_disasm(const CPU_6502 *cpu)
+{
+	const OPC_6502 *op = &cpu->ops[cpu->last_op];
+
+	printf("%s ", op->sym);
+
+}
+
 uint8_t cpu6502_fetch(CPU_6502 *cpu)
 {
-	if (!cpu->ops[cpu->last_op].addr_mode == &op_imp)
+	if (cpu->ops[cpu->last_op].addr_mode != &op_imp)
 		cpu->cache = cpu6502_read(cpu, cpu->last_abs_addr);
 
 	return cpu->cache;
@@ -419,6 +453,23 @@ void cpu6502_free(CPU_6502 *cpu)
 {
 	bus6502_free_device(cpu->bus, cpu);
 	free(cpu);
+	cpu = NULL;
+}
+
+void cpu6502_print_regs(const CPU_6502 *cpu)
+{
+	printf("A: %u\tX: %u\tY: %u\n", cpu->regs.a, cpu->regs.x, cpu->regs.y);
+	printf("SP: %04X\tPC: %04X\n", cpu->regs.sp, cpu->regs.pc);
+
+	printf("FLAGS: ");
+	if (cpu->regs.flags.c) printf("C"); else printf("x");
+	if (cpu->regs.flags.z) printf("Z"); else printf("x");
+	if (cpu->regs.flags.i) printf("I"); else printf("x");
+	if (cpu->regs.flags.d) printf("D"); else printf("x");
+	if (cpu->regs.flags.b) printf("B"); else printf("x");
+	if (cpu->regs.flags.u) printf("U"); else printf("x");
+	if (cpu->regs.flags.v) printf("V"); else printf("x");
+	if (cpu->regs.flags.n) printf("N\n"); else printf("x\n");
 }
 
 void cpu6502_reset(CPU_6502 *cpu)
