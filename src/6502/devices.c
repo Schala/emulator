@@ -303,13 +303,15 @@ BUS_6502 * bus6502_alloc()
 
 void bus6502_add_device(BUS_6502 *bus, void *dev)
 {
+	if (!bus) return;
+	if (!dev) return;
+
 	if (!bus->dev_list)
 		bus->dev_list = (DEV_6502 *)calloc(1, sizeof(DEV_6502));
 
 	DEV_6502 *it = bus->dev_list;
-	while (it->next)
-		it = it->next;
 
+	while (it) it = it->next;
 	it = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
 	it->data = dev;
 }
@@ -317,15 +319,17 @@ void bus6502_add_device(BUS_6502 *bus, void *dev)
 
 void * bus6502_device(BUS_6502 *bus, size_t index)
 {
-	DEV_6502 *it = bus->dev_list;
-	while (index--)
-		it = it->next;
+	if (!bus) return NULL;
 
+	DEV_6502 *it = bus->dev_list;
+	while (index--) it = it->next;
 	return it->data;
 }
 
 void bus6502_free(BUS_6502 *bus)
 {
+	if (!bus) return;
+
 	DEV_6502 *it = NULL;
 	DEV_6502 *next = bus->dev_list;
 
@@ -342,13 +346,15 @@ void bus6502_free(BUS_6502 *bus)
 
 void bus6502_free_device(BUS_6502 *bus, void *dev)
 {
+	if (!bus) return;
+	if (!dev) return;
+
 	DEV_6502 *it = bus->dev_list;
 	DEV_6502 *prev = NULL;
 
 	while (dev != it->data)
 	{
-		if (!it->next)
-			break;
+		if (!it->next) break;
 
 		prev = it;
 		it = it->next;
@@ -370,6 +376,8 @@ void bus6502_free_device(BUS_6502 *bus, void *dev)
 
 void bus6502_print_ram(const BUS_6502 *bus)
 {
+	if (!bus) return;
+
 	for (int y = 0; y < 4096; y++)
 	{
 		// offset
@@ -394,6 +402,8 @@ void bus6502_print_ram(const BUS_6502 *bus)
 
 int bus6502_ram_dump(const BUS_6502 *bus, size_t iter)
 {
+	if (!bus) return -1;
+
 	char fmt[BUFSIZ];
 	memset((char *)&fmt, 0, BUFSIZ);
 	sprintf((char *)&fmt, "6502.%u.dmp", iter);
@@ -419,6 +429,8 @@ CPU_6502 * cpu6502_alloc(BUS_6502 *bus)
 
 void cpu6502_clock(CPU_6502 *cpu)
 {
+	if (!cpu) return;
+
 	if (cpu->cycles == 0)
 	{
 		// get and increment the counter
@@ -433,53 +445,153 @@ void cpu6502_clock(CPU_6502 *cpu)
 	cpu->cycles--;
 }
 
-void cpu6502_disasm(const CPU_6502 *cpu)
+void cpu6502_disasm(CPU_6502 *cpu, uint16_t addr, uint16_t size)
 {
-	const OPC_6502 *op = &cpu->ops[cpu->last_op];
+	if (!cpu) return;
+	if (cpu->disasm) cpu6502_disasm_free(cpu);
 
-	printf("%s ", op->sym);
+	cpu->disasm = (DISASM_6502 *)calloc(1, sizeof(DISASM_6502));
 
-	if (op->addr_mode == &op_imp)
-		printf(" ");
-	else if (op->addr_mode == &op_imm)
-		printf("#$%02X", cpu6502_read_last(cpu));
-	else if (op->addr_mode == &op_zp)
-		printf("$%02X", cpu6502_read_last(cpu));
-	else if (op->addr_mode == &op_zpx)
-		printf("$%02X, X", cpu6502_read_last(cpu));
-	else if (op->addr_mode == &op_zpy)
-		printf("$%02X, Y", cpu6502_read_last(cpu));
-	else if (op->addr_mode == &op_izx)
-		printf("($%02X, X)", cpu6502_read_last(cpu));
-	else if (op->addr_mode == &op_izy)
-		printf("($%02X, Y)", cpu6502_read_last(cpu));
-	else if (op->addr_mode == &op_abs)
-		printf("$%04X", cpu->last_abs_addr);
-	else if (op->addr_mode == &op_abx)
-		printf("$%04X, X", cpu->last_abs_addr);
-	else if (op->addr_mode == &op_aby)
-		printf("$%04X, Y", cpu->last_abs_addr);
-	else if (op->addr_mode == &op_ind)
-		printf("($%04X)", cpu->last_abs_addr);
-	else if (op->addr_mode == &op_rel)
-		printf("$%02X [$%04X]", cpu6502_read_last(cpu), cpu->last_abs_addr);
+	DISASM_6502 *it = cpu->disasm;
+	uint16_t start_addr = addr;
 
-	printf("\n");
+	while (addr < (start_addr + size))
+	{
+		it->addr = addr;
+
+		const OPC_6502 *op = &cpu->ops[cpu6502_read(cpu, addr++)];
+
+		sprintf((char *)&it->lhs, "%s", op->sym);
+
+		if (op->addr_mode == &op_imm)
+			sprintf((char *)&it->rhs, "#$%02X", cpu6502_read(cpu, addr++));
+		else if (op->addr_mode == &op_zp)
+			sprintf((char *)&it->rhs, "$%02X", cpu6502_read(cpu, addr++));
+		else if (op->addr_mode == &op_zpx)
+			sprintf((char *)&it->rhs, "$%02X, X", cpu6502_read(cpu, addr++));
+		else if (op->addr_mode == &op_zpy)
+			sprintf((char *)&it->rhs, "$%02X, Y", cpu6502_read(cpu, addr++));
+		else if (op->addr_mode == &op_izx)
+			sprintf((char *)&it->rhs, "($%02X, X)", cpu6502_read(cpu, addr++));
+		else if (op->addr_mode == &op_izy)
+			sprintf((char *)&it->rhs, "($%02X, Y)", cpu6502_read(cpu, addr++));
+		else if (op->addr_mode == &op_abs)
+		{
+			sprintf((char *)&it->rhs, "$%04X", cpu6502_read_addr(cpu, addr));
+			addr += 2;
+		}
+		else if (op->addr_mode == &op_abx)
+		{
+			sprintf((char *)&it->rhs, "$%04X, X", cpu6502_read_addr(cpu, addr));
+			addr += 2;
+		}
+		else if (op->addr_mode == &op_aby)
+		{
+			sprintf((char *)&it->rhs, "$%04X, Y", cpu6502_read_addr(cpu, addr));
+			addr += 2;
+		}
+		else if (op->addr_mode == &op_ind)
+		{
+			sprintf((char *)&it->rhs, "($%04X)", cpu6502_read_addr(cpu, addr));
+			addr += 2;
+		}
+		else if (op->addr_mode == &op_rel)
+		{
+			uint8_t value = cpu6502_read(cpu, addr++);
+
+			sprintf((char *)&it->rhs, "$%02X [$%04X]", value, addr + (int8_t)value);
+		}
+
+		it->next = (DISASM_6502 *)calloc(1, sizeof(DISASM_6502));
+		it = it->next;
+	}
+}
+
+void cpu6502_disasm_free(CPU_6502 *cpu)
+{
+	if (!cpu) return;
+	if (!cpu->disasm) return;
+
+	DISASM_6502 *it = NULL;
+	DISASM_6502 *next = cpu->disasm;
+
+	while (next)
+	{
+		it = next;
+		next = it->next;
+		free(it);
+	}
+}
+
+const DISASM_6502 * cpu6502_disasm_get(const CPU_6502 *cpu, uint16_t index)
+{
+	if (!cpu) return NULL;
+
+	DISASM_6502 *it = cpu->disasm;
+	while (index--) it = it->next;
+	return it;
 }
 
 uint8_t cpu6502_fetch(CPU_6502 *cpu)
 {
+	if (!cpu) return 0;
+
 	if (cpu->ops[cpu->last_op].addr_mode != &op_imp)
-		cpu->cache = cpu6502_read(cpu, cpu->last_abs_addr);
+		cpu->cache = cpu6502_read(cpu, cpu6502_read_addr(cpu, cpu->last_abs_addr));
 
 	return cpu->cache;
 }
 
 void cpu6502_free(CPU_6502 *cpu)
 {
+	if (!cpu) return;
+
 	bus6502_free_device(cpu->bus, cpu);
+	cpu6502_disasm_free(cpu);
 	free(cpu);
 	cpu = NULL;
+}
+
+void cpu6502_print_all_disasm(const CPU_6502 *cpu)
+{
+	if (!cpu->disasm) return;
+
+	DISASM_6502 *it = cpu->disasm;
+
+	while (it)
+	{
+		printf("%04X: %s %s\n", it->addr, it->lhs, it->rhs);
+		it = it->next;
+	};
+}
+
+void cpu6502_print_disasm(const CPU_6502 *cpu, size_t frame_size)
+{
+	if (!cpu->disasm) return;
+
+	DISASM_6502 *it = cpu->disasm;
+	size_t index = 0;
+
+	while (cpu->last_abs_addr != it->addr)
+	{
+		if (!it->next) break;
+		it = it->next;
+		index++;
+	}
+
+	if (cpu->last_abs_addr == it->addr)
+		if (index < frame_size)
+			for (int i = 0; i < index; i++)
+			{
+				const DISASM_6502 *line = cpu6502_disasm_get(cpu, i);
+				printf("%04X: %s %s\n", line->addr, line->lhs, line->rhs);
+			}
+		else
+			for (int i = index - frame_size; i < (index + frame_size); i++)
+			{
+				const DISASM_6502 *line = cpu6502_disasm_get(cpu, i);
+				printf("%04X: %s %s\n", line->addr, line->lhs, line->rhs);
+			}
 }
 
 void cpu6502_print_regs(const CPU_6502 *cpu)

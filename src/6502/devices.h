@@ -22,6 +22,9 @@
 // High bytes of a 16-bit absolute address
 #define ABS16_HI(x) ((x) & 0xFF00)
 
+// Disassembly line length
+#define DISASM_STR_LEN_6502 16
+
 typedef struct _DEV_6502 DEV_6502;
 
 // Bus device tree node
@@ -107,6 +110,16 @@ typedef struct _OPC_6502
 	uint8_t (*op)(CPU_6502 *);
 } OPC_6502;
 
+typedef struct _DISASM_6502 DISASM_6502;
+
+struct _DISASM_6502
+{
+	char lhs[DISASM_STR_LEN_6502];
+	char rhs[DISASM_STR_LEN_6502];
+	uint16_t addr;
+	DISASM_6502 *next;
+};
+
 // The CPU processes data available via its bus
 struct _CPU_6502
 {
@@ -117,6 +130,7 @@ struct _CPU_6502
 	uint16_t last_rel_addr;
 	BUS_6502 *bus;
 	const OPC_6502 *ops;
+	DISASM_6502 *disasm;
 	REGS_6502 regs;
 };
 
@@ -126,14 +140,26 @@ CPU_6502 * cpu6502_alloc(BUS_6502 *);
 // CPU clock operation (execute one instruction)
 void cpu6502_clock(CPU_6502 *);
 
-// Disassemble (and print, for now) the last operation
-void cpu6502_disasm(const CPU_6502 *);
+// Disassemble from the specified address for the specified length
+void cpu6502_disasm(CPU_6502 *, uint16_t, uint16_t);
+
+// Deallocate disassembly cache
+void cpu6502_disasm_free(CPU_6502 *);
+
+// Retrieve the disassembly line at a given index
+const DISASM_6502 * cpu6502_disasm_get(const CPU_6502 *, uint16_t);
 
 // Fetch and cache a byte from the cached absolute address
 uint8_t cpu6502_fetch(CPU_6502 *);
 
 // Deallocate CPU
 void cpu6502_free(CPU_6502 *);
+
+// Prints all cached disassembly
+void cpu6502_print_all_disasm(const CPU_6502 *);
+
+// Prints the disassembly in range of the current address
+void cpu6502_print_disasm(const CPU_6502 *, size_t);
 
 // Prints the CPU's register states
 void cpu6502_print_regs(const CPU_6502 *);
@@ -159,12 +185,6 @@ static inline void cpu6502_branch(CPU_6502 *cpu)
 static inline uint8_t cpu6502_read(const CPU_6502 *cpu, uint16_t addr)
 {
 	return cpu->bus->ram[addr];
-}
-
-// Read value from last used RAM address
-static inline uint8_t cpu6502_read_last(const CPU_6502 *cpu)
-{
-	return cpu6502_read(cpu, cpu->last_abs_addr);
 }
 
 // Read address from RAM address
