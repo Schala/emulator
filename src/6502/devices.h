@@ -4,9 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-// total allowable RAM bytes
-#define RAM_SIZE_6502 65536
-
 // stack offset in RAM
 #define STACK_BASE_ADDR_6502 256
 
@@ -25,27 +22,29 @@
 // Disassembly line length
 #define DISASM_STR_LEN_6502 16
 
-typedef struct _DEV_6502 DEV_6502;
-
 // Bus device tree node
-struct _DEV_6502
+typedef struct _DEV_6502
 {
+	uint16_t ram_offset; // start offset in RAM on bus
+	uint16_t ram_size; // how much RAM does the device use?
 	void *data; // Actual device pointer
-	DEV_6502 *next;
-};
+	struct _DEV_6502 *next;
+} DEV_6502;
 
 // The bus is responsible for making available data to various devices
 typedef struct _BUS_6502
 {
-	uint8_t ram[RAM_SIZE_6502];
+	uint16_t ram_size;
+	uint32_t total_cycles;
+	uint8_t *ram;
 	DEV_6502 *dev_list;
 } BUS_6502;
 
-// Allocate a new bus.
-BUS_6502 * bus6502_alloc();
+// Allocate a new bus with the specified RAM amount
+BUS_6502 * bus6502_alloc(uint16_t);
 
-// Add a device to a bus.
-void bus6502_add_device(BUS_6502 *, void *);
+// Add a device to a bus mapped to an offset in RAM and how much RAM used
+DEV_6502 * bus6502_add_device(BUS_6502 *, void *, uint16_t, uint16_t);
 
 // Get a device from bus's device tree at given index
 void * bus6502_device(BUS_6502 *, size_t);
@@ -110,20 +109,18 @@ typedef struct _OPC_6502
 	uint8_t (*op)(CPU_6502 *);
 } OPC_6502;
 
-typedef struct _DISASM_6502 DISASM_6502;
-
-struct _DISASM_6502
+typedef struct _DISASM_6502
 {
 	char lhs[DISASM_STR_LEN_6502];
 	char rhs[DISASM_STR_LEN_6502];
 	uint16_t addr;
-	DISASM_6502 *next;
-};
+	struct _DISASM_6502 *next;
+} DISASM_6502;
 
 // The CPU processes data available via its bus
 struct _CPU_6502
 {
-	uint8_t cache;
+	uint8_t cache; // last read byte
 	uint8_t cycles; // remaining cycles for current operation
 	uint8_t last_op;
 	uint16_t last_abs_addr;
@@ -131,11 +128,12 @@ struct _CPU_6502
 	BUS_6502 *bus;
 	const OPC_6502 *ops;
 	DISASM_6502 *disasm;
+	DEV_6502 *node; // Pointer to device node in the bus's device tree
 	REGS_6502 regs;
 };
 
-// Allocate a new CPU, given a parent bus
-CPU_6502 * cpu6502_alloc(BUS_6502 *);
+// Allocate a new CPU, given a parent bus, and start and end addresses in RAM
+CPU_6502 * cpu6502_alloc(BUS_6502 *, uint16_t, uint16_t);
 
 // CPU clock operation (execute one instruction)
 void cpu6502_clock(CPU_6502 *);
@@ -184,7 +182,9 @@ static inline void cpu6502_branch(CPU_6502 *cpu)
 // Read byte from RAM address
 static inline uint8_t cpu6502_read(const CPU_6502 *cpu, uint16_t addr)
 {
-	return cpu->bus->ram[addr];
+	if (addr => cpu->node->ram_offset && addr < cpu->node->ram_size)
+		return cpu->bus->ram[addr & (cpu->bus->ram_size - 1)];
+	return 0;
 }
 
 // Read address from RAM address
@@ -208,7 +208,8 @@ static inline uint16_t cpu6502_read_rom_addr(CPU_6502 *cpu)
 // Write byte to RAM address
 static inline void cpu6502_write(CPU_6502 *cpu, uint16_t addr, uint8_t data)
 {
-	cpu->bus->ram[addr] = data;
+	if (addr => cpu->node->ram_offset && addr < cpu->node->ram_size)
+		cpu->bus->ram[addr & (cpu->bus->ram_size - 1)] = data;
 }
 
 // Write byte to last used address

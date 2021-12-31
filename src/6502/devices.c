@@ -5,7 +5,7 @@
 #include "instructions.h"
 
 static const OPC_6502 OPCODES[] = {
-	// 0X
+	// 0x
 	{ 7, "BRK", &op_imp, &op_brk },
 	{ 6, "ORA", &op_izx, &op_ora },
 	{ 0, "JAM", NULL, &op_jam },
@@ -23,7 +23,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "ASL", &op_abs, &op_asl },
 	{ 6, "SLO", &op_abs, &op_slo },
 
-	// 1X
+	// 1x
 	{ 2, "BPL", &op_rel, &op_bpl },
 	{ 5, "ORA", &op_izy, &op_ora },
 	{ 0, "JAM", NULL, &op_jam },
@@ -41,7 +41,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 7, "ASL", &op_abx, &op_asl },
 	{ 7, "SLO", &op_abx, &op_slo },
 
-	// 2X
+	// 2x
 	{ 6, "JSR", &op_abs, &op_jsr },
 	{ 6, "AND", &op_izx, &op_and },
 	{ 0, "JAM", NULL, &op_jam },
@@ -59,7 +59,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "ROL", &op_abs, &op_rol },
 	{ 6, "RLA", &op_abs, &op_rla },
 
-	// 3X
+	// 3x
 	{ 2, "BMI", &op_rel, &op_bmi },
 	{ 5, "AND", &op_izy, &op_and },
 	{ 0, "JAM", NULL, &op_jam },
@@ -77,7 +77,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 7, "ROL", &op_abx, &op_rol },
 	{ 7, "RLA", &op_abx, &op_rla },
 
-	// 4X
+	// 4x
 	{ 6, "RTI", &op_imp, &op_rti },
 	{ 6, "EOR", &op_izx, &op_eor },
 	{ 0, "JAM", NULL, &op_jam },
@@ -95,7 +95,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "LSR", &op_abs, &op_lsr },
 	{ 6, "SRE", &op_abs, &op_sre },
 
-	// 5X
+	// 5x
 	{ 2, "BVC", &op_rel, &op_bvc },
 	{ 5, "EOR", &op_izy, &op_eor },
 	{ 0, "JAM", NULL, &op_jam },
@@ -113,7 +113,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 7, "LSR", &op_abx, &op_lsr },
 	{ 7, "SRE", &op_abx, &op_sre },
 
-	// 6X
+	// 6x
 	{ 6, "RTS", &op_imp, &op_rts },
 	{ 6, "ADC", &op_izx, &op_adc },
 	{ 0, "JAM", NULL, &op_jam },
@@ -131,7 +131,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "ROR", &op_abs, &op_ror },
 	{ 6, "RRA", &op_abs, &op_rra },
 
-	// 7X
+	// 7x
 	{ 2, "BVS", &op_rel, &op_bvs },
 	{ 5, "ADC", &op_izy, &op_adc },
 	{ 0, "JAM", NULL, &op_jam },
@@ -149,7 +149,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 7, "ROR", &op_abx, &op_ror },
 	{ 7, "RRA", &op_abx, &op_rra },
 
-	// 8X
+	// 8x
 	{ 2, "NOP", &op_imm, &op_nop },
 	{ 6, "STA", &op_izx, &op_sta },
 	{ 2, "NOP", &op_imm, &op_nop },
@@ -167,7 +167,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 4, "STX", &op_abs, &op_stx },
 	{ 4, "SAX", &op_abs, &op_sax },
 
-	// 9X
+	// 9x
 	{ 2, "BCC", &op_rel, &op_bcc },
 	{ 6, "STA", &op_izy, &op_sta },
 	{ 0, "JAM", NULL, &op_jam },
@@ -185,7 +185,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "SHX", &op_aby, &op_shx },
 	{ 5, "SHA", &op_aby, &op_sha },
 
-	// AX
+	// Ax
 	{ 2, "LDY", &op_imm, &op_ldy },
 	{ 6, "LDA", &op_izx, &op_lda },
 	{ 2, "LDX", &op_imm, &op_ldx },
@@ -203,7 +203,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 4, "LDX", &op_abs, &op_ldx },
 	{ 4, "LAX", &op_abs, &op_lax },
 
-	// BX
+	// Bx
 	{ 2, "BCS", &op_rel, &op_bcs },
 	{ 5, "LDA", &op_izy, &op_lda },
 	{ 0, "JAM", NULL, &op_jam },
@@ -221,7 +221,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 4, "LDX", &op_aby, &op_ldx },
 	{ 4, "LAX", &op_aby, &op_lax },
 
-	// CX
+	// Cx
 	{ 2, "CPY", &op_imm, &op_cpy },
 	{ 6, "CMP", &op_izx, &op_cmp },
 	{ 2, "NOP", &op_imm, &op_nop },
@@ -239,7 +239,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "DEC", &op_abs, &op_dec },
 	{ 6, "DCP", &op_abs, &op_dcp },
 
-	// DX
+	// Dx
 	{ 2, "BNE", &op_rel, &op_bne },
 	{ 5, "CMP", &op_izy, &op_cmp },
 	{ 0, "JAM", NULL, &op_jam },
@@ -257,7 +257,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 7, "DEC", &op_abx, &op_dec },
 	{ 7, "DCP", &op_abx, &op_dcp },
 
-	// EX
+	// Ex
 	{ 2, "CPX", &op_imm, &op_cpx },
 	{ 6, "SBC", &op_izx, &op_sbc },
 	{ 2, "NOP", &op_imm, &op_nop },
@@ -275,7 +275,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 6, "INC", &op_abs, &op_inc },
 	{ 6, "ISC", &op_abs, &op_isc },
 
-	// FX
+	// Fx
 	{ 2, "BEQ", &op_rel, &op_beq },
 	{ 5, "SBC", &op_izy, &op_sbc },
 	{ 0, "JAM", NULL, &op_jam },
@@ -294,14 +294,17 @@ static const OPC_6502 OPCODES[] = {
 	{ 7, "ISC", &op_abx, &op_isc },
 };
 
-BUS_6502 * bus6502_alloc()
+BUS_6502 * bus6502_alloc(uint16_t ram_size)
 {
 	BUS_6502 *bus = (BUS_6502 *)calloc(1, sizeof(BUS_6502));
+	bus->ram = (uint8_t *)calloc(1, ram_size);
+	bus->ram_size = ram_size;
+
 	return bus;
 }
 
 
-void bus6502_add_device(BUS_6502 *bus, void *dev)
+DEV_6502 * bus6502_add_device(BUS_6502 *bus, void *dev, uint16_t ram_offset, uint16_t ram_size)
 {
 	if (!bus) return;
 	if (!dev) return;
@@ -312,10 +315,14 @@ void bus6502_add_device(BUS_6502 *bus, void *dev)
 	DEV_6502 *it = bus->dev_list;
 
 	while (it) it = it->next;
-	it = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
-	it->data = dev;
-}
 
+	it = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
+	it->ram_offset = ram_offset;
+	it->ram_size = ram_size
+	it->data = dev;
+
+	return it;
+}
 
 void * bus6502_device(BUS_6502 *bus, size_t index)
 {
@@ -409,12 +416,12 @@ int bus6502_ram_dump(const BUS_6502 *bus, size_t iter)
 	sprintf((char *)&fmt, "6502.%u.dmp", iter);
 
 	FILE *dump = fopen((char *)&fmt, "wb");
-	fwrite(&bus->ram, 1, RAM_SIZE_6502, dump);
+	fwrite(&bus->ram, 1, bus->ram_size, dump);
 
 	return fclose(dump);
 }
 
-CPU_6502 * cpu6502_alloc(BUS_6502 *bus)
+CPU_6502 * cpu6502_alloc(BUS_6502 *bus, uint16_t start, uint16_t end)
 {
 	CPU_6502 *cpu = (CPU_6502 *)calloc(1, sizeof(CPU_6502));
 	cpu->bus = bus;
@@ -422,7 +429,7 @@ CPU_6502 * cpu6502_alloc(BUS_6502 *bus)
 	cpu->regs.flags.u = 1;
 	cpu->regs.sp = STACK_PTR_INIT_6502;
 
-	bus6502_add_device(bus, cpu);
+	cpu->node = bus6502_add_device(bus, cpu, start, end + 1);
 
 	return cpu;
 }
