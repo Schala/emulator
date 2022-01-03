@@ -1,7 +1,7 @@
 #ifndef _NES_H
 #define _NES_H
 
-#include "devices.h"
+#include "dev.h"
 
 // ROM file header magic
 #define NES_ROM_MAGIC "NES\x1A"

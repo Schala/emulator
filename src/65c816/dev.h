@@ -1,9 +1,9 @@
-#ifndef _65C816_DEVICES_H
-#define _65C816_DEVICES_H
+#ifndef _65C816_DEV_H
+#define _65C816_DEV_H
 
 #include <stdint.h>
 
-typedef struct _STATUS_65C816
+typedef struct _STATE_65C816
 {
 	uint8_t
 		n : 1, // negative
@@ -14,11 +14,11 @@ typedef struct _STATUS_65C816
 		i : 1, // interrupt disable
 		z : 1, // zero
 		c : 1; // carry
-} STATUS_65C816;
+} STATE_65C816;
 
 typedef struct _REGS_65C816
 {
-	STATUS_65C816 p; // processor state
+	STATE_65C816 p; // processor state
 	uint16_t a; // accumulator
 	uint16_t b; // accumulator
 	uint16_t x; // index
@@ -34,4 +34,4 @@ typedef struct _CPU_65C816
 	REGS_65C816 regs;
 } CPU_65C816;
 
-#endif // _65C816_DEVICES_H
+#endif // _65C816_DEV_H

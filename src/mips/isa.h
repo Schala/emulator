@@ -1,7 +1,7 @@
 #ifndef _MIPS_ISA_H
 #define _MIPS_ISA_H
 
-#include "devices.h"
+#include "dev.h"
 
 // MIPS instruction data
 typedef struct _MIPS_ISA

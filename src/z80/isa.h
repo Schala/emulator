@@ -1,7 +1,7 @@
 #ifndef _Z80_ISA_H
 #define _Z80_ISA_H
 
-#include "devices.h"
+#include "dev.h"
 
 // add with carry
 uint8_t z80_adc(Z80_CPU *);

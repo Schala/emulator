@@ -1,9 +1,9 @@
-#ifndef _Z80_DEVICES_H
-#define _Z80_DEVICES_H
+#ifndef _Z80_DEV_H
+#define _Z80_DEV_H
 
 #include <stdint.h>
 
-typedef struct _Z80_STATUS
+typedef struct _Z80_STATE
 {
 	uint8_t
 		s : 1, // sign
@@ -14,12 +14,12 @@ typedef struct _Z80_STATUS
 		v : 1, // overflow
 		n : 1, // add/subtract
 		c : 1; // carry
-} Z80_STATUS;
+} Z80_STATE;
 
 typedef struct _Z80_REGS
 {
 	uint8_t a; // accumulator
-	Z80_STATUS f;
+	Z80_STATE f;
 
 	// general purpse, either 8 bit or paired to be 16 bit
 	uint8_t b, c,
@@ -38,4 +38,4 @@ typedef struct _Z80_CPU
 	Z80_REGS regs;
 } Z80_CPU;
 
-#endif // _Z80_DEVICES_H
+#endif // _Z80_DEV_H

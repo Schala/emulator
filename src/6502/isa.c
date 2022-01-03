@@ -159,7 +159,7 @@ uint8_t op6502_bvs(CPU_6502 *cpu)
 }
 
 
-// status bit manipulation
+// state bit manipulation
 
 uint8_t op6502_clc(CPU_6502 *cpu)
 {
@@ -240,7 +240,7 @@ uint8_t op6502_rti(CPU_6502 *cpu)
 	uint8_t bits = cpu6502_stack_read(cpu);
 
 	// restore flags
-	cpu->regs.flags = *(STATUS_6502 *)&bits;
+	cpu->regs.flags = *(STATE_6502 *)&bits;
 	cpu->regs.flags.b &= ~cpu->regs.flags.b;
 	cpu->regs.flags.u &= ~cpu->regs.flags.u;
 
@@ -377,7 +377,7 @@ uint8_t op6502_asl(CPU_6502 *cpu)
 
 	cpu6502_flags_cnz(cpu, tmp);
 
-	if (cpu->ops[cpu->last_op].addr_mode == &op6502_imp)
+	if (cpu->ops[cpu->last_op].addr_mode == &am6502_imp)
 		cpu->regs.a = tmp & 255;
 	else
 		cpu6502_write_last(cpu, tmp & 255);
@@ -399,7 +399,7 @@ uint8_t op6502_lsr(CPU_6502 *cpu)
 	uint16_t tmp = cpu->cache >> 1;
 	cpu6502_flags_nz(cpu, tmp);
 
-	if (cpu->ops[cpu->last_op].addr_mode == &op6502_imp)
+	if (cpu->ops[cpu->last_op].addr_mode == &am6502_imp)
 		cpu->regs.a = tmp & 255;
 	else
 		cpu6502_write_last(cpu, tmp & 255);
@@ -420,7 +420,7 @@ uint8_t op6502_rol(CPU_6502 *cpu)
 	uint16_t tmp = (cpu6502_fetch(cpu) << 1) | cpu->regs.flags.c;
 	cpu6502_flags_cnz(cpu, tmp);
 
-	if (cpu->ops[cpu->last_op].addr_mode == &op6502_imp)
+	if (cpu->ops[cpu->last_op].addr_mode == &am6502_imp)
 		cpu->regs.a = tmp & 255;
 	else
 		cpu6502_write_last(cpu, tmp & 255);
@@ -435,7 +435,7 @@ uint8_t op6502_ror(CPU_6502 *cpu)
 	cpu->regs.flags.c = cpu->cache & 1 ? 1 : 0;
 	cpu6502_flags_nz(cpu, tmp);
 
-	if (cpu->ops[cpu->last_op].addr_mode == &op6502_imp)
+	if (cpu->ops[cpu->last_op].addr_mode == &am6502_imp)
 		cpu->regs.a = tmp & 255;
 	else
 		cpu6502_write_last(cpu, tmp & 255);
@@ -627,7 +627,7 @@ uint8_t op6502_isc(CPU_6502 *cpu)
 uint8_t op6502_jam(CPU_6502 *cpu)
 {
 	cpu->regs.pc = 0xFFFF;
-	memset(&cpu->regs.flags, 0, sizeof(STATUS_6502));
+	memset(&cpu->regs.flags, 0, sizeof(STATE_6502));
 	return 0;
 }
 

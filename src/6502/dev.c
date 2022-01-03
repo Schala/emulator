@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "instructions.h"
+#include "isa.h"
 
 static const OPC_6502 OPCODES[] = {
 	// 0x
@@ -126,7 +126,7 @@ static const OPC_6502 OPCODES[] = {
 	{ 2, "ADC", &am6502_imm, &op6502_adc },
 	{ 2, "ROR", &am6502_imp, &op6502_ror },
 	{ 2, "ARR", &am6502_imm, &op6502_arr },
-	{ 5, "JMP", &op6502_ind, &op6502_jmp },
+	{ 5, "JMP", &am6502_ind, &op6502_jmp },
 	{ 4, "ADC", &am6502_abs, &op6502_adc },
 	{ 6, "ROR", &am6502_abs, &op6502_ror },
 	{ 6, "RRA", &am6502_abs, &op6502_rra },
@@ -306,8 +306,8 @@ BUS_6502 * bus6502_alloc(uint16_t ram_size)
 
 DEV_6502 * bus6502_add_device(BUS_6502 *bus, void *dev, uint16_t ram_offset, uint16_t ram_size)
 {
-	if (!bus) return;
-	if (!dev) return;
+	if (!bus) return NULL;
+	if (!dev) return NULL;
 
 	if (!bus->dev_list)
 		bus->dev_list = (DEV_6502 *)calloc(1, sizeof(DEV_6502));
@@ -318,7 +318,7 @@ DEV_6502 * bus6502_add_device(BUS_6502 *bus, void *dev, uint16_t ram_offset, uin
 
 	it = (DEV_6502 *)calloc(0, sizeof(DEV_6502));
 	it->ram_offset = ram_offset;
-	it->ram_size = ram_size
+	it->ram_size = ram_size;
 	it->data = dev;
 
 	return it;
@@ -497,7 +497,7 @@ void cpu6502_disasm(CPU_6502 *cpu, uint16_t addr, uint16_t size)
 			sprintf((char *)&it->rhs, "$%04X, Y", cpu6502_read_addr(cpu, addr));
 			addr += 2;
 		}
-		else if (op->addr_mode == &op6502_ind)
+		else if (op->addr_mode == &am6502_ind)
 		{
 			sprintf((char *)&it->rhs, "($%04X)", cpu6502_read_addr(cpu, addr));
 			addr += 2;

@@ -1,5 +1,5 @@
-#ifndef _6502_DEVICES_H
-#define _6502_DEVICES_H
+#ifndef _6502_DEV_H
+#define _6502_DEV_H
 
 #include <stdint.h>
 #include <string.h>
@@ -73,8 +73,8 @@ static inline uint8_t * bus6502_reset_vec(BUS_6502 *bus, uint16_t addr)
 	return (uint8_t *)memcpy(&bus->ram[RESET_ADDR_6502], &addr, 2);
 }
 
-// Register status flags
-typedef struct _STATUS_6502
+// Register STATE flags
+typedef struct _STATE_6502
 {
 	uint8_t
 		c : 1, // carry
@@ -85,7 +85,7 @@ typedef struct _STATUS_6502
 		u : 1, // unused
 		v : 1, // overflow
 		n : 1; // negative
-} STATUS_6502;
+} STATE_6502;
 
 // CPU registers
 typedef struct _REGS_6502
@@ -94,7 +94,7 @@ typedef struct _REGS_6502
 	uint8_t x;
 	uint8_t y;
 	uint8_t sp; // stack pointer
-	STATUS_6502 flags;
+	STATE_6502 flags;
 	uint16_t pc; // program counter
 } REGS_6502;
 
@@ -183,7 +183,7 @@ static inline void cpu6502_branch(CPU_6502 *cpu)
 // Read byte from RAM address
 static inline uint8_t cpu6502_read(const CPU_6502 *cpu, uint16_t addr)
 {
-	if (addr => cpu->node->ram_offset && addr < cpu->node->ram_size)
+	if (addr >= cpu->node->ram_offset && addr < cpu->node->ram_size)
 		return cpu->bus->ram[addr & (cpu->bus->ram_size - 1)];
 	return 0;
 }
@@ -209,7 +209,7 @@ static inline uint16_t cpu6502_read_rom_addr(CPU_6502 *cpu)
 // Write byte to RAM address
 static inline void cpu6502_write(CPU_6502 *cpu, uint16_t addr, uint8_t data)
 {
-	if (addr => cpu->node->ram_offset && addr < cpu->node->ram_size)
+	if (addr >= cpu->node->ram_offset && addr < cpu->node->ram_size)
 		cpu->bus->ram[addr & (cpu->bus->ram_size - 1)] = data;
 }
 
@@ -225,20 +225,20 @@ static inline uint16_t cpu6502_fetch_addr(const CPU_6502 *cpu)
 	return cpu6502_read(cpu, cpu->last_abs_addr) | (cpu6502_read(cpu, cpu->last_abs_addr + 1) << 8);
 }
 
-// Return status flags register as a byte
+// Return STATE flags register as a byte
 static inline uint8_t cpu6502_flags(const CPU_6502 *cpu)
 {
 	return *(uint8_t *)&cpu->regs.flags;
 }
 
-// (Re)initialise status flags register
+// (Re)initialise STATE flags register
 static inline void cpu6502_flags_init(CPU_6502 *cpu)
 {
-	memset(&cpu->regs.flags, 0, sizeof(STATUS_6502));
+	memset(&cpu->regs.flags, 0, sizeof(STATE_6502));
 	cpu->regs.flags.u = 1;
 }
 
-// Set carry, negative, and/or zero bits of status flags register, given a 16-bit value
+// Set carry, negative, and/or zero bits of STATE flags register, given a 16-bit value
 static inline void cpu6502_flags_cnz(CPU_6502 *cpu, uint16_t value)
 {
 	cpu->regs.flags.c = value > 255 ? 1 : 0;
@@ -246,7 +246,7 @@ static inline void cpu6502_flags_cnz(CPU_6502 *cpu, uint16_t value)
 	cpu->regs.flags.n = value & 128 ? 1 : 0;
 }
 
-// Set negative and/or zero bits of status flags register, given a value
+// Set negative and/or zero bits of STATE flags register, given a value
 static inline void cpu6502_flags_nz(CPU_6502 *cpu, uint16_t value)
 {
 	cpu->regs.flags.z = (value & 255) == 0 ? 1 : 0;
@@ -303,4 +303,4 @@ static inline void cpu6502_interrupt(CPU_6502 *cpu, uint16_t new_abs_addr, uint8
 	cpu->cycles = new_cycles;
 }
 
-#endif // _6502_DEVICES_H
+#endif // _6502_DEV_H

@@ -1,5 +1,5 @@
-#ifndef _MIPS_DEVICES_H
-#define _MIPS_DEVICES_H
+#ifndef _MIPS_DEV_H
+#define _MIPS_DEV_H
 
 #include <stdint.h>
 
@@ -55,4 +55,4 @@ typedef struct _MIPS_CPU {
 MIPS_CPU * mips_cpu_alloc();
 void mips_cpu_free(MIPS_CPU *);
 
-#endif // _MIPS_DEVICES_H
+#endif // _MIPS_DEV_H
