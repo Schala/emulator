@@ -62,7 +62,7 @@ static inline uint8_t * bus6502_load(BUS_6502 *bus, const uint8_t *data, size_t 
 }
 
 // Print RAM to stdout
-void bus6502_print_ram(const BUS_6502 *);
+//void bus6502_print_ram(const BUS_6502 *);
 
 // Dump bus RAM to file with iteration appended to filename
 int bus6502_ram_dump(const BUS_6502 *, size_t);
@@ -98,6 +98,15 @@ typedef struct _REGS_6502
 	uint16_t pc; // program counter
 } REGS_6502;
 
+// Disassembly cache
+typedef struct _DISASM_6502
+{
+	char lhs[DISASM_STR_LEN_6502];
+	char rhs[DISASM_STR_LEN_6502];
+	uint16_t addr;
+	struct _DISASM_6502 *next;
+} DISASM_6502;
+
 typedef struct _CPU_6502 CPU_6502;
 
 // Metadata for the CPU's various operations
@@ -108,14 +117,6 @@ typedef struct _OPC_6502
 	uint8_t (*addr_mode)(CPU_6502 *);
 	uint8_t (*op)(CPU_6502 *);
 } OPC_6502;
-
-typedef struct _DISASM_6502
-{
-	char lhs[DISASM_STR_LEN_6502];
-	char rhs[DISASM_STR_LEN_6502];
-	uint16_t addr;
-	struct _DISASM_6502 *next;
-} DISASM_6502;
 
 // The CPU processes data available via its bus
 struct _CPU_6502
@@ -154,13 +155,13 @@ uint8_t cpu6502_fetch(CPU_6502 *);
 void cpu6502_free(CPU_6502 *);
 
 // Prints all cached disassembly
-void cpu6502_print_all_disasm(const CPU_6502 *);
+//void cpu6502_print_all_disasm(const CPU_6502 *);
 
 // Prints the disassembly in range of the current address
-void cpu6502_print_disasm(const CPU_6502 *, size_t);
+//void cpu6502_print_disasm(const CPU_6502 *, size_t);
 
 // Prints the CPU's register states
-void cpu6502_print_regs(const CPU_6502 *);
+//void cpu6502_print_regs(const CPU_6502 *);
 
 // Reset CPU state
 void cpu6502_reset(CPU_6502 *);

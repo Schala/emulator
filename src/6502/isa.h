@@ -1,5 +1,5 @@
-#ifndef _6502_INSTRUCTIONS_H
-#define _6502_INSTRUCTIONS_H
+#ifndef _6502_ISA_H
+#define _6502_ISA_H
 
 #include "devices.h"
 
@@ -321,4 +321,4 @@ uint8_t op_tas(CPU_6502 *);
 // SBC + NOP
 uint8_t op_usbc(CPU_6502 *);
 
-#endif // _6502_INSTRUCTIONS_H
+#endif // _6502_ISA_H

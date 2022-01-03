@@ -6,292 +6,292 @@
 
 static const OPC_6502 OPCODES[] = {
 	// 0x
-	{ 7, "BRK", &op_imp, &op_brk },
-	{ 6, "ORA", &op_izx, &op_ora },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "SLO", &op_izx, &op_slo },
-	{ 2, "NOP", &op_zp, &op_nop },
-	{ 3, "ORA", &op_zp, &op_ora },
-	{ 5, "ASL", &op_zp, &op_asl },
-	{ 5, "SLO", &op_zp, &op_slo },
-	{ 3, "PHP", &op_imp, &op_php },
-	{ 2, "ORA", &op_imm, &op_ora },
-	{ 2, "ASL", &op_imp, &op_asl },
-	{ 2, "ANC", &op_imm, &op_anc },
-	{ 4, "NOP", &op_abs, &op_nop },
-	{ 4, "ORA", &op_abs, &op_ora },
-	{ 6, "ASL", &op_abs, &op_asl },
-	{ 6, "SLO", &op_abs, &op_slo },
+	{ 7, "BRK", &am6502_imp, &op6502_brk },
+	{ 6, "ORA", &am6502_izx, &op6502_ora },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "SLO", &am6502_izx, &op6502_slo },
+	{ 2, "NOP", &am6502_zp, &op6502_nop },
+	{ 3, "ORA", &am6502_zp, &op6502_ora },
+	{ 5, "ASL", &am6502_zp, &op6502_asl },
+	{ 5, "SLO", &am6502_zp, &op6502_slo },
+	{ 3, "PHP", &am6502_imp, &op6502_php },
+	{ 2, "ORA", &am6502_imm, &op6502_ora },
+	{ 2, "ASL", &am6502_imp, &op6502_asl },
+	{ 2, "ANC", &am6502_imm, &op6502_anc },
+	{ 4, "NOP", &am6502_abs, &op6502_nop },
+	{ 4, "ORA", &am6502_abs, &op6502_ora },
+	{ 6, "ASL", &am6502_abs, &op6502_asl },
+	{ 6, "SLO", &am6502_abs, &op6502_slo },
 
 	// 1x
-	{ 2, "BPL", &op_rel, &op_bpl },
-	{ 5, "ORA", &op_izy, &op_ora },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "SLO", &op_izy, &op_slo },
-	{ 4, "NOP", &op_zpx, &op_nop },
-	{ 4, "ORA", &op_zpx, &op_ora },
-	{ 6, "ASL", &op_zpx, &op_asl },
-	{ 6, "SLO", &op_zpx, &op_slo },
-	{ 2, "CLC", &op_imp, &op_clc },
-	{ 4, "ORA", &op_aby, &op_ora },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 7, "SLO", &op_aby, &op_slo },
-	{ 4, "NOP", &op_abx, &op_nop },
-	{ 4, "ORA", &op_abx, &op_ora },
-	{ 7, "ASL", &op_abx, &op_asl },
-	{ 7, "SLO", &op_abx, &op_slo },
+	{ 2, "BPL", &am6502_rel, &op6502_bpl },
+	{ 5, "ORA", &am6502_izy, &op6502_ora },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "SLO", &am6502_izy, &op6502_slo },
+	{ 4, "NOP", &am6502_zpx, &op6502_nop },
+	{ 4, "ORA", &am6502_zpx, &op6502_ora },
+	{ 6, "ASL", &am6502_zpx, &op6502_asl },
+	{ 6, "SLO", &am6502_zpx, &op6502_slo },
+	{ 2, "CLC", &am6502_imp, &op6502_clc },
+	{ 4, "ORA", &am6502_aby, &op6502_ora },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 7, "SLO", &am6502_aby, &op6502_slo },
+	{ 4, "NOP", &am6502_abx, &op6502_nop },
+	{ 4, "ORA", &am6502_abx, &op6502_ora },
+	{ 7, "ASL", &am6502_abx, &op6502_asl },
+	{ 7, "SLO", &am6502_abx, &op6502_slo },
 
 	// 2x
-	{ 6, "JSR", &op_abs, &op_jsr },
-	{ 6, "AND", &op_izx, &op_and },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "RLA", &op_izx, &op_rla },
-	{ 3, "BIT", &op_zp, &op_bit },
-	{ 3, "AND", &op_zp, &op_and },
-	{ 5, "ROL", &op_zp, &op_rol },
-	{ 5, "RLA", &op_zp, &op_rla },
-	{ 4, "PLP", &op_imp, &op_plp },
-	{ 2, "AND", &op_imm, &op_and },
-	{ 2, "ROL", &op_imp, &op_rol },
-	{ 2, "ANC", &op_imm, &op_anc },
-	{ 4, "BIT", &op_abs, &op_bit },
-	{ 4, "AND", &op_abs, &op_and },
-	{ 6, "ROL", &op_abs, &op_rol },
-	{ 6, "RLA", &op_abs, &op_rla },
+	{ 6, "JSR", &am6502_abs, &op6502_jsr },
+	{ 6, "AND", &am6502_izx, &op6502_and },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "RLA", &am6502_izx, &op6502_rla },
+	{ 3, "BIT", &am6502_zp, &op6502_bit },
+	{ 3, "AND", &am6502_zp, &op6502_and },
+	{ 5, "ROL", &am6502_zp, &op6502_rol },
+	{ 5, "RLA", &am6502_zp, &op6502_rla },
+	{ 4, "PLP", &am6502_imp, &op6502_plp },
+	{ 2, "AND", &am6502_imm, &op6502_and },
+	{ 2, "ROL", &am6502_imp, &op6502_rol },
+	{ 2, "ANC", &am6502_imm, &op6502_anc },
+	{ 4, "BIT", &am6502_abs, &op6502_bit },
+	{ 4, "AND", &am6502_abs, &op6502_and },
+	{ 6, "ROL", &am6502_abs, &op6502_rol },
+	{ 6, "RLA", &am6502_abs, &op6502_rla },
 
 	// 3x
-	{ 2, "BMI", &op_rel, &op_bmi },
-	{ 5, "AND", &op_izy, &op_and },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "RLA", &op_izy, &op_rla },
-	{ 4, "NOP", &op_zpx, &op_nop },
-	{ 4, "AND", &op_zpx, &op_and },
-	{ 6, "ROL", &op_zpx, &op_rol },
-	{ 6, "RLA", &op_zpx, &op_rla },
-	{ 2, "SEC", &op_imp, &op_sec },
-	{ 4, "AND", &op_aby, &op_and },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 7, "RLA", &op_aby, &op_rla },
-	{ 4, "NOP", &op_abx, &op_nop },
-	{ 4, "AND", &op_abx, &op_and },
-	{ 7, "ROL", &op_abx, &op_rol },
-	{ 7, "RLA", &op_abx, &op_rla },
+	{ 2, "BMI", &am6502_rel, &op6502_bmi },
+	{ 5, "AND", &am6502_izy, &op6502_and },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "RLA", &am6502_izy, &op6502_rla },
+	{ 4, "NOP", &am6502_zpx, &op6502_nop },
+	{ 4, "AND", &am6502_zpx, &op6502_and },
+	{ 6, "ROL", &am6502_zpx, &op6502_rol },
+	{ 6, "RLA", &am6502_zpx, &op6502_rla },
+	{ 2, "SEC", &am6502_imp, &op6502_sec },
+	{ 4, "AND", &am6502_aby, &op6502_and },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 7, "RLA", &am6502_aby, &op6502_rla },
+	{ 4, "NOP", &am6502_abx, &op6502_nop },
+	{ 4, "AND", &am6502_abx, &op6502_and },
+	{ 7, "ROL", &am6502_abx, &op6502_rol },
+	{ 7, "RLA", &am6502_abx, &op6502_rla },
 
 	// 4x
-	{ 6, "RTI", &op_imp, &op_rti },
-	{ 6, "EOR", &op_izx, &op_eor },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "SRE", &op_izx, &op_sre },
-	{ 3, "NOP", &op_zp, &op_nop },
-	{ 3, "EOR", &op_zp, &op_eor },
-	{ 5, "LSR", &op_zp, &op_lsr },
-	{ 5, "SRE", &op_zp, &op_sre },
-	{ 3, "PHA", &op_imp, &op_pha },
-	{ 2, "EOR", &op_imm, &op_eor },
-	{ 2, "LSR", &op_imp, &op_lsr },
-	{ 2, "ALR", &op_abs, &op_alr },
-	{ 3, "JMP", &op_abs, &op_jmp },
-	{ 4, "EOR", &op_abs, &op_eor },
-	{ 6, "LSR", &op_abs, &op_lsr },
-	{ 6, "SRE", &op_abs, &op_sre },
+	{ 6, "RTI", &am6502_imp, &op6502_rti },
+	{ 6, "EOR", &am6502_izx, &op6502_eor },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "SRE", &am6502_izx, &op6502_sre },
+	{ 3, "NOP", &am6502_zp, &op6502_nop },
+	{ 3, "EOR", &am6502_zp, &op6502_eor },
+	{ 5, "LSR", &am6502_zp, &op6502_lsr },
+	{ 5, "SRE", &am6502_zp, &op6502_sre },
+	{ 3, "PHA", &am6502_imp, &op6502_pha },
+	{ 2, "EOR", &am6502_imm, &op6502_eor },
+	{ 2, "LSR", &am6502_imp, &op6502_lsr },
+	{ 2, "ALR", &am6502_abs, &op6502_alr },
+	{ 3, "JMP", &am6502_abs, &op6502_jmp },
+	{ 4, "EOR", &am6502_abs, &op6502_eor },
+	{ 6, "LSR", &am6502_abs, &op6502_lsr },
+	{ 6, "SRE", &am6502_abs, &op6502_sre },
 
 	// 5x
-	{ 2, "BVC", &op_rel, &op_bvc },
-	{ 5, "EOR", &op_izy, &op_eor },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "SRE", &op_izy, &op_sre },
-	{ 4, "NOP", &op_zpx, &op_nop },
-	{ 4, "EOR", &op_zpx, &op_eor },
-	{ 6, "LSR", &op_zpx, &op_lsr },
-	{ 6, "SRE", &op_zpx, &op_sre },
-	{ 2, "CLI", &op_imp, &op_cli },
-	{ 4, "EOR", &op_aby, &op_eor },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 7, "SRE", &op_aby, &op_sre },
-	{ 4, "NOP", &op_abx, &op_nop },
-	{ 4, "EOR", &op_abx, &op_eor },
-	{ 7, "LSR", &op_abx, &op_lsr },
-	{ 7, "SRE", &op_abx, &op_sre },
+	{ 2, "BVC", &am6502_rel, &op6502_bvc },
+	{ 5, "EOR", &am6502_izy, &op6502_eor },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "SRE", &am6502_izy, &op6502_sre },
+	{ 4, "NOP", &am6502_zpx, &op6502_nop },
+	{ 4, "EOR", &am6502_zpx, &op6502_eor },
+	{ 6, "LSR", &am6502_zpx, &op6502_lsr },
+	{ 6, "SRE", &am6502_zpx, &op6502_sre },
+	{ 2, "CLI", &am6502_imp, &op6502_cli },
+	{ 4, "EOR", &am6502_aby, &op6502_eor },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 7, "SRE", &am6502_aby, &op6502_sre },
+	{ 4, "NOP", &am6502_abx, &op6502_nop },
+	{ 4, "EOR", &am6502_abx, &op6502_eor },
+	{ 7, "LSR", &am6502_abx, &op6502_lsr },
+	{ 7, "SRE", &am6502_abx, &op6502_sre },
 
 	// 6x
-	{ 6, "RTS", &op_imp, &op_rts },
-	{ 6, "ADC", &op_izx, &op_adc },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "RRA", &op_izx, &op_rra },
-	{ 3, "NOP", &op_zp, &op_nop },
-	{ 3, "ADC", &op_zp, &op_adc },
-	{ 5, "ROR", &op_zp, &op_ror },
-	{ 5, "RRA", &op_zp, &op_rra },
-	{ 4, "PLA", &op_imp, &op_pla },
-	{ 2, "ADC", &op_imm, &op_adc },
-	{ 2, "ROR", &op_imp, &op_ror },
-	{ 2, "ARR", &op_imm, &op_arr },
-	{ 5, "JMP", &op_ind, &op_jmp },
-	{ 4, "ADC", &op_abs, &op_adc },
-	{ 6, "ROR", &op_abs, &op_ror },
-	{ 6, "RRA", &op_abs, &op_rra },
+	{ 6, "RTS", &am6502_imp, &op6502_rts },
+	{ 6, "ADC", &am6502_izx, &op6502_adc },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "RRA", &am6502_izx, &op6502_rra },
+	{ 3, "NOP", &am6502_zp, &op6502_nop },
+	{ 3, "ADC", &am6502_zp, &op6502_adc },
+	{ 5, "ROR", &am6502_zp, &op6502_ror },
+	{ 5, "RRA", &am6502_zp, &op6502_rra },
+	{ 4, "PLA", &am6502_imp, &op6502_pla },
+	{ 2, "ADC", &am6502_imm, &op6502_adc },
+	{ 2, "ROR", &am6502_imp, &op6502_ror },
+	{ 2, "ARR", &am6502_imm, &op6502_arr },
+	{ 5, "JMP", &op6502_ind, &op6502_jmp },
+	{ 4, "ADC", &am6502_abs, &op6502_adc },
+	{ 6, "ROR", &am6502_abs, &op6502_ror },
+	{ 6, "RRA", &am6502_abs, &op6502_rra },
 
 	// 7x
-	{ 2, "BVS", &op_rel, &op_bvs },
-	{ 5, "ADC", &op_izy, &op_adc },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "RRA", &op_izy, &op_rra },
-	{ 4, "NOP", &op_zpx, &op_nop },
-	{ 4, "ADC", &op_zpx, &op_adc },
-	{ 6, "ROR", &op_zpx, &op_ror },
-	{ 6, "RRA", &op_zpx, &op_rra },
-	{ 2, "SEI", &op_imp, &op_sei },
-	{ 4, "ADC", &op_aby, &op_adc },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 7, "RRA", &op_aby, &op_rra },
-	{ 4, "NOP", &op_abx, &op_nop },
-	{ 4, "ADC", &op_abx, &op_adc },
-	{ 7, "ROR", &op_abx, &op_ror },
-	{ 7, "RRA", &op_abx, &op_rra },
+	{ 2, "BVS", &am6502_rel, &op6502_bvs },
+	{ 5, "ADC", &am6502_izy, &op6502_adc },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "RRA", &am6502_izy, &op6502_rra },
+	{ 4, "NOP", &am6502_zpx, &op6502_nop },
+	{ 4, "ADC", &am6502_zpx, &op6502_adc },
+	{ 6, "ROR", &am6502_zpx, &op6502_ror },
+	{ 6, "RRA", &am6502_zpx, &op6502_rra },
+	{ 2, "SEI", &am6502_imp, &op6502_sei },
+	{ 4, "ADC", &am6502_aby, &op6502_adc },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 7, "RRA", &am6502_aby, &op6502_rra },
+	{ 4, "NOP", &am6502_abx, &op6502_nop },
+	{ 4, "ADC", &am6502_abx, &op6502_adc },
+	{ 7, "ROR", &am6502_abx, &op6502_ror },
+	{ 7, "RRA", &am6502_abx, &op6502_rra },
 
 	// 8x
-	{ 2, "NOP", &op_imm, &op_nop },
-	{ 6, "STA", &op_izx, &op_sta },
-	{ 2, "NOP", &op_imm, &op_nop },
-	{ 6, "SAX", &op_izx, &op_sax },
-	{ 3, "STY", &op_zp, &op_sty },
-	{ 3, "STA", &op_zp, &op_sta },
-	{ 3, "STX", &op_zp, &op_stx },
-	{ 3, "SAX", &op_zp, &op_sax },
-	{ 2, "DEY", &op_imp, &op_dey },
-	{ 2, "NOP", &op_imm, &op_nop },
-	{ 2, "TXA", &op_imp, &op_txa },
-	{ 2, "ANE", &op_imm, &op_ane },
-	{ 4, "STY", &op_abs, &op_sty },
-	{ 4, "STA", &op_abs, &op_sta },
-	{ 4, "STX", &op_abs, &op_stx },
-	{ 4, "SAX", &op_abs, &op_sax },
+	{ 2, "NOP", &am6502_imm, &op6502_nop },
+	{ 6, "STA", &am6502_izx, &op6502_sta },
+	{ 2, "NOP", &am6502_imm, &op6502_nop },
+	{ 6, "SAX", &am6502_izx, &op6502_sax },
+	{ 3, "STY", &am6502_zp, &op6502_sty },
+	{ 3, "STA", &am6502_zp, &op6502_sta },
+	{ 3, "STX", &am6502_zp, &op6502_stx },
+	{ 3, "SAX", &am6502_zp, &op6502_sax },
+	{ 2, "DEY", &am6502_imp, &op6502_dey },
+	{ 2, "NOP", &am6502_imm, &op6502_nop },
+	{ 2, "TXA", &am6502_imp, &op6502_txa },
+	{ 2, "ANE", &am6502_imm, &op6502_ane },
+	{ 4, "STY", &am6502_abs, &op6502_sty },
+	{ 4, "STA", &am6502_abs, &op6502_sta },
+	{ 4, "STX", &am6502_abs, &op6502_stx },
+	{ 4, "SAX", &am6502_abs, &op6502_sax },
 
 	// 9x
-	{ 2, "BCC", &op_rel, &op_bcc },
-	{ 6, "STA", &op_izy, &op_sta },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 6, "SHA", &op_izy, &op_sha },
-	{ 4, "STY", &op_zpx, &op_sty },
-	{ 4, "STA", &op_zpx, &op_sta },
-	{ 4, "STX", &op_zpy, &op_stx },
-	{ 4, "SAX", &op_zpy, &op_sax },
-	{ 2, "TYA", &op_imp, &op_tya },
-	{ 5, "STA", &op_aby, &op_sta },
-	{ 2, "TXS", &op_imp, &op_txs },
-	{ 5, "TAS", &op_aby, &op_tas },
-	{ 5, "SHY", &op_abx, &op_shy },
-	{ 5, "STA", &op_abx, &op_sta },
-	{ 6, "SHX", &op_aby, &op_shx },
-	{ 5, "SHA", &op_aby, &op_sha },
+	{ 2, "BCC", &am6502_rel, &op6502_bcc },
+	{ 6, "STA", &am6502_izy, &op6502_sta },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 6, "SHA", &am6502_izy, &op6502_sha },
+	{ 4, "STY", &am6502_zpx, &op6502_sty },
+	{ 4, "STA", &am6502_zpx, &op6502_sta },
+	{ 4, "STX", &am6502_zpy, &op6502_stx },
+	{ 4, "SAX", &am6502_zpy, &op6502_sax },
+	{ 2, "TYA", &am6502_imp, &op6502_tya },
+	{ 5, "STA", &am6502_aby, &op6502_sta },
+	{ 2, "TXS", &am6502_imp, &op6502_txs },
+	{ 5, "TAS", &am6502_aby, &op6502_tas },
+	{ 5, "SHY", &am6502_abx, &op6502_shy },
+	{ 5, "STA", &am6502_abx, &op6502_sta },
+	{ 6, "SHX", &am6502_aby, &op6502_shx },
+	{ 5, "SHA", &am6502_aby, &op6502_sha },
 
 	// Ax
-	{ 2, "LDY", &op_imm, &op_ldy },
-	{ 6, "LDA", &op_izx, &op_lda },
-	{ 2, "LDX", &op_imm, &op_ldx },
-	{ 6, "LAX", &op_izx, &op_lax },
-	{ 3, "LDY", &op_zp, &op_ldy },
-	{ 3, "LDA", &op_zp, &op_lda },
-	{ 3, "LDX", &op_zp, &op_ldx },
-	{ 3, "LAX", &op_zp, &op_lax },
-	{ 2, "TAY", &op_imp, &op_tay },
-	{ 2, "LDA", &op_imm, &op_lda },
-	{ 2, "TAX", &op_imp, &op_tax },
-	{ 2, "LXA", &op_imm, &op_lxa },
-	{ 4, "LDY", &op_abs, &op_ldy },
-	{ 4, "LDA", &op_abs, &op_lda },
-	{ 4, "LDX", &op_abs, &op_ldx },
-	{ 4, "LAX", &op_abs, &op_lax },
+	{ 2, "LDY", &am6502_imm, &op6502_ldy },
+	{ 6, "LDA", &am6502_izx, &op6502_lda },
+	{ 2, "LDX", &am6502_imm, &op6502_ldx },
+	{ 6, "LAX", &am6502_izx, &op6502_lax },
+	{ 3, "LDY", &am6502_zp, &op6502_ldy },
+	{ 3, "LDA", &am6502_zp, &op6502_lda },
+	{ 3, "LDX", &am6502_zp, &op6502_ldx },
+	{ 3, "LAX", &am6502_zp, &op6502_lax },
+	{ 2, "TAY", &am6502_imp, &op6502_tay },
+	{ 2, "LDA", &am6502_imm, &op6502_lda },
+	{ 2, "TAX", &am6502_imp, &op6502_tax },
+	{ 2, "LXA", &am6502_imm, &op6502_lxa },
+	{ 4, "LDY", &am6502_abs, &op6502_ldy },
+	{ 4, "LDA", &am6502_abs, &op6502_lda },
+	{ 4, "LDX", &am6502_abs, &op6502_ldx },
+	{ 4, "LAX", &am6502_abs, &op6502_lax },
 
 	// Bx
-	{ 2, "BCS", &op_rel, &op_bcs },
-	{ 5, "LDA", &op_izy, &op_lda },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 5, "LAX", &op_izy, &op_lax },
-	{ 4, "LDY", &op_zpx, &op_ldy },
-	{ 4, "LDA", &op_zpx, &op_lda },
-	{ 4, "LDX", &op_zpy, &op_ldx },
-	{ 4, "LAX", &op_zpy, &op_lax },
-	{ 2, "CLV", &op_imp, &op_clv },
-	{ 4, "LDA", &op_aby, &op_lda },
-	{ 2, "TSX", &op_imp, &op_tsx },
-	{ 4, "LAS", &op_aby, &op_las },
-	{ 4, "LDY", &op_abx, &op_ldy },
-	{ 4, "LDA", &op_abx, &op_lda },
-	{ 4, "LDX", &op_aby, &op_ldx },
-	{ 4, "LAX", &op_aby, &op_lax },
+	{ 2, "BCS", &am6502_rel, &op6502_bcs },
+	{ 5, "LDA", &am6502_izy, &op6502_lda },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 5, "LAX", &am6502_izy, &op6502_lax },
+	{ 4, "LDY", &am6502_zpx, &op6502_ldy },
+	{ 4, "LDA", &am6502_zpx, &op6502_lda },
+	{ 4, "LDX", &am6502_zpy, &op6502_ldx },
+	{ 4, "LAX", &am6502_zpy, &op6502_lax },
+	{ 2, "CLV", &am6502_imp, &op6502_clv },
+	{ 4, "LDA", &am6502_aby, &op6502_lda },
+	{ 2, "TSX", &am6502_imp, &op6502_tsx },
+	{ 4, "LAS", &am6502_aby, &op6502_las },
+	{ 4, "LDY", &am6502_abx, &op6502_ldy },
+	{ 4, "LDA", &am6502_abx, &op6502_lda },
+	{ 4, "LDX", &am6502_aby, &op6502_ldx },
+	{ 4, "LAX", &am6502_aby, &op6502_lax },
 
 	// Cx
-	{ 2, "CPY", &op_imm, &op_cpy },
-	{ 6, "CMP", &op_izx, &op_cmp },
-	{ 2, "NOP", &op_imm, &op_nop },
-	{ 8, "DCP", &op_izx, &op_dcp },
-	{ 3, "CPY", &op_zp, &op_cpy },
-	{ 3, "CMP", &op_zp, &op_cmp },
-	{ 5, "DEC", &op_zp, &op_dec },
-	{ 5, "DCP", &op_zp, &op_dcp },
-	{ 2, "INY", &op_imp, &op_iny },
-	{ 2, "CMP", &op_imm, &op_cmp },
-	{ 2, "DEX", &op_imp, &op_dex },
-	{ 2, "SBX", &op_imm, &op_sbx },
-	{ 4, "CPY", &op_abs, &op_cpy },
-	{ 4, "CMP", &op_abs, &op_cmp },
-	{ 6, "DEC", &op_abs, &op_dec },
-	{ 6, "DCP", &op_abs, &op_dcp },
+	{ 2, "CPY", &am6502_imm, &op6502_cpy },
+	{ 6, "CMP", &am6502_izx, &op6502_cmp },
+	{ 2, "NOP", &am6502_imm, &op6502_nop },
+	{ 8, "DCP", &am6502_izx, &op6502_dcp },
+	{ 3, "CPY", &am6502_zp, &op6502_cpy },
+	{ 3, "CMP", &am6502_zp, &op6502_cmp },
+	{ 5, "DEC", &am6502_zp, &op6502_dec },
+	{ 5, "DCP", &am6502_zp, &op6502_dcp },
+	{ 2, "INY", &am6502_imp, &op6502_iny },
+	{ 2, "CMP", &am6502_imm, &op6502_cmp },
+	{ 2, "DEX", &am6502_imp, &op6502_dex },
+	{ 2, "SBX", &am6502_imm, &op6502_sbx },
+	{ 4, "CPY", &am6502_abs, &op6502_cpy },
+	{ 4, "CMP", &am6502_abs, &op6502_cmp },
+	{ 6, "DEC", &am6502_abs, &op6502_dec },
+	{ 6, "DCP", &am6502_abs, &op6502_dcp },
 
 	// Dx
-	{ 2, "BNE", &op_rel, &op_bne },
-	{ 5, "CMP", &op_izy, &op_cmp },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 8, "DCP", &op_izy, &op_dcp },
-	{ 4, "NOP", &op_zpx, &op_nop },
-	{ 4, "CMP", &op_zpx, &op_cmp },
-	{ 6, "DEC", &op_zpx, &op_dec },
-	{ 6, "DCP", &op_zpx, &op_dcp },
-	{ 2, "CLD", &op_imp, &op_cld },
-	{ 4, "CMP", &op_aby, &op_cmp },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 7, "DCP", &op_aby, &op_dcp },
-	{ 4, "NOP", &op_abx, &op_nop },
-	{ 4, "CMP", &op_abx, &op_cmp },
-	{ 7, "DEC", &op_abx, &op_dec },
-	{ 7, "DCP", &op_abx, &op_dcp },
+	{ 2, "BNE", &am6502_rel, &op6502_bne },
+	{ 5, "CMP", &am6502_izy, &op6502_cmp },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 8, "DCP", &am6502_izy, &op6502_dcp },
+	{ 4, "NOP", &am6502_zpx, &op6502_nop },
+	{ 4, "CMP", &am6502_zpx, &op6502_cmp },
+	{ 6, "DEC", &am6502_zpx, &op6502_dec },
+	{ 6, "DCP", &am6502_zpx, &op6502_dcp },
+	{ 2, "CLD", &am6502_imp, &op6502_cld },
+	{ 4, "CMP", &am6502_aby, &op6502_cmp },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 7, "DCP", &am6502_aby, &op6502_dcp },
+	{ 4, "NOP", &am6502_abx, &op6502_nop },
+	{ 4, "CMP", &am6502_abx, &op6502_cmp },
+	{ 7, "DEC", &am6502_abx, &op6502_dec },
+	{ 7, "DCP", &am6502_abx, &op6502_dcp },
 
 	// Ex
-	{ 2, "CPX", &op_imm, &op_cpx },
-	{ 6, "SBC", &op_izx, &op_sbc },
-	{ 2, "NOP", &op_imm, &op_nop },
-	{ 8, "ISC", &op_izx, &op_isc },
-	{ 3, "CPX", &op_zp, &op_cpx },
-	{ 3, "SBC", &op_zp, &op_sbc },
-	{ 5, "INC", &op_zp, &op_inc },
-	{ 5, "ISC", &op_zp, &op_isc },
-	{ 2, "INX", &op_imp, &op_inx },
-	{ 2, "SBC", &op_imm, &op_sbc },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 2, "USBC", &op_imm, &op_usbc },
-	{ 4, "CPX", &op_abs, &op_cpx },
-	{ 4, "SBC", &op_abs, &op_sbc },
-	{ 6, "INC", &op_abs, &op_inc },
-	{ 6, "ISC", &op_abs, &op_isc },
+	{ 2, "CPX", &am6502_imm, &op6502_cpx },
+	{ 6, "SBC", &am6502_izx, &op6502_sbc },
+	{ 2, "NOP", &am6502_imm, &op6502_nop },
+	{ 8, "ISC", &am6502_izx, &op6502_isc },
+	{ 3, "CPX", &am6502_zp, &op6502_cpx },
+	{ 3, "SBC", &am6502_zp, &op6502_sbc },
+	{ 5, "INC", &am6502_zp, &op6502_inc },
+	{ 5, "ISC", &am6502_zp, &op6502_isc },
+	{ 2, "INX", &am6502_imp, &op6502_inx },
+	{ 2, "SBC", &am6502_imm, &op6502_sbc },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 2, "USBC", &am6502_imm, &op6502_usbc },
+	{ 4, "CPX", &am6502_abs, &op6502_cpx },
+	{ 4, "SBC", &am6502_abs, &op6502_sbc },
+	{ 6, "INC", &am6502_abs, &op6502_inc },
+	{ 6, "ISC", &am6502_abs, &op6502_isc },
 
 	// Fx
-	{ 2, "BEQ", &op_rel, &op_beq },
-	{ 5, "SBC", &op_izy, &op_sbc },
-	{ 0, "JAM", NULL, &op_jam },
-	{ 4, "ISC", &op_izy, &op_isc },
-	{ 4, "NOP", &op_zpx, &op_nop },
-	{ 4, "SBC", &op_zpx, &op_sbc },
-	{ 6, "INC", &op_zpx, &op_inc },
-	{ 6, "ISC", &op_zpx, &op_isc },
-	{ 2, "SED", &op_imp, &op_sed },
-	{ 4, "SBC", &op_aby, &op_sbc },
-	{ 2, "NOP", &op_imp, &op_nop },
-	{ 7, "ISC", &op_aby, &op_isc },
-	{ 4, "NOP", &op_abx, &op_nop },
-	{ 4, "SBC", &op_abx, &op_sbc },
-	{ 7, "INC", &op_abx, &op_inc },
-	{ 7, "ISC", &op_abx, &op_isc },
+	{ 2, "BEQ", &am6502_rel, &op6502_beq },
+	{ 5, "SBC", &am6502_izy, &op6502_sbc },
+	{ 0, "JAM", NULL, &op6502_jam },
+	{ 4, "ISC", &am6502_izy, &op6502_isc },
+	{ 4, "NOP", &am6502_zpx, &op6502_nop },
+	{ 4, "SBC", &am6502_zpx, &op6502_sbc },
+	{ 6, "INC", &am6502_zpx, &op6502_inc },
+	{ 6, "ISC", &am6502_zpx, &op6502_isc },
+	{ 2, "SED", &am6502_imp, &op6502_sed },
+	{ 4, "SBC", &am6502_aby, &op6502_sbc },
+	{ 2, "NOP", &am6502_imp, &op6502_nop },
+	{ 7, "ISC", &am6502_aby, &op6502_isc },
+	{ 4, "NOP", &am6502_abx, &op6502_nop },
+	{ 4, "SBC", &am6502_abx, &op6502_sbc },
+	{ 7, "INC", &am6502_abx, &op6502_inc },
+	{ 7, "ISC", &am6502_abx, &op6502_isc },
 };
 
 BUS_6502 * bus6502_alloc(uint16_t ram_size)
@@ -381,7 +381,7 @@ void bus6502_free_device(BUS_6502 *bus, void *dev)
 	}
 }
 
-void bus6502_print_ram(const BUS_6502 *bus)
+/*void bus6502_print_ram(const BUS_6502 *bus)
 {
 	if (!bus) return;
 
@@ -405,7 +405,7 @@ void bus6502_print_ram(const BUS_6502 *bus)
 
 		printf("\n");
 	}
-}
+}*/
 
 int bus6502_ram_dump(const BUS_6502 *bus, size_t iter)
 {
@@ -470,39 +470,39 @@ void cpu6502_disasm(CPU_6502 *cpu, uint16_t addr, uint16_t size)
 
 		sprintf((char *)&it->lhs, "%s", op->sym);
 
-		if (op->addr_mode == &op_imm)
+		if (op->addr_mode == &am6502_imm)
 			sprintf((char *)&it->rhs, "#$%02X", cpu6502_read(cpu, addr++));
-		else if (op->addr_mode == &op_zp)
+		else if (op->addr_mode == &am6502_zp)
 			sprintf((char *)&it->rhs, "$%02X", cpu6502_read(cpu, addr++));
-		else if (op->addr_mode == &op_zpx)
+		else if (op->addr_mode == &am6502_zpx)
 			sprintf((char *)&it->rhs, "$%02X, X", cpu6502_read(cpu, addr++));
-		else if (op->addr_mode == &op_zpy)
+		else if (op->addr_mode == &am6502_zpy)
 			sprintf((char *)&it->rhs, "$%02X, Y", cpu6502_read(cpu, addr++));
-		else if (op->addr_mode == &op_izx)
+		else if (op->addr_mode == &am6502_izx)
 			sprintf((char *)&it->rhs, "($%02X, X)", cpu6502_read(cpu, addr++));
-		else if (op->addr_mode == &op_izy)
+		else if (op->addr_mode == &am6502_izy)
 			sprintf((char *)&it->rhs, "($%02X, Y)", cpu6502_read(cpu, addr++));
-		else if (op->addr_mode == &op_abs)
+		else if (op->addr_mode == &am6502_abs)
 		{
 			sprintf((char *)&it->rhs, "$%04X", cpu6502_read_addr(cpu, addr));
 			addr += 2;
 		}
-		else if (op->addr_mode == &op_abx)
+		else if (op->addr_mode == &am6502_abx)
 		{
 			sprintf((char *)&it->rhs, "$%04X, X", cpu6502_read_addr(cpu, addr));
 			addr += 2;
 		}
-		else if (op->addr_mode == &op_aby)
+		else if (op->addr_mode == &am6502_aby)
 		{
 			sprintf((char *)&it->rhs, "$%04X, Y", cpu6502_read_addr(cpu, addr));
 			addr += 2;
 		}
-		else if (op->addr_mode == &op_ind)
+		else if (op->addr_mode == &op6502_ind)
 		{
 			sprintf((char *)&it->rhs, "($%04X)", cpu6502_read_addr(cpu, addr));
 			addr += 2;
 		}
-		else if (op->addr_mode == &op_rel)
+		else if (op->addr_mode == &am6502_rel)
 		{
 			uint8_t value = cpu6502_read(cpu, addr++);
 
@@ -543,7 +543,7 @@ uint8_t cpu6502_fetch(CPU_6502 *cpu)
 {
 	if (!cpu) return 0;
 
-	if (cpu->ops[cpu->last_op].addr_mode != &op_imp)
+	if (cpu->ops[cpu->last_op].addr_mode != &am6502_imp)
 		cpu->cache = cpu6502_read(cpu, cpu6502_read_addr(cpu, cpu->last_abs_addr));
 
 	return cpu->cache;
@@ -559,7 +559,7 @@ void cpu6502_free(CPU_6502 *cpu)
 	cpu = NULL;
 }
 
-void cpu6502_print_all_disasm(const CPU_6502 *cpu)
+/*void cpu6502_print_all_disasm(const CPU_6502 *cpu)
 {
 	if (!cpu->disasm) return;
 
@@ -615,7 +615,7 @@ void cpu6502_print_regs(const CPU_6502 *cpu)
 	if (cpu->regs.flags.u) printf("U"); else printf("x");
 	if (cpu->regs.flags.v) printf("V"); else printf("x");
 	if (cpu->regs.flags.n) printf("N\n"); else printf("x\n");
-}
+}*/
 
 void cpu6502_reset(CPU_6502 *cpu)
 {
