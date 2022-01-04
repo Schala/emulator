@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "../util.h"
+
 // stack offset in RAM
 #define STACK_BASE_ADDR_6502 256
 
@@ -15,9 +17,6 @@
 
 // for some unstable illegal opcodes
 #define MAGIC_VAL_6502 255
-
-// High bytes of a 16-bit absolute address
-#define ABS16_HI(x) ((x) & 0xFF00)
 
 // Disassembly line length
 #define DISASM_STR_LEN_6502 16
@@ -173,7 +172,7 @@ static inline void cpu6502_branch(CPU_6502 *cpu)
 	cpu->last_abs_addr = cpu->regs.pc + cpu->last_rel_addr;
 
 	// need an additional cycle if different page
-	if (ABS16_HI(cpu->last_abs_addr) != ABS16_HI(cpu->regs.pc))
+	if (HI16(cpu->last_abs_addr) != HI16(cpu->regs.pc))
 		cpu->cycles++;
 
 	// jump to address

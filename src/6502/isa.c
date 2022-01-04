@@ -13,7 +13,7 @@ uint8_t am6502_abx(CPU_6502 *cpu)
 	uint16_t addr = cpu6502_read_rom_addr(cpu) + cpu->regs.x;
 	cpu->last_abs_addr = addr;
 
-	if (ABS16_HI(cpu->last_abs_addr) != ABS16_HI(addr))
+	if (HI16(cpu->last_abs_addr) != HI16(addr))
 		return 1;
 	else
 		return 0;
@@ -24,7 +24,7 @@ uint8_t am6502_aby(CPU_6502 *cpu)
 	uint16_t addr = cpu6502_read_rom_addr(cpu) + cpu->regs.y;
 	cpu->last_abs_addr = addr;
 
-	return ABS16_HI(cpu->last_abs_addr) != ABS16_HI(addr) ? 1 : 0;
+	return HI16(cpu->last_abs_addr) != HI16(addr) ? 1 : 0;
 }
 
 uint8_t am6502_imm(CPU_6502 *cpu)
@@ -67,7 +67,7 @@ uint8_t am6502_izy(CPU_6502 *cpu)
 
 	cpu->last_abs_addr = (hi << 8) | lo + cpu->regs.y;
 
-	return ABS16_HI(cpu->last_abs_addr) != hi << 8 ? 1 : 0;
+	return HI16(cpu->last_abs_addr) != hi << 8 ? 1 : 0;
 }
 
 uint8_t am6502_rel(CPU_6502 *cpu)
@@ -688,19 +688,19 @@ uint8_t op6502_sbx(CPU_6502 *cpu)
 
 uint8_t op6502_sha(CPU_6502 *cpu)
 {
-	cpu6502_write_last(cpu, cpu->regs.a & cpu->regs.x & (ABS16_HI(cpu->last_abs_addr) + 1));
+	cpu6502_write_last(cpu, cpu->regs.a & cpu->regs.x & (HI16(cpu->last_abs_addr) + 1));
 	return 0;
 }
 
 uint8_t op6502_shx(CPU_6502 *cpu)
 {
-	cpu6502_write_last(cpu, cpu->regs.x & (ABS16_HI(cpu->last_abs_addr) + 1));
+	cpu6502_write_last(cpu, cpu->regs.x & (HI16(cpu->last_abs_addr) + 1));
 	return 0;
 }
 
 uint8_t op6502_shy(CPU_6502 *cpu)
 {
-	cpu6502_write_last(cpu, cpu->regs.y & (ABS16_HI(cpu->last_abs_addr) + 1));
+	cpu6502_write_last(cpu, cpu->regs.y & (HI16(cpu->last_abs_addr) + 1));
 	return 0;
 }
 
@@ -717,7 +717,7 @@ uint8_t op6502_sre(CPU_6502 *cpu)
 uint8_t op6502_tas(CPU_6502 *cpu)
 {
 	cpu->regs.sp = cpu->regs.a & cpu->regs.x;
-	cpu6502_write_last(cpu, cpu->regs.a & cpu->regs.x & (ABS16_HI(cpu->last_abs_addr) + 1));
+	cpu6502_write_last(cpu, cpu->regs.a & cpu->regs.x & (HI16(cpu->last_abs_addr) + 1));
 }
 
 uint8_t op6502_usbc(CPU_6502 *cpu)

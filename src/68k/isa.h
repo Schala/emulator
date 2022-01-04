@@ -1,6 +1,6 @@
-#ifndef _M68K_ISA_H
-#define _M68K_ISA_H
+#ifndef _68K_ISA_H
+#define _68K_ISA_H
 
-#include "devices.h"
+#include "dev.h"
 
-#endif // _M68K_ISA_H
+#endif // _68K_ISA_H

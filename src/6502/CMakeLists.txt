@@ -1,6 +1,7 @@
 set (MOS6502_SOURCES
-	devices.c
-	devices.h
+	../util.h
+	dev.c
+	dev.h
 	isa.c
 	isa.h
 )

@@ -1,6 +1,6 @@
 set (WDC65C816_SOURCES
-	devices.c
-	devices.h
+	dev.c
+	dev.h
 	isa.c
 	isa.h
 )
