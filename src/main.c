@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	bus6502_reset_vec(bus, 0x8000);
 	cpu6502_disasm(cpu, 0x8000, 28);*/
 
-	printf("Ready!\n");
+	printf("Ready! %u\n");
 
 	if (nes->rom)
 	{
@@ -52,7 +52,8 @@ int main(int argc, char **argv)
 				break;
 			case 'B':
 			{
-				DISASM_6502 *disasm = disasm6502(nes->rom->prg, nes->map->prg_size);
+				DISASM_6502 *disasm = disasm6502(nes->rom->prg, nes->map->prg_size *
+					nes->rom->header.prg_pages);
 				disasm6502_print(disasm);
 				disasm6502_free(disasm);
 				printf("\n");
@@ -84,7 +85,7 @@ int main(int argc, char **argv)
 				printf("\n");
 				break;
 			case 'S':
-				disasm6502(nes->rom->chr, nes->map->chr_size);
+				disasm6502(nes->rom->chr, nes->map->chr_size * nes->rom->header.chr_pages);
 				printf("\n");
 				break;
 			default:

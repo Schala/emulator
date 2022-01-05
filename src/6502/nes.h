@@ -52,7 +52,7 @@ typedef struct _NES_PPU
 // ROM header flags
 typedef struct _NES_ROM_MAPPER_INFO
 {
-	uint8_t
+	uint16_t
 		mirror_vertical : 1,
 		battery_backed_ram : 1, // 6000-7FFF
 		trainer : 1, // 7000-71FF

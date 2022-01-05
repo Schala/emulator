@@ -664,6 +664,8 @@ DISASM_6502 * disasm6502(const uint8_t *data, size_t size)
 		it->next = (DISASM_6502 *)calloc(1, sizeof(DISASM_6502));
 		it = it->next;
 	}
+
+	return disasm;
 }
 
 void disasm6502_free(DISASM_6502 *disasm)

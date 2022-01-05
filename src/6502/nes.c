@@ -55,7 +55,7 @@ void nes_rom_alloc(NES *nes, const char *filepath)
 	fread(nes->rom->prg, header.prg_pages, nes->map->prg_size, f);
 
 	nes->rom->chr = (uint8_t *)malloc(header.chr_pages * nes->map->chr_size);
-	fread(nes->rom->prg, header.chr_pages, nes->map->chr_size, f);
+	fread(nes->rom->chr, header.chr_pages, nes->map->chr_size, f);
 
 	fclose(f);
 
