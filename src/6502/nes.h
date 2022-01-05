@@ -9,14 +9,14 @@
 // Address mask for a CPU in RAM
 #define NES_CPU_ADDR_MASK 0x7FF
 
-// Address mask for a CPU in RAM
+// Address mask for a PPU in RAM
 #define NES_PPU_ADDR_MASK 7
 
 // Starting offset in RAM for PPU
 #define NES_PPU_START_MAIN_ADDR 0x2000
 
 // End offset for a PPU in RAM
-#define NES_PPU_END_ADDR 0x3FFF
+#define NES_PPU_END_MAIN_ADDR 0x3FFF
 
 // PPU bus ram size
 #define NES_PPU_BUS_RAM_SIZE 0x4000
@@ -39,18 +39,12 @@
 // offset in RAM to load ROM
 #define NES_ROM_ADDR 0x4020
 
-// Size of one program memory page
-#define NES_PRG_PAGE_SIZE 16384
-
-// Size of one character memory page
-#define NES_CHR_PAGE_SIZE 8192
-
 // 2C02 picture processing unit
 typedef struct _NES_PPU
 {
-	uint8_t vram[NES_VRAM_SIZE];
+	uint8_t vram[NES_VRAM_SIZE]; // nametable
 	uint8_t palette[NES_PALETTE_SIZE];
-	BUS *bus; // PPU's own bus
+	BUS_6502 *bus; // PPU's own bus
 	DEV_6502 *cpu_node; // device node in CPU bus device tree
 	DEV_6502 *ppu_node; // device node in its own bus
 } NES_PPU;
@@ -92,6 +86,19 @@ typedef struct _NES_ROM
 	NES_ROM_HEADER header;
 } NES_ROM;
 
+typedef struct _NES_MAPPER
+{
+	uint16_t prg_size;
+	uint16_t prg_start_addr;
+	uint16_t prg_end_addr;
+	uint16_t chr_size;
+	uint16_t chr_start_addr;
+	uint16_t chr_end_addr;
+	uint16_t ram_start_addr;
+	uint16_t ram_end_addr;
+	const char *id;
+} NES_MAPPER;
+
 // The NES system itself
 typedef struct _NES
 {
@@ -99,19 +106,20 @@ typedef struct _NES
 	CPU_6502 *cpu;
 	NES_PPU *ppu;
 	NES_ROM *rom;
+	NES_MAPPER *map;
 } NES;
 
 // Allocate the NES system
 NES * nes_alloc();
 
 // Allocates the NES CPU, mapped appropriately in RAM
-CPU_6502 * nes_cpu_alloc(NES *);
+void nes_cpu_alloc(NES *);
 
 // Deallocate the NES system
 void nes_free(NES *);
 
 // Validate ROM and load into RAM, returning a new ROM pointer
-NES_ROM * nes_rom_alloc(NES *, const char *);
+void nes_rom_alloc(NES *, const char *);
 
 // Deallocate ROM
 void nes_rom_free(NES *);
@@ -125,6 +133,24 @@ void nes_ppu_free(NES *);
 // Read byte from RAM address
 uint8_t nes_read(const NES *, uint16_t);
 
+// PPU read from CPU
+uint8_t nes_ppu_read_cpu(NES *, uint16_t);
+
+// PPU write to CPU
+void nes_ppu_write_cpu(NES *, uint16_t, uint8_t);
+
+// ROM read from CPU
+uint8_t nes_rom_read_cpu(NES *, uint16_t);
+
+// ROM write to CPU
+void nes_rom_write_cpu(NES *, uint16_t, uint8_t);
+
+// ROM read from PPU
+uint8_t nes_rom_read_ppu(NES *, uint16_t);
+
+// ROM write to PPU
+void nes_rom_write_ppu(NES *, uint16_t, uint8_t);
+
 // Write byte to RAM address
 void nes_write(NES *, uint16_t, uint8_t);
 
@@ -136,5 +162,17 @@ void nes_ppu_write(NES *, uint16_t, uint8_t);
 
 // print ROM info to console
 void nes_print_rom_info(const NES *);
+
+// Map an address to the CPU
+int nes_map_cpu(NES *, uint16_t, uint32_t *);
+
+// Map an address to the PPU
+int nes_map_ppu(NES *, uint16_t, uint32_t *);
+
+// Prints PRG memory
+void nes_print_prg(const NES *);
+
+// Prints CHR memory
+void nes_print_chr(const NES *);
 
 #endif // _NES_H

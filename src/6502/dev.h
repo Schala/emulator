@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../util.h"
+#include "../macros.h"
 
 // stack offset in RAM
 #define STACK_BASE_ADDR_6502 256
@@ -34,9 +34,9 @@ typedef struct _DEV_6502
 typedef struct _BUS_6502
 {
 	uint16_t ram_size;
-	uint32_t total_cycles;
 	uint8_t *ram;
 	DEV_6502 *dev_list;
+	uint64_t total_cycles;
 } BUS_6502;
 
 // Allocate a new bus with the specified RAM amount
@@ -61,7 +61,7 @@ static inline uint8_t * bus6502_load(BUS_6502 *bus, const uint8_t *data, size_t 
 }
 
 // Print RAM to stdout
-//void bus6502_print_ram(const BUS_6502 *);
+void bus6502_print_ram(const BUS_6502 *);
 
 // Dump bus RAM to file with iteration appended to filename
 int bus6502_ram_dump(const BUS_6502 *, size_t);
@@ -112,9 +112,9 @@ typedef struct _CPU_6502 CPU_6502;
 typedef struct _OPC_6502
 {
 	uint8_t cycles;
-	char *sym; // mneumonic for (dis)assembly
-	uint8_t (*addr_mode)(CPU_6502 *);
-	uint8_t (*op)(CPU_6502 *);
+	const char *sym; // mneumonic for (dis)assembly
+	const uint8_t (*addr_mode)(CPU_6502 *);
+	const uint8_t (*op)(CPU_6502 *);
 } OPC_6502;
 
 // The CPU processes data available via its bus
@@ -153,14 +153,17 @@ uint8_t cpu6502_fetch(CPU_6502 *);
 // Deallocate CPU
 void cpu6502_free(CPU_6502 *);
 
-// Prints all cached disassembly
-//void cpu6502_print_all_disasm(const CPU_6502 *);
+// Map the start and end RAM addresses if not specified during allocation
+void cpu6502_map(CPU_6502 *, uint16_t, uint16_t);
+
+// Prints all disassembly in tree
+void disasm6502_print(DISASM_6502 *);
 
 // Prints the disassembly in range of the current address
-//void cpu6502_print_disasm(const CPU_6502 *, size_t);
+void cpu6502_print_disasm(const CPU_6502 *, size_t);
 
 // Prints the CPU's register states
-//void cpu6502_print_regs(const CPU_6502 *);
+void cpu6502_print_regs(const CPU_6502 *);
 
 // Reset CPU state
 void cpu6502_reset(CPU_6502 *);
@@ -178,6 +181,12 @@ static inline void cpu6502_branch(CPU_6502 *cpu)
 	// jump to address
 	cpu->regs.pc = cpu->last_abs_addr;
 }
+
+// Generic variant of the CPU disassembly function for plain bytes
+DISASM_6502 * disasm6502(const uint8_t *, size_t);
+
+// Deallocating disassembly tree
+void disasm6502_free(DISASM_6502 *);
 
 // Read byte from RAM address
 static inline uint8_t cpu6502_read(const CPU_6502 *cpu, uint16_t addr)
