@@ -1,6 +1,7 @@
 #ifndef _EMU_C_AST_H
 #define _EMU_C_AST_H
 
+#include <stdarg.h>
 #include <stdint.h>
 
 enum C_OP
@@ -36,23 +37,29 @@ enum C_OP
 	COP_XORA // ^=
 };
 
+enum C_TYPE
+{
+	CT_BYTE,
+	CT_PTR,
+	CT_VOID,
+};
+
 // A variable, holding either an address or a value
 typedef struct _CVAR
 {
 	char name[16];
-
-	union
-	{
-		uint16_t addr;
-		uint8_t value;
-	};
+	uint16_t value;
+	C_TYPE type;
 } CVAR;
+
+CVAR * cvar_alloc(char *, C_TYPE);
+void cvar_free(CVAR *);
 
 // Variable tree node
 typedef struct _CVNODE
 {
 	CVAR *var;
-	CVNODE *next;
+	struct _CVNODE *next;
 } CVNODE;
 
 // A binary expression
@@ -63,11 +70,32 @@ typedef struct _CBINEXP
 	void *rhs;
 } CBINEXP;
 
-// Function call
+// Function
 typedef struct _CFUNC
 {
 	char name[16];
+	C_TYPE type;
 	CVNODE *args;
 } CFUNC;
+
+// Function tree node
+typedef struct _CFNODE
+{
+	CFUNC *func;
+	struct _CFNODE *next;
+} CFNODE;
+
+CFUNC * cfunc_alloc(char *);
+void cfunc_add_arg(CVAR *);
+void cfunc_free(CFUNC *);
+
+typedef struct _CSTREE
+{
+	CFNODE *funcs;
+	CVNODE *vars;
+} CSTREE;
+
+CSTREE * cstree_alloc();
+void cstree_free(CSTREE *);
 
 #endif // _EMU_C_AST_H
