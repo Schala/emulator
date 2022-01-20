@@ -1,7 +1,7 @@
 #ifndef _6502_ISA_H
 #define _6502_ISA_H
 
-#include "dev.h"
+#include "cpu.h"
 
 #define IRQ_ADDR 0xFFFE
 #define NMI_ADDR 0xFFFA

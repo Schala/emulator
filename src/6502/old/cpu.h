@@ -1,10 +1,8 @@
-#ifndef _6502_DEV_H
-#define _6502_DEV_H
-
-#include <stdint.h>
-#include <string.h>
+#ifndef _6502_CPU_H
+#define _6502_CPU_H
 
 #include "../macros.h"
+#include "bus.h"
 
 // stack offset in RAM
 #define STACK_BASE_ADDR_6502 256
@@ -12,67 +10,22 @@
 // stack pointer initial offset
 #define STACK_PTR_INIT_6502 253
 
-// Absolute address when cpu_reset is called
-#define RESET_ADDR_6502 0xFFFC
-
 // for some unstable illegal opcodes
 #define MAGIC_VAL_6502 255
 
 // Disassembly line length
 #define DISASM_STR_LEN_6502 16
 
-// Bus device tree node
-typedef struct _DEV_6502
+// Disassembly cache
+typedef struct _DISASM_6502
 {
-	uint16_t ram_offset; // start offset in RAM on bus
-	uint16_t ram_size; // how much RAM does the device use?
-	void *data; // Actual device pointer
-	struct _DEV_6502 *next;
-} DEV_6502;
+	char lhs[DISASM_STR_LEN_6502];
+	char rhs[DISASM_STR_LEN_6502];
+	uint16_t addr;
+	struct _DISASM_6502 *next;
+} DISASM_6502;
 
-// The bus is responsible for making available data to various devices
-typedef struct _BUS_6502
-{
-	uint16_t ram_size;
-	uint8_t *ram;
-	DEV_6502 *dev_list;
-	uint64_t total_cycles;
-} BUS_6502;
-
-// Allocate a new bus with the specified RAM amount
-BUS_6502 * bus6502_alloc(uint16_t);
-
-// Add a device to a bus mapped to an offset in RAM and how much RAM used
-DEV_6502 * bus6502_add_device(BUS_6502 *, void *, uint16_t, uint16_t);
-
-// Get a device from bus's device tree at given index
-void * bus6502_device(BUS_6502 *, size_t);
-
-// Deallocate bus
-void bus6502_free(BUS_6502 *);
-
-// Remove device from bus device tree
-void bus6502_free_device(BUS_6502 *, void *);
-
-// Loads into RAM
-static inline uint8_t * bus6502_load(BUS_6502 *bus, const uint8_t *data, size_t length, uint16_t addr)
-{
-	return (uint8_t *)memcpy(&bus->ram[addr], data, length);
-}
-
-// Print RAM to stdout
-void bus6502_print_ram(const BUS_6502 *);
-
-// Dump bus RAM to file with iteration appended to filename
-int bus6502_ram_dump(const BUS_6502 *, size_t);
-
-// Sets the reset vector in RAM
-static inline uint8_t * bus6502_reset_vec(BUS_6502 *bus, uint16_t addr)
-{
-	return (uint8_t *)memcpy(&bus->ram[RESET_ADDR_6502], &addr, 2);
-}
-
-// Register STATE flags
+// Register state flags
 typedef struct _STATE_6502
 {
 	uint8_t
@@ -96,15 +49,6 @@ typedef struct _REGS_6502
 	STATE_6502 flags;
 	uint16_t pc; // program counter
 } REGS_6502;
-
-// Disassembly cache
-typedef struct _DISASM_6502
-{
-	char lhs[DISASM_STR_LEN_6502];
-	char rhs[DISASM_STR_LEN_6502];
-	uint16_t addr;
-	struct _DISASM_6502 *next;
-} DISASM_6502;
 
 typedef struct _CPU_6502 CPU_6502;
 
@@ -230,7 +174,7 @@ static inline void cpu6502_write_last(CPU_6502 *cpu, uint8_t data)
 // Read address from RAM
 static inline uint16_t cpu6502_fetch_addr(const CPU_6502 *cpu)
 {
-	return cpu6502_read(cpu, cpu->last_abs_addr) | (cpu6502_read(cpu, cpu->last_abs_addr + 1) << 8);
+	return cpu6502_fetch(cpu) | (cpu6502_fetch(cpu) << 8);
 }
 
 // Return STATE flags register as a byte
@@ -311,4 +255,4 @@ static inline void cpu6502_interrupt(CPU_6502 *cpu, uint16_t new_abs_addr, uint8
 	cpu->cycles = new_cycles;
 }
 
-#endif // _6502_DEV_H
+#endif // _6502_CPU_H
