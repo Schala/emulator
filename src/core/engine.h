@@ -1,7 +1,6 @@
-#ifndef _EMU_ENGINE_H
-#define _EMU_ENGINE_H
+#ifndef _CORE_ENGINE_H
+#define _CORE_ENGINE_H
 
-#include <chrono>
 #include <SDL2/SDL.h>
 #include <vector>
 
@@ -25,6 +24,8 @@ private:
 class Engine
 {
 public:
+	static constexpr SDL_Color Black = { 0, 0, 0, SDL_ALPHA_OPAQUE };
+
 	Engine(float);
 	virtual ~Engine();
 	void Pause();
@@ -33,6 +34,7 @@ public:
 	void Stop();
 protected:
 	float m_fps;
+	float m_delta;
 	float m_timeScale;
 	float m_prevTimeScale;
 	SDL_Renderer *m_renderer;
@@ -43,11 +45,11 @@ protected:
 	virtual void Updated(float);
 private:
 	SDL_Window *m_window;
-	std::chrono::system_clock::time_point m_now;
-	std::chrono::system_clock::time_point m_then;
+	uint64_t m_now;
+	uint64_t m_then;
 	SDL_Event m_event;
 
 	void Update();
 };
 
-#endif // _EMU_ENGINE_H
+#endif // _CORE_ENGINE_H

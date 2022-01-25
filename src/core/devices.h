@@ -1,10 +1,12 @@
-#ifndef _EMU_DEVICES_H
-#define _EMU_DEVICES_H
+#ifndef _CORE_DEVICES_H
+#define _CORE_DEVICES_H
 
 #include <cstdint>
 #include <vector>
 
 typedef std::vector<uint8_t>::iterator RAMIterator;
+
+class Bus;
 
 // Base class for bus-connected devices
 class Device
@@ -32,17 +34,17 @@ public:
 	void Add(Device *);
 	void Remove(Device *);
 
+	// dump RAM to file
+	//void DumpRAM(size_t);
+
 	// Iterator to beginning of RAM, for assigning device RAM iterators
-	inline RAMIterator GetRAMIterator() const;
+	inline RAMIterator GetRAMIterator();
 
 	// load data into RAM at offset
 	RAMIterator LoadIntoRAM(const std::vector<uint8_t> &, size_t);
-
-	// dump RAM to file
-	//void RAMDump(size_t);
 protected:
 	std::vector<uint8_t> m_ram;
-	std::vector<Device *> m_devices;
+	std::vector<Device *> m_devices; // non-owning
 };
 
-#endif // _EMU_DEVICES_H
+#endif // _CORE_DEVICES_H

@@ -6,7 +6,7 @@
 #include <map>
 #include <string_view>
 
-#include "../devices.h"
+#include "../core/devices.h"
 
 class Z80;
 
@@ -48,7 +48,7 @@ private:
 				v : 1, // overflow
 				n : 1, // add/subtract
 				c : 1; // carry
-		} state;
+		} p;
 
 		uint8_t a; // accumulator
 		uint8_t sp; // stack pointer
@@ -72,7 +72,6 @@ private:
 	// --- arithmetic ---
 
 	uint8_t Add();
-
 
 	// add with carry
 	uint8_t AddCarry();

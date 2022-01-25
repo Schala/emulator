@@ -3,9 +3,9 @@
 
 #include <array>
 
-#include "../devices.h"
+#include "../core/devices.h"
 
-class CPU68K : public Device
+class Motorola68K : public Device
 {
 private:
 	struct
@@ -24,7 +24,7 @@ private:
 				z : 1, // zero
 				v : 1, // overflow
 				c : 1; // carry
-		} state;
+		} p;
 
 		std::array<uint32_t, 8> d;
 		std::array<uint32_t, 7> a;

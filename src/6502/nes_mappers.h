@@ -12,7 +12,7 @@ public:
 	virtual bool CPUMapWrite(uint16_t, uint32_t &) = 0;
 	virtual bool PPUMapRead(uint16_t, uint32_t &) = 0;
 	virtual bool PPUMapWrite(uint16_t, uint32_t &) = 0;
-private:
+protected:
 	uint8_t m_numPRGBanks;
 	uint8_t m_numCHRBanks;
 };

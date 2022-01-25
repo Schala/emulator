@@ -2,10 +2,9 @@
 #define _6502_DEVICES_H
 
 #include <array>
-#include <functional>
 #include <string_view>
 
-#include "../devices.h"
+#include "../core/devices.h"
 
 // Extends the base Bus class with suitable functions for the 6502
 class Bus6502 : public Bus
@@ -14,21 +13,26 @@ public:
 	Bus6502(size_t);
 
 	// Read byte from RAM address
-	inline uint8_t Read(uint16_t) const;
+	uint8_t Read(uint16_t) const;
 
 	// Write byte to RAM address
-	inline void Write(uint16_t, uint8_t);
+	void Write(uint16_t, uint8_t);
 };
 
-class CPU6502;
+class MOS6502;
+
+typedef uint8_t (MOS6502::*Instruction6502)();
 
 // Metadata for the CPU's various operations
 struct Opcode6502
 {
+	// Constructor needed because otherwise we'll get an array error
+	Opcode6502(uint8_t, Instruction6502, Instruction6502, std::string_view);
+
 	uint8_t Cycles;
-	std::function<uint8_t(CPU6502 *)> AddressMode;
-	std::function<uint8_t(CPU6502 *)> Operation;
-	std::string_view Label;
+	Instruction6502 AddressMode;
+	Instruction6502 Operation;
+	std::string_view Mneumonic;
 };
 
 // Disassembly cache
@@ -39,11 +43,11 @@ struct Disassembly6502
 };
 
 // The CPU processes data available via its bus
-class CPU6502 : public Device
+class MOS6502 : public Device
 {
 public:
 	// Allocate a new CPU, given a parent bus, and start and end addresses in RAM
-	CPU6502(Bus &, uint16_t, uint16_t);
+	MOS6502(Bus6502 *, uint16_t, uint16_t);
 
 	// CPU clock operation (execute one instruction)
 	void Clock();
@@ -55,123 +59,52 @@ public:
 	uint8_t Fetch();
 
 	// Read address from RAM
-	inline uint16_t FetchAddress();
+	uint16_t FetchAddress();
 
 	// Returns a string containing info of the CPU stack
 	std::string FrameInfo() const;
 
 	// Read byte from RAM address
-	inline uint8_t Read(uint16_t) const;
+	uint8_t Read(uint16_t) const;
 
 	// Read address from RAM address
-	inline uint16_t ReadAddress(uint16_t) const;
+	uint16_t ReadAddress(uint16_t) const;
 
 	// Read byte from last used address
-	inline uint8_t ReadFromLastAddress() const;
+	uint8_t ReadFromLastAddress() const;
 
 	// Read byte from ROM
-	inline uint8_t ReadROM();
+	uint8_t ReadROM();
 
 	// Read address from ROM
-	inline uint16_t ReadROMAddress();
+	uint16_t ReadROMAddress();
 
 	// Reset CPU state
 	void Reset();
 
 	// Read byte from stack
-	inline uint8_t StackRead();
+	uint8_t StackRead();
 
 	// Read address from stack
-	inline uint16_t StackReadAddress();
+	uint16_t StackReadAddress();
 
 	// Write byte to stack
-	inline void StackWrite(uint8_t);
+	void StackWrite(uint8_t);
 
 	// Write address to stack
-	inline void StackWriteAddress(uint16_t);
+	void StackWriteAddress(uint16_t);
 
 	// Return state register as a byte
-	inline uint8_t StateByte() const;
+	uint8_t StateByte() const;
 
 	// Write byte to RAM address
-	inline void Write(uint16_t, uint8_t);
+	void Write(uint16_t, uint8_t);
+
+	// Fetch an address, write to it, and return the address
+	uint16_t WriteToFetchedAddress(uint8_t);
 
 	// Write byte to last used address
-	inline void WriteToLastAddress(uint8_t);
-private:
-	static constexpr uint16_t InterruptRequestAddress = 0xFFFE;
-
-	// for some unstable illegal opcodes
-	static constexpr uint8_t MagicValue = 255;
-
-	static constexpr uint16_t NonMaskableInterruptAddress = 0xFFFA;
-
-	// Reset address
-	static constexpr uint16_t ResetAddress = 0xFFFC;
-
-	// Reset vector address
-	static constexpr uint16_t ResetVectorAddress = 0xFFFD;
-
-	// stack offset in RAM
-	static constexpr uint16_t StackBaseAddress = 256;
-
-	// stack pointer initial offset
-	static constexpr uint16_t StackPtrInitAddress 253;
-
-	static const std::array<Opcode6502, 256> Ops;
-
-	uint8_t m_cache; // last read byte
-	uint8_t m_cycles; // remaining cycles for current operation
-	uint8_t m_lastOp;
-	uint8_t m_lastRelAddr;
-	uint16_t m_lastAbsAddr;
-
-	struct
-	{
-		uint8_t a; // accumulator
-		uint8_t x;
-		uint8_t y;
-		uint8_t sp; // stack pointer
-
-		struct
-		{
-			bool
-				c : 1, // carry
-				z : 1, // zero
-				i : 1, // no interrupts
-				d : 1, // decimal mode
-				b : 1, // break
-				u : 1, // unused
-				v : 1, // overflow
-				n : 1; // negative
-		} state;
-
-		uint16_t pc; // program counter
-	} m_regs;
-
-	std::vector<Disassembly6502> m_disasm;
-
-	// Common functionality for branch instructions
-	inline void Branch();
-
-	// Check the address mode, either assigning to accumulator, or writing to cached address
-	inline void CheckAddressMode(uint16_t);
-
-	// (Re)initialise flags register
-	inline void InitializeState();
-
-	// Common functionality for interrupt operations
-	inline void Interrupt(uint16_t, uint8_t);
-
-	// Unstable magic value equation for some illegal opcodes
-	inline uint8_t Magic() const;
-
-	// Set carry, negative, and/or zero bits of flags register, given a 16-bit value
-	inline void SetCarryNegativeZero(uint16_t);
-
-	// Set negative and/or zero bits of flags register, given a value
-	inline void SetNegativeZero(uint16_t);
-
+	void WriteToLastAddress(uint8_t);
 
 	// None of these should be inlined, as we need them to be addressable.
 	// All return the number of additional cycles possibly needed.
@@ -449,7 +382,7 @@ private:
 	uint8_t LXA();
 
 	// No operation
-	uint8_t NOP() const;
+	uint8_t NOP();
 
 	// ROL + AND
 	uint8_t RLA();
@@ -483,6 +416,79 @@ private:
 
 	// SBC + NOP
 	uint8_t USBC();
+private:
+	static constexpr uint16_t InterruptRequestAddress = 0xFFFE;
+
+	// for some unstable illegal opcodes
+	static constexpr uint8_t MagicValue = 255;
+
+	static constexpr uint16_t NonMaskableInterruptAddress = 0xFFFA;
+
+	// Reset address
+	static constexpr uint16_t ResetAddress = 0xFFFC;
+
+	// Reset vector address
+	static constexpr uint16_t ResetVectorAddress = 0xFFFD;
+
+	// stack offset in RAM
+	static constexpr uint16_t StackBaseAddress = 256;
+
+	// stack pointer initial offset
+	static constexpr uint16_t StackPtrInitAddress = 253;
+
+	static const std::array<Opcode6502, 256> Ops;
+
+	uint8_t m_cache; // last read byte
+	uint8_t m_cycles; // remaining cycles for current operation
+	uint8_t m_lastOp;
+	uint8_t m_lastRelAddr;
+	uint16_t m_lastAbsAddr;
+
+	struct Registers
+	{
+		uint8_t a; // accumulator
+		uint8_t x;
+		uint8_t y;
+		uint8_t sp; // stack pointer
+
+		struct State
+		{
+			bool
+				c : 1, // carry
+				z : 1, // zero
+				i : 1, // no interrupts
+				d : 1, // decimal mode
+				b : 1, // break
+				u : 1, // unused
+				v : 1, // overflow
+				n : 1; // negative
+		} p;
+
+		uint16_t pc; // program counter
+	} m_regs;
+
+	std::vector<Disassembly6502> m_disasm;
+
+	// Common functionality for branch instructions
+	void Branch();
+
+	// Check the address mode, either assigning to accumulator, or writing to cached address
+	void CheckAddressMode(uint16_t);
+
+	// (Re)initialise flags register
+	void InitializeState();
+
+	// Common functionality for interrupt operations
+	void Interrupt(uint16_t, uint8_t);
+
+	// Unstable magic value equation for some illegal opcodes
+	uint8_t Magic() const;
+
+	// Set carry, negative, and/or zero bits of flags register, given a 16-bit value
+	void SetCarryNegativeZero(uint16_t);
+
+	// Set negative and/or zero bits of flags register, given a value
+	void SetNegativeZero(uint16_t);
 };
 
 #endif // _6502_DEVICES_H

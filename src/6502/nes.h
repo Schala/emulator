@@ -1,10 +1,10 @@
-#ifndef _NINTENDO_H
-#define _NINTENDO_H
+#ifndef _NES_H
+#define _NES_H
 
 #include <filesystem>
 #include <random>
 
-#include "../engine.h"
+#include "../core/engine.h"
 #include "devices.h"
 #include "nes_mappers.h"
 
@@ -14,11 +14,17 @@ class NES;
 class PPU2C02 : public Device
 {
 public:
+	static constexpr float NTSCFrameRate = 60.0f;
+
+	static constexpr uint8_t PaletteSize = 64;
+
 	// Unscaled screen height
 	static constexpr uint32_t ScreenHeight = 240;
 
 	// Unscaled screen width
 	static constexpr uint32_t ScreenWidth = 256;
+
+	static const std::array<uint32_t, PaletteSize> Palette;
 
 	PPU2C02(NES &, SDL_Renderer *);
 
@@ -33,7 +39,11 @@ public:
 	// Write to CPU bus
 	void CPUWrite(uint16_t, uint8_t);
 
-	inline Bus6502 * GetBus() const;
+	Bus6502 * GetBus();
+
+	bool IsFrameDone() const;
+
+	void NextFrame();
 
 	void NoiseTest();
 
@@ -43,8 +53,6 @@ public:
 	// Write byte to RAM address
 	void Write(uint16_t, uint8_t);
 private:
-	static const std::array<SDL_Color, PaletteSize> Palette;
-
 	static constexpr uint16_t AddressMask = 7;
 
 	// How much RAM to allocate to PPU dedicated Bus
@@ -60,11 +68,9 @@ private:
 	static constexpr uint16_t MaxCycles = 341;
 
 	// Max scalines in a frame
-	static constexpr int16_t MaxScanlines 261;
+	static constexpr int16_t MaxScanlines = 261;
 
 	static constexpr uint16_t PaletteAddress = 0x3F00;
-
-	static constexpr uint8_t PaletteSize = 64;
 
 	// Both the X and Y pattern dimensions
 	static constexpr uint8_t PatternDimension = 128;
@@ -91,6 +97,7 @@ private:
 	std::mt19937 m_mt;
 	std::bernoulli_distribution m_rng;
 };
+
 
 class NESROM : public Device
 {
@@ -142,10 +149,11 @@ private:
 	} m_header;
 
 	NES &m_nes;
-	const NESMapper *m_mapper;
+	NESMapper *m_mapper;
 	std::vector<uint8_t> m_prg; // PRG memory
 	std::vector<uint8_t> m_chr; // CHR memory
 };
+
 
 class NES
 {
@@ -157,9 +165,9 @@ public:
 	void Clock();
 
 	// Retrieves a pointer to the main CPU bus
-	inline Bus6502 * GetBus() const;
+	Bus6502 * GetBus();
 
-	inline PPU2C02 * GetPPU() const;
+	PPU2C02 * GetPPU();
 
 	void LoadROM(const std::filesystem::path &);
 
@@ -175,9 +183,9 @@ private:
 	static constexpr size_t BusRAM = 65536;
 
 	size_t m_cycles;
-	CPU6502 m_cpu;
 	NESROM *m_rom;
 	Bus6502 m_bus;
+	MOS6502 m_cpu;
 	PPU2C02 m_ppu;
 };
 
