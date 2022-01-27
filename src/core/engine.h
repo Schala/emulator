@@ -10,8 +10,11 @@ public:
 	// Constructs the sprite, given a width and height
 	Sprite(size_t, size_t);
 
+	// Retrieve the pixel by index
+	inline SDL_Color & operator[](size_t) const;
+
 	// Retrieve the pixel at x, y
-	inline SDL_Color Get(size_t, size_t) const;
+	inline SDL_Color & Get(size_t, size_t) const;
 
 	// Set the pixel at x, y
 	inline void Set(size_t, size_t, SDL_Color);

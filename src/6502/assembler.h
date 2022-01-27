@@ -2,6 +2,7 @@
 #define _6502_ASSEMBLER_H
 
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
@@ -28,14 +29,15 @@ enum class Token6502 : uint8_t
 {
 	Invalid,
 	EndOfFile,
-	Binary,
+	Binary, // %
 	Decimal,
 	Hex,
 	Identifier,
-	Offset,
+	Label,
+	Offset, // *=
 	Operation,
-	X,
-	Y
+	X, // 'X'
+	Y // 'Y'
 };
 
 struct Operation6502
@@ -48,14 +50,23 @@ class Assembler6502State
 {
 public:
 	Assembler6502State();
-	Token6502 NextToken();
+	~Assembler6502State();
+	void OpenSourceFile(const std::filesystem::path &);
 private:
+	struct Flags
+	{
+		bool
+			dec : 1;
+	} m_flags;
+
 	Token6502 m_lastToken;
 	char m_lastChar;
 	uint16_t m_val;
 	std::ifstream m_src;
 	std::string m_lastIdentifier;
 	std::vector<std::string_view> m_labels;
+
+	Token6502 NextToken();
 };
 
 #endif // _6502_ASSEMBLER_H

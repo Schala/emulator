@@ -5,6 +5,41 @@
 
 #include "../core/devices.h"
 
+struct MIPSInstruction
+{
+	union
+	{
+		struct
+		{
+			uint32_t
+				op : 6, // opcode
+				rs : 5, // source register #
+				rt : 5, // target register # or branch condition
+				imm : 16; // immediate value, branch displacement or address displacement
+		} Immediate;
+
+		struct
+		{
+			uint32_t
+				op : 6, // opcode
+				t : 26; // target address
+		} Jump;
+
+		struct
+		{
+			uint32_t
+				op : 6, // opcode
+				rs : 5, // source register #
+				rt : 5, // target register # or branch condition
+				rd : 5, // destination register #
+				sa : 5, // shift amount
+				f : 6; // function
+		} Register;
+	};
+
+	void (MIPS::*Operation)();
+};
+
 class MIPS : public Device
 {
 public:
@@ -14,7 +49,7 @@ public:
 
 	void Disassemble(uint64_t, uint64_t);
 private:
-	struct
+	struct Registers
 	{
 		uint8_t ll : 1; // load/link bit
 		float ir; // implementation/revision
@@ -31,7 +66,7 @@ private:
 		uint64_t pc; // counter
 	} m_regs;
 
-	struct
+	struct CP0Registers
 	{
 		uint64_t i; // TLB array pointer
 		uint64_t r; // pseudorandom pointer into TLB array (read only)
@@ -58,6 +93,267 @@ private:
 		uint64_t thi; // cache tag register hi
 		uint64_t eepc; // error exception program counter
 	} m_cp0Regs;
+
+
+	// --- arithmetic ---
+
+	void Add();
+
+	void AddImmediate();
+
+	void AddImmediateUnsigned();
+
+	void AddUnsigned();
+
+	void Divide();
+
+	void DivideUnsigned();
+
+	void DWordAdd();
+
+	void DWordAddImmediate();
+
+	void DWordAddImmediateUnsigned();
+
+	void DWordAddUnsigned();
+
+	void DWordDivide();
+
+	void DWordDivideUnsigned();
+
+	void DWordMultiply();
+
+	void DWordMultiplyUnsigned();
+
+	void DWordSubtract();
+
+	void DWordSubtractUnsigned();
+
+	void Multiply();
+
+	void MultiplyUnsigned();
+
+	void Subtract();
+
+	void SubtractUnsigned();
+
+
+	// -- bitwise ---
+
+	void And();
+
+	void AndImmediate();
+
+	void DWordShiftLeft();
+
+	void DWordShiftLeft32();
+
+	void DWordShiftLeftVariable();
+
+	void DWordShiftRightA();
+
+	void DWordShiftRightA32();
+
+	void DWordShiftRightAVariable();
+
+	void DWordShiftRightL();
+
+	void DWordShiftRightL32();
+
+	void DWordShiftRightLVariable();
+
+	void Nor();
+
+	void Or();
+
+	void OrImmediate();
+
+	void ShiftLeft();
+
+	void ShiftLeftVariable();
+
+	void ShiftRightA();
+
+	void ShiftRightAVariable();
+
+	void ShiftRightL();
+
+	void ShiftRightLVariable();
+
+	void Xor();
+
+	void XorImmediate();
+
+
+	// --- branching ---
+
+	void BranchEqual();
+
+	void BranchEqualLikely();
+
+	void BranchGreater0();
+
+	void BranchGreater0Likely();
+
+	void BranchGreaterEqual0();
+
+	void BranchGreaterEqual0LinkLikely();
+
+	void BranchLess0();
+
+	void BranchLess0Likely();
+
+	void BranchLess0Link();
+
+	void BranchLess0LinkLikely();
+
+	void BranchLessEqual0();
+
+	void BranchLessEqual0Likely();
+
+	void BranchNotEqual();
+
+	void BranchNotEqualLikely();
+
+
+	// --- interrupts ---
+
+	void Break();
+
+
+	// --- moving ---
+
+	void DWordMoveFromC0();
+
+	void DWordMoveToC0();
+
+	void MoveFromC0();
+
+	void MoveFromHi();
+
+	void MoveFromLo();
+
+	void MoveToC0();
+
+	void MoveToHi();
+
+	void MoveToLo();
+
+
+	// --- jump ---
+
+	void ExceptionReturn();
+
+	void Jump();
+
+	void JumpLink();
+
+	void JumpLinkRegister();
+
+	void JumpRegister();
+
+	void SystemCall();
+
+
+	// --- load/store ---
+
+	void LoadByte();
+
+	void LoadByteUnsigned();
+
+	void LoadDWord();
+
+	void LoadDWordLeft();
+
+	void LoadDWordRight();
+
+	void LoadHWord();
+
+	void LoadHWordUnsigned();
+
+	void LoadLinked();
+
+	void LoadLinkedDWord();
+
+	void LoadUpperImmediate();
+
+	void LoadWord();
+
+	void LoadWordUnsigned();
+
+	void StoreByte();
+
+	void StoreConditional();
+
+	void StoreConditionalDWord();
+
+	void StoreDWord();
+
+	void StoreDWordLeft();
+
+	void StoreDWordRight();
+
+	void StoreHWord();
+
+	void StoreWord();
+
+	void StoreWordLeft();
+
+	void StoreWordRight();
+
+
+	// --- state control ---
+
+	void SetLessThan();
+
+	void SetLessThanImmediate();
+
+	void SetLessThanImmediateUnsigned();
+
+	void SetLessThanUnsigned();
+
+
+	// --- trapping ---
+
+	void TrapEqual();
+
+	void TrapEqualImmediate();
+
+	void TrapGreaterEqual();
+
+	void TrapGreaterEqualImmediate();
+
+	void TrapGreaterEqualImmediateUnsigned();
+
+	void TrapGreaterEqualUnsigned();
+
+	void TrapLessThan();
+
+	void TrapLessThanImmediate();
+
+	void TrapLessThanImmediateUnsigned();
+
+	void TrapLessThanUnsigned();
+
+	void TrapNotEqual();
+
+	void TrapNotEqualImmediate();
+
+
+	// --- TLB ---
+
+	void TLBProbe();
+
+	void TLBRead();
+
+	void TLBWriteIndexed();
+
+	void TLBWriteRandom();
+
+
+	// --- misc ---
+
+	void Sync();
 };
 
 #endif // _MIPS_DEVICES_H

@@ -8,9 +8,9 @@
 class Motorola68K : public Device
 {
 private:
-	struct
+	struct Registers
 	{
-		struct
+		struct State
 		{
 			uint16_t
 				t : 2,

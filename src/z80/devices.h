@@ -35,9 +35,9 @@ private:
 	static const std::map<uint8_t, Z80Opcode> IYOps;
 	static const std::array<Z80Opcode, 256> MainOps;
 
-	struct
+	struct Registers
 	{
-		struct
+		struct State
 		{
 			bool
 				s : 1, // sign
@@ -79,10 +79,6 @@ private:
 	// adjust accumulator for add and subtact operations
 	uint8_t AdjustAddSubtract();
 
-	uint8_t ArithmeticShiftLeft();
-
-	uint8_t ArithmeticShiftRight();
-
 	uint8_t Decrement();
 
 	uint8_t Increment();
@@ -123,6 +119,10 @@ private:
 	uint8_t RotateRightCarry();
 
 	uint8_t SetBit();
+
+	uint8_t ShiftLeft();
+
+	uint8_t ShiftRight();
 
 	uint8_t SwapHiLo();
 

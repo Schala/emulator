@@ -10,7 +10,12 @@ Sprite::Sprite(size_t w, size_t h):
 {
 }
 
-SDL_Color Sprite::Get(size_t x, size_t y) const
+SDL_Color & Sprite::operator[](size_t index) const
+{
+	return m_pixels.at(index);
+}
+
+SDL_Color & Sprite::Get(size_t x, size_t y) const
 {
 	return m_pixels.at((y * m_h) + x);
 }

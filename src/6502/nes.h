@@ -2,7 +2,7 @@
 #define _NES_H
 
 #include <filesystem>
-#include <random>
+//#include <random>
 
 #include "../core/engine.h"
 #include "devices.h"
@@ -14,17 +14,7 @@ class NES;
 class PPU2C02 : public Device
 {
 public:
-	static constexpr float NTSCFrameRate = 60.0f;
-
-	static constexpr uint8_t PaletteSize = 64;
-
-	// Unscaled screen height
-	static constexpr uint32_t ScreenHeight = 240;
-
-	// Unscaled screen width
-	static constexpr uint32_t ScreenWidth = 256;
-
-	static const std::array<uint32_t, PaletteSize> Palette;
+	static const std::array<uint32_t, 64> Palette;
 
 	PPU2C02(NES &, SDL_Renderer *);
 
@@ -45,39 +35,22 @@ public:
 
 	void NextFrame();
 
-	void NoiseTest();
+	//void NoiseTest();
 
 	// Read byte from RAM address
 	uint8_t Read(uint16_t) const;
 
+	// Return the color from the palette in RAM
+	SDL_Color & ReadRAMPaletteColor(uint8_t, uint8_t) const;
+
 	// Write byte to RAM address
 	void Write(uint16_t, uint8_t);
 private:
-	static constexpr uint16_t AddressMask = 7;
-
-	// How much RAM to allocate to PPU dedicated Bus
-	static constexpr uint16_t BusRAM = 0x4000;
-
 	// Ending offset in CPU bus RAM
 	static constexpr uint16_t CPUBusEndAddress = 0x3FFF;
 
 	// Starting offset in the CPU bus RAM
 	static constexpr uint16_t CPUBusStartAddress = 0x2000;
-
-	// Max cycles in a screen row
-	static constexpr uint16_t MaxCycles = 341;
-
-	// Max scalines in a frame
-	static constexpr int16_t MaxScanlines = 261;
-
-	static constexpr uint16_t PaletteAddress = 0x3F00;
-
-	// Both the X and Y pattern dimensions
-	static constexpr uint8_t PatternDimension = 128;
-
-	static constexpr uint16_t VRAMStartAddress = 0x2000;
-
-	static constexpr uint16_t VRAMEndAddress = 0x2FFF;
 
 	struct
 	{
@@ -92,10 +65,11 @@ private:
 	Bus6502 m_ppuBus; // dedicated second bus
 	std::array<Sprite, 2> m_nameTbl;
 	std::array<Sprite, 2> m_patTbl;
+	Sprite m_ramPalette;
 
 	// noise test
-	std::mt19937 m_mt;
-	std::bernoulli_distribution m_rng;
+	/*std::mt19937 m_mt;
+	std::bernoulli_distribution m_rng;*/
 };
 
 

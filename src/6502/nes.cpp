@@ -95,17 +95,18 @@ PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
 	m_cycle(0),
 	m_renderer(renderer),
 	m_nes(nes),
-	m_ppuBus(Bus6502(BusRAM)),
+	m_ppuBus(Bus6502(0x4000)),
 	m_nameTbl(
 	{
-		Sprite(ScreenWidth, ScreenHeight),
-		Sprite(ScreenWidth, ScreenHeight)
+		Sprite(32, 32),
+		Sprite(32, 32)
 	}),
 	m_patTbl(
 	{
-		Sprite(PatternDimension, PatternDimension),
-		Sprite(PatternDimension, PatternDimension)
-	})
+		Sprite(64, 64),
+		Sprite(64, 64)
+	}),
+	m_ramPalette(Sprite(16, 4))
 {
 	m_flags.frameDone = false;
 
@@ -122,11 +123,11 @@ PPU2C02::~PPU2C02()
 
 void PPU2C02::Clock()
 {
-	if (++m_cycle >= MaxCycles)
+	if (++m_cycle >= 341)
 	{
 		m_cycle = 0;
 
-		if (++m_scanline >= MaxScanlines)
+		if (++m_scanline >= 261)
 		{
 			m_scanline = -1;
 			m_flags.frameDone = true;
@@ -183,20 +184,34 @@ void PPU2C02::NextFrame()
 	m_flags.frameDone = false;
 }
 
-void PPU2C02::NoiseTest()
+/*void PPU2C02::NoiseTest()
 {
 	SDL_Color c = ColorFromU32(Palette[m_rng(m_mt) ? 63 : 48]);
 	SDL_SetRenderDrawColor(m_renderer, c.r, c.g, c.b, c.a);
 	SDL_RenderDrawPoint(m_renderer, m_cycle - 1, m_scanline);
-}
+}*/
 
 uint8_t PPU2C02::Read(uint16_t addr) const
 {
-	return 0;
+	addr &= 0x3FFF;
+
+	if (addr >= 0 && addr <= 0x1FFF) // pattern
+	else if (addr >= 0x2000 && addr <= 0x3EFF) // nametable
+	else // palette?
+}
+
+SDL_Color & PPU2C02::ReadRAMPaletteColor(uint8_t palette, uint8_t pixel) const
+{
+	return m_ramPalette[Read(0x3F00 + (palette << 2) + pixel)];
 }
 
 void PPU2C02::Write(uint16_t addr, uint8_t data)
 {
+	addr &= 0x3FFF;
+
+	if (addr >= 0 && addr <= 0x1FFF) // pattern
+	else if (addr >= 0x2000 && addr <= 0x3EFF) // nametable
+	else // palette?
 }
 
 
@@ -276,7 +291,7 @@ void NESROM::PPUWrite(uint16_t addr, uint8_t data)
 NES::NES(SDL_Renderer *renderer):
 	m_cycles(0),
 	m_rom(nullptr),
-	m_bus(Bus6502(BusRAM)),
+	m_bus(Bus6502(0xFFFF)),
 	m_cpu(MOS6502(&m_bus, 0, 0x1FFF)),
 	m_ppu(PPU2C02(*this, renderer))
 {
