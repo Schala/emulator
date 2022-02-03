@@ -1,7 +1,6 @@
 #include <iostream>
 
-#include "core/engine.h"
-#include "6502/nes.h"
+#include "6502/nes/nes.h"
 
 class Emulator : public Engine
 {

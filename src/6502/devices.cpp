@@ -6,7 +6,7 @@
 
 #include "devices.h"
 
-using namespace std::literals;
+using namespace std::literals:string_view_literals;
 
 static constexpr uint16_t Hi16(uint16_t value)
 {
@@ -343,7 +343,7 @@ MOS6502::MOS6502(Bus6502 *bus, uint16_t startAddr, uint16_t endAddr):
 	m_lastRelAddr(0)
 {
 	m_regs.a = m_regs.x = m_regs.y = m_regs.pc = 0;
-	m_regs.sp = StackPtrInitAddress;
+	m_regs.sp = 253;
 	InitializeState();
 }
 
@@ -507,7 +507,7 @@ void MOS6502::Interrupt(uint16_t newAbsAddr, uint8_t newCycles)
 
 uint8_t MOS6502::Magic() const
 {
-	return m_regs.a | MagicValue;
+	return m_regs.a | 255;
 }
 
 uint8_t MOS6502::Read(uint16_t addr) const
@@ -538,10 +538,10 @@ uint16_t MOS6502::ReadROMAddress()
 void MOS6502::Reset()
 {
 	m_cache = m_lastRelAddr = m_regs.a = m_regs.x = m_regs.y = m_regs.pc = 0;
-	m_regs.sp = StackPtrInitAddress;
+	m_regs.sp = 253;
 	InitializeState();
 
-	m_lastAbsAddr = ResetAddress;
+	m_lastAbsAddr = 0xFFFC;
 	m_regs.pc = FetchAddress();
 
 	m_lastAbsAddr = 0;
@@ -560,9 +560,14 @@ void MOS6502::SetNegativeZero(uint16_t value)
 	m_regs.p.n = value & 128;
 }
 
+void MOS6502::SetResetVector(uint16_t addr)
+{
+	WriteAddress(0xFFFC, addr);
+}
+
 uint8_t MOS6502::StackRead()
 {
-	return Read(StackBaseAddress + ++m_regs.sp);
+	return Read(256 + ++m_regs.sp);
 }
 
 uint16_t MOS6502::StackReadAddress()
@@ -572,13 +577,13 @@ uint16_t MOS6502::StackReadAddress()
 
 void MOS6502::StackWrite(uint8_t data)
 {
-	Write(StackBaseAddress + m_regs.sp--, data);
+	Write(256 + m_regs.sp--, data);
 }
 
 void MOS6502::StackWriteAddress(uint16_t addr)
 {
+	StackWrite((addr & 0xFF00) >> 8);
 	StackWrite(addr & 255);
-	StackWrite((addr >> 8) & 255);
 }
 
 uint8_t MOS6502::StateByte() const
@@ -589,6 +594,12 @@ uint8_t MOS6502::StateByte() const
 void MOS6502::Write(uint16_t addr, uint8_t data)
 {
 	dynamic_cast<Bus6502 *>(m_bus)->Write(addr, data);
+}
+
+void MOS6502::WriteAddress(uint16_t addr, uint16_t vector)
+{
+	Write(addr, vector & 255);
+	Write(addr + 1, (vector & 0xFF00) >> 8);
 }
 
 uint16_t MOS6502::WriteToFetchedAddress(uint8_t data)
@@ -812,7 +823,7 @@ uint8_t MOS6502::Break()
 	StackWrite(StateByte());
 	m_regs.p.b = false;
 
-	m_regs.pc = ReadAddress(InterruptRequestAddress);
+	m_regs.pc = ReadAddress(0xFFFE);
 
 	return 0;
 }
@@ -820,7 +831,7 @@ uint8_t MOS6502::Break()
 uint8_t MOS6502::InterruptRequest()
 {
 	if (!m_regs.p.i)
-		Interrupt(InterruptRequestAddress, 7);
+		Interrupt(0xFFFE, 7);
 	return 0;
 }
 
@@ -841,7 +852,7 @@ uint8_t MOS6502::InterruptReturn()
 
 uint8_t MOS6502::NonMaskableInterrupt()
 {
-	Interrupt(NonMaskableInterruptAddress, 8);
+	Interrupt(0xFFFA, 8);
 	return 0;
 }
 
@@ -1162,7 +1173,7 @@ uint8_t MOS6502::YToAccumulator()
 }
 
 
-// illegals43333333333333333333
+// illegals
 
 uint8_t MOS6502::ALR()
 {

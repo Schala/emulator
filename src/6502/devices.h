@@ -82,6 +82,8 @@ public:
 	// Reset CPU state
 	void Reset();
 
+	void SetResetVector(uint16_t);
+
 	// Read byte from stack
 	uint8_t StackRead();
 
@@ -99,6 +101,9 @@ public:
 
 	// Write byte to RAM address
 	void Write(uint16_t, uint8_t);
+
+	// Write address to RAM
+	void WriteAddress(uint16_t, uint16_t);
 
 	// Fetch an address, write to it, and return the address
 	uint16_t WriteToFetchedAddress(uint8_t);

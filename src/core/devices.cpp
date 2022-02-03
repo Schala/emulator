@@ -3,19 +3,34 @@
 
 #include "devices.h"
 
-Device::Device(Bus *bus, size_t startAddr, size_t endAddr):
-	m_ramBeginIter(bus->GetRAMIterator() + startAddr),
-	m_ramEndIter(bus->GetRAMIterator() + (endAddr + 1)),
+Device::Device(Bus *bus):
 	m_bus(bus)
 {
+	bus->Add(this);
+}
+
+Device::Device(Bus *bus, size_t startAddr, size_t endAddr):
+	m_bus(bus)
+{
+	AddRange(startAddr, endAddr);
 	bus->Add(this);
 }
 
 Device::~Device()
 {
 	// zero out the occupied RAM
-	std::fill(m_ramBeginIter, m_ramEndIter, 0);
+	for (auto &addrRange : m_addrMap)
+		std::fill(addrRange.first, addrRange.second, 0);
+
 	m_bus->Remove(this);
+}
+
+void Device::AddRange(size_t startAddr, size_t endAddr)
+{
+	m_addrMap.push_back(std::make_pair(
+		bus->GetRAMIterator() + startAddr,
+		bus->GetRAMIterator() + (endAddr + 1)
+	));
 }
 
 Bus::Bus(size_t ramSize):

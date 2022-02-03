@@ -12,7 +12,7 @@ bool IsNewLine(char c)
 {
 	switch (c)
 	{
-		case '\n': [[fallthrough]]
+		case '\n':
 		case '\r':
 			return true;
 		default:

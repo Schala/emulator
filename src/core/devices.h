@@ -2,6 +2,7 @@
 #define _CORE_DEVICES_H
 
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 typedef std::vector<uint8_t>::iterator RAMIterator;
@@ -12,15 +13,20 @@ class Bus;
 class Device
 {
 public:
-	// Allocate a new device, given an owning bus, and start and end addresses in RAM
+	// Allocate a new device, given an owning bus
+	Device(Bus *);
+
+	// Allocate a new device, given an owning bus, and one pair of start and end addresses in RAM
 	Device(Bus *, size_t, size_t);
+
+	// Add an occupied address range in bus RAM
+	void AddRange(size_t, size_t);
 
 	// Zero out the device's RAM occupation before disposal
 	virtual ~Device();
 protected:
-	RAMIterator m_ramBeginIter;
-	RAMIterator m_ramEndIter;
 	Bus *m_bus; // Should be a non-owned pointer so we can cast to derivatives
+	std::vector<std::pair<RAMIterator, RAMIterator>> m_addrMap;
 };
 
 // Provides read/write access between various devices and the RAM

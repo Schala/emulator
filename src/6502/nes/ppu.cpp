@@ -1,9 +1,4 @@
-#include <algorithm>
-#include <fmt/core.h>
-#include <fstream>
-#include <stdexcept>
-
-#include "nes.h"
+#include "ppu.h"
 
 static constexpr SDL_Color ColorFromU32(uint32_t u)
 {
@@ -15,8 +10,6 @@ static constexpr SDL_Color ColorFromU32(uint32_t u)
 		static_cast<uint8_t>(u & 255)
 	};
 }
-
-// PPU2C02
 
 const std::array<uint32_t, PPU2C02::PaletteSize> PPU2C02::Palette =
 {
@@ -212,149 +205,4 @@ void PPU2C02::Write(uint16_t addr, uint8_t data)
 	if (addr >= 0 && addr <= 0x1FFF) // pattern
 	else if (addr >= 0x2000 && addr <= 0x3EFF) // nametable
 	else // palette?
-}
-
-
-// NESROM
-
-NESROM::NESROM(NES &nes, const std::filesystem::path &path):
-	Device(nes.GetBus(), 0, 0),
-	m_nes(nes)
-{
-	std::ifstream romFile(path, std::ios::binary);
-	romFile.read(std::bit_cast<char *>(&m_header), HeaderSize);
-
-	if (std::equal(m_header.magic.begin(), m_header.magic.end(), Magic.begin()))
-	{
-		m_prg.resize(m_header.prgPages * 16384);
-		romFile.read(std::bit_cast<char *>(m_prg.data()), m_prg.size());
-
-		m_chr.resize(m_header.chrPages * 8192);
-		romFile.read(std::bit_cast<char *>(m_chr.data()), m_chr.size());
-
-		m_mapperID = (m_header.mapperInfo.typeHi << 4) | m_header.mapperInfo.typeLo;
-
-		switch (m_mapperID)
-		{
-			case 0: m_mapper = new NROM(m_header.prgPages, m_header.chrPages); break;
-			default:
-				throw std::runtime_error(fmt::format("Unsupported mapper ID: {}", m_mapperID));
-		}
-	}
-
-	nes.GetPPU()->GetBus()->Add(this);
-}
-
-NESROM::~NESROM()
-{
-	m_nes.GetPPU()->GetBus()->Remove(this);
-	if (m_mapper) delete m_mapper;
-}
-
-uint8_t NESROM::CPURead(uint16_t addr) const
-{
-	uint32_t mappedAddr = 0;
-
-	if (m_mapper->CPUMapRead(addr, mappedAddr))
-		return m_prg[mappedAddr];
-	return 0;
-}
-
-void NESROM::CPUWrite(uint16_t addr, uint8_t data)
-{
-	uint32_t mappedAddr = 0;
-
-	if (m_mapper->CPUMapWrite(addr, mappedAddr))
-		m_prg[mappedAddr] = data;
-}
-
-uint8_t NESROM::PPURead(uint16_t addr) const
-{
-	uint32_t mappedAddr = 0;
-
-	if (m_mapper->PPUMapRead(addr, mappedAddr))
-		return m_chr[mappedAddr];
-	return 0;
-}
-
-void NESROM::PPUWrite(uint16_t addr, uint8_t data)
-{
-	uint32_t mappedAddr = 0;
-
-	if (m_mapper->PPUMapWrite(addr, mappedAddr))
-		m_chr[mappedAddr] = data;
-}
-
-
-// NES
-
-NES::NES(SDL_Renderer *renderer):
-	m_cycles(0),
-	m_rom(nullptr),
-	m_bus(Bus6502(0xFFFF)),
-	m_cpu(MOS6502(&m_bus, 0, 0x1FFF)),
-	m_ppu(PPU2C02(*this, renderer))
-{
-}
-
-NES::~NES()
-{
-	if (m_rom) delete m_rom;
-}
-
-void NES::Clock()
-{
-	m_ppu.Clock();
-
-	// CPU runs 3 times slower than PPU
-	if (m_cycles++ % 3 == 0)
-		m_cpu.Clock();
-}
-
-Bus6502 * NES::GetBus()
-{
-	return &m_bus;
-}
-
-PPU2C02 * NES::GetPPU()
-{
-	return &m_ppu;
-}
-
-void NES::LoadROM(const std::filesystem::path &path)
-{
-	if (m_rom) delete m_rom;
-	m_rom = new NESROM(*this, path);
-}
-
-uint8_t NES::Read(uint16_t addr) const
-{
-	// system ram
-	if (addr >= 0 && addr <= 0x1FFF)
-		return m_cpu.Read(addr & 0x7FF);
-	// PPU ram
-	else if (addr >= 0x2000 && addr <= 0x3FFF)
-		return m_ppu.CPURead(addr & 7);
-	// rom?
-	else
-		return m_rom->CPURead(addr);
-}
-
-void NES::Reset()
-{
-	m_cpu.Reset();
-	m_cycles = 0;
-}
-
-void NES::Write(uint16_t addr, uint8_t data)
-{
-	// system ram
-	if (addr >= 0 && addr <= 0x1FFF)
-		m_cpu.Write(addr & 0x7FF, data);
-	// PPU ram
-	else if (addr >= 0x2000 && addr <= 0x3FFF)
-		m_ppu.CPUWrite(addr & 7, data);
-	// rom?
-	else
-		m_rom->CPUWrite(addr, data);
 }

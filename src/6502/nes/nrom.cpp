@@ -1,13 +1,4 @@
-#include "nes_mappers.h"
-
-NESMapper::NESMapper(uint8_t numPRGBanks, uint8_t numCHRBanks):
-	m_numPRGBanks(numPRGBanks),
-	m_numCHRBanks(numCHRBanks)
-{
-}
-
-
-// NROM
+#include "nrom.h"
 
 NROM::NROM(uint8_t numPRGBanks, uint8_t numCHRBanks): NESMapper(numPRGBanks, numCHRBanks)
 {

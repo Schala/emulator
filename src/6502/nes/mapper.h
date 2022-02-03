@@ -1,5 +1,5 @@
-#ifndef _NES_MAPPERS_H
-#define _NES_MAPPERS_H
+#ifndef _NES_MAPPER_H
+#define _NES_MAPPER_H
 
 #include <cstdint>
 
@@ -15,17 +15,6 @@ public:
 protected:
 	uint8_t m_numPRGBanks;
 	uint8_t m_numCHRBanks;
-};
-
-// Mapper ID 0
-class NROM : public NESMapper
-{
-public:
-	NROM(uint8_t, uint8_t);
-	bool CPUMapRead(uint16_t, uint32_t &) override;
-	bool CPUMapWrite(uint16_t, uint32_t &) override;
-	bool PPUMapRead(uint16_t, uint32_t &) override;
-	bool PPUMapWrite(uint16_t, uint32_t &) override;
 };
 
 #endif // _NES_MAPPERS_H
