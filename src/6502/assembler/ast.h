@@ -107,10 +107,10 @@ private:
 };
 
 // Label expression
-class LabelExpr6502 : public Expr6502
+class LabelDecl6502 : public Expr6502
 {
 public:
-	LabelExpr6502(uint16_t, const char *);
+	LabelDecl6502(uint16_t, const char *);
 private:
 	uint16_t m_addr;
 	std::string_view m_name;

@@ -2,22 +2,8 @@
 #define _6502_DEVICES_H
 
 #include <array>
-#include <string_view>
 
 #include "../core/devices.h"
-
-// Extends the base Bus class with suitable functions for the 6502
-class Bus6502 : public Bus
-{
-public:
-	Bus6502(size_t);
-
-	// Read byte from RAM address
-	uint8_t Read(uint16_t) const;
-
-	// Write byte to RAM address
-	void Write(uint16_t, uint8_t);
-};
 
 class MOS6502;
 
@@ -32,84 +18,36 @@ struct Opcode6502
 	uint8_t Cycles;
 	Instruction6502 AddressMode;
 	Instruction6502 Operation;
-	std::string_view Mneumonic;
-};
-
-// Disassembly cache
-struct Disassembly6502
-{
-	uint16_t Address;
-	std::string_view Line;
+	std::string_view Mnemonic;
 };
 
 // The CPU processes data available via its bus
-class MOS6502 : public Device
+class MOS6502 : public CPU<uint16_t, uint8_t>
 {
 public:
 	// Allocate a new CPU, given a parent bus, and start and end addresses in RAM
-	MOS6502(Bus6502 *, uint16_t, uint16_t);
+	MOS6502(BusType *, uint16_t, uint16_t);
 
 	// CPU clock operation (execute one instruction)
-	void Clock();
+	void Clock() override;
 
 	// Disassemble from the specified address for the specified length
-	void Disassemble(uint16_t, uint16_t);
+	void Disassemble(uint16_t, uint16_t) override;
 
 	// Fetch and cache a byte from the cached absolute address
-	uint8_t Fetch();
-
-	// Read address from RAM
-	uint16_t FetchAddress();
+	uint8_t Fetch() override;
 
 	// Returns a string containing info of the CPU stack
 	std::string FrameInfo() const;
 
-	// Read byte from RAM address
-	uint8_t Read(uint16_t) const;
-
-	// Read address from RAM address
-	uint16_t ReadAddress(uint16_t) const;
-
-	// Read byte from last used address
-	uint8_t ReadFromLastAddress() const;
-
 	// Read byte from ROM
-	uint8_t ReadROM();
-
-	// Read address from ROM
-	uint16_t ReadROMAddress();
+	uint8_t ReadROM() override;
 
 	// Reset CPU state
-	void Reset();
-
-	void SetResetVector(uint16_t);
-
-	// Read byte from stack
-	uint8_t StackRead();
-
-	// Read address from stack
-	uint16_t StackReadAddress();
-
-	// Write byte to stack
-	void StackWrite(uint8_t);
-
-	// Write address to stack
-	void StackWriteAddress(uint16_t);
+	void Reset() override;
 
 	// Return state register as a byte
 	uint8_t StateByte() const;
-
-	// Write byte to RAM address
-	void Write(uint16_t, uint8_t);
-
-	// Write address to RAM
-	void WriteAddress(uint16_t, uint16_t);
-
-	// Fetch an address, write to it, and return the address
-	uint16_t WriteToFetchedAddress(uint8_t);
-
-	// Write byte to last used address
-	void WriteToLastAddress(uint8_t);
 
 	// None of these should be inlined, as we need them to be addressable.
 	// All return the number of additional cycles possibly needed.
@@ -156,202 +94,202 @@ public:
 	/// --- branching ---
 
 	// Branch if carry bit clear
-	uint8_t BranchCarryClear();
+	uint8_t BCC();
 
 	// Branch if carry bit set
-	uint8_t BranchCarrySet();
+	uint8_t BCS();
 
 	// Branch if equal
-	uint8_t BranchEqual();
+	uint8_t BEQ();
 
 	// Branch if negative
-	uint8_t BranchNegative();
+	uint8_t BMI();
 
 	// Branch if not equal
-	uint8_t BranchNotEqual();
-
-	// Branch if overflow bit clear
-	uint8_t BranchOverflowClear();
-
-	// Branch if overflow bit set
-	uint8_t BranchOverflowSet();
+	uint8_t BNE();
 
 	// Branch if positive
-	uint8_t BranchPositive();
+	uint8_t BPL();
+
+	// Branch if overflow bit clear
+	uint8_t BVC();
+
+	// Branch if overflow bit set
+	uint8_t BVS();
 
 
 	// --- state manipulation ---
 
 	// Clear carry bit
-	uint8_t ClearCarry();
+	uint8_t CLC();
 
 	// Clear decimal mode bit
-	uint8_t ClearDecimal();
+	uint8_t CLD();
 
 	// Clear disable interrupts bit
-	uint8_t ClearDisableInterrupts();
+	uint8_t CLI();
 
 	// Clear overflow bit
-	uint8_t ClearOverflow();
+	uint8_t CLV();
 
 	// Set carry bit
-	uint8_t SetCarry();
+	uint8_t SEC();
 
 	// Set decimal mode bit
-	uint8_t SetDecimal();
+	uint8_t SED();
 
 	// Set disable interrupts bit
-	uint8_t SetDisableInterrupts();
+	uint8_t SEI();
 
 
 	// --- interrupts ---
 
 	// Program-sourced interrupt
-	uint8_t Break();
+	uint8_t BRK();
 
 	// Interrupt request
-	uint8_t InterruptRequest();
-
-	// Return from interrupt
-	uint8_t InterruptReturn();
+	uint8_t IRQ();
 
 	// Non-maskable interrupt
-	uint8_t NonMaskableInterrupt();
+	uint8_t NMI();
+
+	// Return from interrupt
+	uint8_t RTI();
 
 	// Return from subroutine
-	uint8_t SubroutineReturn();
+	uint8_t RTS();
 
 
 	// --- stack manipulation ---
 
-	// Pop accumulator from stack
-	uint8_t PopAccumulator();
-
-	// Pop state from stack
-	uint8_t PopState();
-
 	// Push accumulator to stack
-	uint8_t PushAccumulator();
+	uint8_t PHA();
 
 	// Push state to stack
-	uint8_t PushState();
+	uint8_t PHP();
+
+	// Pop accumulator from stack
+	uint8_t PLA();
+
+	// Pop state from stack
+	uint8_t PLP();
 
 
 	// --- arithmetic ---
 
 	// Add with carry
-	uint8_t Add();
+	uint8_t ADC();
 
 	// Decrement value at location
-	uint8_t Decrement();
+	uint8_t DEC();
 
 	// Decrement X register
-	uint8_t DecrementX();
+	uint8_t DEX();
 
 	// Decrement Y register
-	uint8_t DecrementY();
+	uint8_t DEY();
 
 	// Increment value at location
-	uint8_t Increment();
+	uint8_t INC();
 
 	// Increment X register
-	uint8_t IncrementX();
+	uint8_t INX();
 
 	// Increment Y register
-	uint8_t IncrementY();
+	uint8_t INY();
 
 	// Subtract with carry
-	uint8_t Subtract();
+	uint8_t SBC();
 
 
 	// --- bitwise --
 
 	// Bitwise and
-	uint8_t And();
-
-	// Bitwise or
-	uint8_t Or();
-
-	// Rotate left
-	uint8_t RotateLeft();
-
-	// Rotate right
-	uint8_t RotateRight();
+	uint8_t AND();
 
 	// Arithmetical shift left
-	uint8_t ShiftLeft();
-
-	// Logical shift right
-	uint8_t ShiftRight();
+	uint8_t ASL();
 
 	// Exclusive or
-	uint8_t Xor();
+	uint8_t EOR();
+
+	// Logical shift right
+	uint8_t LSR();
+
+	// Bitwise or
+	uint8_t ORA();
+
+	// Rotate left
+	uint8_t ROL();
+
+	// Rotate right
+	uint8_t ROR();
 
 
 	// --- comparison ---
 
+	// Bit test
+	uint8_t BIT();
+
 	// Compare accumulator
-	uint8_t Compare();
+	uint8_t CMP();
 
 	// Compare X register
-	uint8_t CompareX();
+	uint8_t CPX();
 
 	// Compare Y register
-	uint8_t CompareY();
-
-	// Bit test
-	uint8_t TestBit();
+	uint8_t CPY();
 
 
 	// --- jumps ---
 
 	// Jump to location
-	uint8_t Jump();
+	uint8_t JMP();
 
 	// Jump to subroutine
-	uint8_t SubroutineJump();
+	uint8_t JSR();
 
 
 	// --- load/store ---
 
 	// Load accumulator
-	uint8_t LoadAccumulator();
+	uint8_t LDA();
 
 	// Load X register
-	uint8_t LoadX();
+	uint8_t LDX();
 
 	// Load Y register
-	uint8_t LoadY();
+	uint8_t LDY();
 
 	// Store accumulator
-	uint8_t StoreAccumulator();
+	uint8_t STA();
 
 	// Store X register
-	uint8_t StoreX();
+	uint8_t STX();
 
 	// Store Y register
-	uint8_t StoreY();
+	uint8_t STY();
 
 
 	// --- transfers ---
 
 	// Transfer accumulator to X register
-	uint8_t AccumulatorToX();
+	uint8_t TAX();
 
 	// Transfer accumulator to Y register
-	uint8_t AccumulatorToY();
+	uint8_t TAY();
 
 	// Transfer stack pointer to X register
-	uint8_t StackPtrToX();
+	uint8_t TSX();
 
 	// Transfer X register to accumulator
-	uint8_t XToAccumulator();
+	uint8_t TXA();
 
 	// Transfer X register to stack pointer
-	uint8_t XToStackPtr();
+	uint8_t TXS();
 
 	// Transfer Y register to accumulator
-	uint8_t YToAccumulator();
+	uint8_t TYA();
 
 
 	// --- illegals ---
@@ -454,7 +392,7 @@ private:
 		uint8_t a; // accumulator
 		uint8_t x;
 		uint8_t y;
-		uint8_t sp; // stack pointer
+		uint8_t s; // stack pointer
 
 		struct State
 		{
@@ -471,8 +409,6 @@ private:
 
 		uint16_t pc; // program counter
 	} m_regs;
-
-	std::vector<Disassembly6502> m_disasm;
 
 	// Common functionality for branch instructions
 	void Branch();

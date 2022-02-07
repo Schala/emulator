@@ -71,181 +71,183 @@ private:
 
 	// --- arithmetic ---
 
-	uint8_t Add();
-
 	// add with carry
-	uint8_t AddCarry();
+	uint8_t ADC();
+
+	uint8_t ADD();
 
 	// adjust accumulator for add and subtact operations
-	uint8_t AdjustAddSubtract();
+	uint8_t DAA();
 
-	uint8_t Decrement();
+	uint8_t DEC();
 
-	uint8_t Increment();
+	uint8_t INC();
 
-	uint8_t Negate();
+	uint8_t NEG();
 
-	uint8_t Subtract();
+	uint8_t SBC();
 
-	uint8_t SubtractCarry();
+	uint8_t SUB();
 
 
 	// --- bitwise ---
 
-	uint8_t And();
+	uint8_t AND();
 
-	uint8_t BitShiftRight();
+	uint8_t CPL();
 
-	uint8_t Compliment();
+	uint8_t OR();
 
-	uint8_t Or();
+	uint8_t RES();
 
-	uint8_t ResetBit();
+	uint8_t RL();
 
-	uint8_t RotateAccumulatorLeft();
+	uint8_t RLA();
 
-	uint8_t RotateAccumulatorLeftCarry();
+	uint8_t RLCA();
 
-	uint8_t RotateAccumulatorRight();
+	uint8_t RLC();
 
-	uint8_t RotateAccumulatorRightCarry();
+	uint8_t RLD();
 
-	uint8_t RotateLeft();
+	uint8_t RR();
 
-	uint8_t RotateLeftCarry();
+	uint8_t RRA();
 
-	uint8_t RotateRight();
+	uint8_t RRC();
 
-	uint8_t RotateRightCarry();
+	uint8_t RRCA();
 
-	uint8_t SetBit();
+	uint8_t RRD();
 
-	uint8_t ShiftLeft();
+	uint8_t SET();
 
-	uint8_t ShiftRight();
+	uint8_t SLA();
 
-	uint8_t SwapHiLo();
+	uint8_t SRA();
 
-	uint8_t SwapLoHi();
+	uint8_t SRL();
 
-	uint8_t Xor();
+	uint8_t XOR();
 
 
 	// --- comparison ---
 
-	uint8_t Compare();
+	uint8_t BIT();
+
+	uint8_t CP();
 
 	// compare and decrement
-	uint8_t CompareDecrement();
+	uint8_t CPD();
 
 	// compare and decrement and repeat
-	uint8_t CompareDecrementLoop();
+	uint8_t CPDR();
 
 	// compare and increment
-	uint8_t CompareIncrement();
+	uint8_t CPI();
 
 	// compare and increment and repeat
-	uint8_t CompareIncrementLoop();
-
-	uint8_t TestBit();
+	uint8_t CPIR();
 
 
 	// --- state control ---
 
-	uint8_t DisableMaskableInterrupts();
+	uint8_t CCF();
 
-	uint8_t EnableInterrupts();
+	uint8_t DI();
 
-	uint8_t InvertCarry();
+	uint8_t EI();
+
+	uint8_t SCF();
 
 
 	// --- jumps ---
 
-	uint8_t Call();
-
-	uint8_t ConditionalJump();
+	uint8_t CALL();
 
 	// decrement and jump if not zero
-	uint8_t DecrementJumpNonZero();
+	uint8_t DJNZ();
 
 	uint8_t GoTo();
 
-	uint8_t Jump();
+	uint8_t JP();
 
-	uint8_t Return();
+	uint8_t JR();
+
+	uint8_t RET();
 
 
 	// --- storage control ---
 
-	uint8_t Exchange8();
+	uint8_t EX();
 
-	uint8_t Exchange16();
+	uint8_t EXX();
 
-	uint8_t Load();
-
-	// load and decrement
-	uint8_t LoadDecrement();
-
-	// load and decrement and repeat
-	uint8_t LoadDecrementLoop();
-
-	// load and increment
-	uint8_t LoadIncrement();
-
-	// load and increment and repeat
-	uint8_t LoadIncrementLoop();
-
-	uint8_t PutInput();
+	uint8_t IN();
 
 	// place on input and decrement
-	uint8_t PutInputDecrement();
+	uint8_t IND();
 
 	// place on input and decrement and repeat
-	uint8_t PutInputDecrementLoop();
+	uint8_t INDR();
 
 	// place on input and increment
-	uint8_t PutInputIncrement();
+	uint8_t INI();
 
 	// place on input and increment and repeat
-	uint8_t PutInputIncrementLoop();
+	uint8_t INIR();
 
-	uoutt8_t PutOutput();
+	uint8_t LD();
 
-	// place on output and decrement
-	uoutt8_t PutOutputDecrement();
+	// load and decrement
+	uint8_t LDD();
+
+	// load and decrement and repeat
+	uint8_t LDDR();
+
+	// load and increment
+	uint8_t LDI();
+
+	// load and increment and repeat
+	uint8_t LDIR();
 
 	// place on output and decrement and repeat
-	uoutt8_t PutOutputDecrementLoop();
+	uint8_t OTDR();
 
-	// place on output and outcrement
-	uoutt8_t PutOutputOutcrement();
+	// place on output and increment and repeat
+	uint8_t OTIR();
 
-	// place on output and outcrement and repeat
-	uoutt8_t PutOutputOutcrementLoop();
+	uint8_t OUT();
+
+	// place on output and decrement
+	uint8_t OUTD();
+
+	// place on output and increment
+	uint8_t OUTI();
 
 
 	// --- interrupts ---
 
 	// halt until interrupt
-	uint8_t Halt();
+	uint8_t HALT();
+
+	uint8_t IM();
 
 	// return from interrupt
-	uint8_t InterruptReturn();
+	uint8_t RETI();
 
-	uint8_t NonMaskableInterruptReturn();
-
-	uint8_t SetInterruptMode();
+	uint8_t RETN();
 
 
 	// --- stack control ---
 
-	uint8_t Pop();
+	uint8_t POP();
 
-	uint8_t Push();
+	uint8_t PUSH();
 
 
 	// --- misc ---
-	uint8_t NoOperation();
+	uint8_t NOP();
 };
 
 #endif // _Z80_DEVICES_H

@@ -7,6 +7,8 @@ class SNES
 {
 public:
 	SNES(SDL_Renderer *);
+private:
+
 };
 
 #endif // _SNES_H

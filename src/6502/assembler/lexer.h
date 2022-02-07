@@ -153,10 +153,10 @@ public:
 	std::string & LastIdentifier();
 	uint16_t LastValue() const;
 	Token6502 NextToken();
+	void ResetLineCount();
 private:
 	char m_lastChar;
 	uint16_t m_lastVal;
-	Token6502 m_lastToken;
 	std::istream &m_src;
 	std::string m_lastIdentifier;
 };

@@ -91,11 +91,11 @@ static const std::vector<std::string_view> Ops =
 
 Lexer6502::Lexer6502(Assembler6502 &assembler):
 	m_lastChar(' '),
+	m_lastLineNum(0),
 	m_lastVal(0),
 	m_src(assembler.GetStream())
 {
 }
-
 
 Lexer6502::~Lexer6502()
 {
@@ -106,7 +106,6 @@ std::string & Lexer6502::LastIdentifier()
 {
 	return m_lastIdentifier;
 }
-
 
 uint16_t Lexer6502::LastValue() const
 {

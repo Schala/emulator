@@ -97,263 +97,274 @@ private:
 
 	// --- arithmetic ---
 
-	void Add();
+	void ADD();
 
-	void AddImmediate();
+	void ADDI();
 
-	void AddImmediateUnsigned();
+	void ADDIU();
 
-	void AddUnsigned();
+	void ADDU();
 
-	void Divide();
+	void DADD();
 
-	void DivideUnsigned();
+	void DADDI();
 
-	void DWordAdd();
+	void DADDIU();
 
-	void DWordAddImmediate();
+	void DADDU();
 
-	void DWordAddImmediateUnsigned();
+	void DDIV();
 
-	void DWordAddUnsigned();
+	void DDIVU();
 
-	void DWordDivide();
+	void DIV();
 
-	void DWordDivideUnsigned();
+	void DIVU();
 
-	void DWordMultiply();
+	void DMULT();
 
-	void DWordMultiplyUnsigned();
+	void DMULTU();
 
-	void DWordSubtract();
+	void DSLL();
 
-	void DWordSubtractUnsigned();
+	void DSLL32();
 
-	void Multiply();
+	void DSLLV();
 
-	void MultiplyUnsigned();
+	void DSRA();
 
-	void Subtract();
+	void DSRA32();
 
-	void SubtractUnsigned();
+	void DSRAV();
+
+	void DSRL();
+
+	void DSRL32();
+
+	void DSRLV();
+
+	void DSUB();
+
+	void DSUBU();
+
+	void MUL();
+
+	void MULT();
+
+	void MULTU();
+
+	void SUB();
+
+	void SUBU();
 
 
 	// -- bitwise ---
 
-	void And();
+	void AND();
 
-	void AndImmediate();
+	void ANDI();
 
-	void DWordShiftLeft();
+	void NOR();
 
-	void DWordShiftLeft32();
+	void OR();
 
-	void DWordShiftLeftVariable();
+	void ORI();
 
-	void DWordShiftRightA();
+	void SLL();
 
-	void DWordShiftRightA32();
+	void SLLV();
 
-	void DWordShiftRightAVariable();
+	void SRA();
 
-	void DWordShiftRightL();
+	void SRAV();
 
-	void DWordShiftRightL32();
+	void SRL();
 
-	void DWordShiftRightLVariable();
+	void SRLV();
 
-	void Nor();
+	void XOR();
 
-	void Or();
-
-	void OrImmediate();
-
-	void ShiftLeft();
-
-	void ShiftLeftVariable();
-
-	void ShiftRightA();
-
-	void ShiftRightAVariable();
-
-	void ShiftRightL();
-
-	void ShiftRightLVariable();
-
-	void Xor();
-
-	void XorImmediate();
+	void XORI();
 
 
 	// --- branching ---
 
-	void BranchEqual();
+	void BEQ();
 
-	void BranchEqualLikely();
+	void BEQL();
 
-	void BranchGreater0();
+	void BGEZ();
 
-	void BranchGreater0Likely();
+	void BGEZAL();
 
-	void BranchGreaterEqual0();
+	void BGEZALL();
 
-	void BranchGreaterEqual0LinkLikely();
+	void BGEZL();
 
-	void BranchLess0();
+	void BGTZ();
 
-	void BranchLess0Likely();
+	void BGTZL();
 
-	void BranchLess0Link();
+	void BLE();
 
-	void BranchLess0LinkLikely();
+	void BLEZ();
 
-	void BranchLessEqual0();
+	void BLEZL();
 
-	void BranchLessEqual0Likely();
+	void BLTZ();
 
-	void BranchNotEqual();
+	void BLTZAL();
 
-	void BranchNotEqualLikely();
+	void BLTZALL();
+
+	void BLTZL();
+
+	void BNE();
+
+	void BNEL();
 
 
 	// --- interrupts ---
 
-	void Break();
-
+	void BREAK();
 
 	// --- moving ---
 
-	void DWordMoveFromC0();
+	void MFHI();
 
-	void DWordMoveToC0();
+	void MFLO();
 
-	void MoveFromC0();
+	void MOVN();
 
-	void MoveFromHi();
+	void MOVZ();
 
-	void MoveFromLo();
+	void MTHI();
 
-	void MoveToC0();
-
-	void MoveToHi();
-
-	void MoveToLo();
+	void MTLO();
 
 
 	// --- jump ---
 
-	void ExceptionReturn();
+	void J();
 
-	void Jump();
+	void JAL();
 
-	void JumpLink();
+	void JALR();
 
-	void JumpLinkRegister();
+	void JR();
 
-	void JumpRegister();
-
-	void SystemCall();
+	void SYSCALL();
 
 
 	// --- load/store ---
 
-	void LoadByte();
+	void LA();
 
-	void LoadByteUnsigned();
+	void LB();
 
-	void LoadDWord();
+	void LBU();
 
-	void LoadDWordLeft();
+	void LD();
 
-	void LoadDWordRight();
+	void LDL();
 
-	void LoadHWord();
+	void LDR();
 
-	void LoadHWordUnsigned();
+	void LDXC1();
 
-	void LoadLinked();
+	void LH();
 
-	void LoadLinkedDWord();
+	void LHU();
 
-	void LoadUpperImmediate();
+	void LI();
 
-	void LoadWord();
+	void LL();
 
-	void LoadWordUnsigned();
+	void LLD();
 
-	void StoreByte();
+	void LUI();
 
-	void StoreConditional();
+	void LW();
 
-	void StoreConditionalDWord();
+	void LWL();
 
-	void StoreDWord();
+	void LWR();
 
-	void StoreDWordLeft();
+	void LWU();
 
-	void StoreDWordRight();
+	void LWXC1();
 
-	void StoreHWord();
+	void SB();
 
-	void StoreWord();
+	void SC();
 
-	void StoreWordLeft();
+	void SCD();
 
-	void StoreWordRight();
+	void SD();
+
+	void SDL();
+
+	void SDR();
+
+	void SDXC1();
+
+	void SH();
+
+	void SW();
+
+	void SWL();
+
+	void SWR();
+
+	void SWXC1();
 
 
 	// --- state control ---
 
-	void SetLessThan();
+	void SLT();
 
-	void SetLessThanImmediate();
+	void SLTI();
 
-	void SetLessThanImmediateUnsigned();
-
-	void SetLessThanUnsigned();
+	void SLTIU();
 
 
 	// --- trapping ---
 
-	void TrapEqual();
+	void TEQ();
 
-	void TrapEqualImmediate();
+	void TEQI();
 
-	void TrapGreaterEqual();
+	void TGE();
 
-	void TrapGreaterEqualImmediate();
+	void TGEI();
 
-	void TrapGreaterEqualImmediateUnsigned();
+	void TGEIU();
 
-	void TrapGreaterEqualUnsigned();
+	void TGEU();
 
-	void TrapLessThan();
+	void TLT();
 
-	void TrapLessThanImmediate();
+	void TLTI();
 
-	void TrapLessThanImmediateUnsigned();
+	void TLTIU();
 
-	void TrapLessThanUnsigned();
+	void TLTU();
 
-	void TrapNotEqual();
+	void TNE();
 
-	void TrapNotEqualImmediate();
-
-
-	// --- TLB ---
-
-	void TLBProbe();
-
-	void TLBRead();
-
-	void TLBWriteIndexed();
-
-	void TLBWriteRandom();
+	void TNEI();
 
 
-	// --- misc ---
+	// --- serialisation ---
 
-	void Sync();
+	void SYNC();
+
+
+	// --- prefetch ---
+
+	void PREF();
+
+	void PREFX();
 };
 
 #endif // _MIPS_DEVICES_H

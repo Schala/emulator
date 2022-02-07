@@ -27,6 +27,8 @@ public:
 	std::unique_ptr<Expr6502> ParseValueExpr();
 	void Reset();
 private:
+	uint16_t m_lastBaseOffset;
+	uint16_t m_lastOffset;
 	Token6502 m_lastToken;
 	Lexer6502 m_lexer;
 	std::ifstream m_src;

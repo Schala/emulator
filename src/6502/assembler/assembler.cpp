@@ -72,7 +72,21 @@ std::unique_ptr<Expr6502> Assembler6502::ParseBinaryExpr(uint8_t precedence, Exp
 std::unique_ptr<Expr6502> Assembler6502::ParseIdentifierExpr()
 {
 	std::string_view name = m_lexer.LastIdentifier();
-	m_lastToken =
+
+	// macro/proc call?
+	if (m_lastToken == Token6502::OpenParenthesis)
+	{
+		std::vector<Expr6502Ptr> args;
+		m_lastToken = m_lexer.NextToken();
+
+		if (m_lastToken != Token6502::CloseParenthesis)
+			while (true)
+			{
+
+			}
+	}
+	else
+		return std::make_unique<VariableExpr6502>(name.c_str());
 }
 
 std::unique_ptr<Expr6502> Assembler6502::ParseParenthesesExpr()
@@ -85,7 +99,7 @@ std::unique_ptr<Expr6502> Assembler6502::ParsePrimary()
 {
 	switch (m_lastToken)
 	{
-		case Token6502::Identifier: return ParseIdentif
+		case Token6502::Identifier: return ParseIdentifierExpr();
 	}
 }
 
