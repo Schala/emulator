@@ -3,8 +3,8 @@
 C64::C64()://SDL_Renderer *renderer)
 	m_cycles(0),
 	m_tape(nullptr),
-	m_bus(Bus6502(0xFFFF)),
-	m_cpu(MOS6502(&m_bus, 0, 0x3FF)
+	m_bus(Bus6500(0xFFFF)),
+	m_cpu(MOS6500(&m_bus, 0, 0x3FF)
 {
 }
 
@@ -19,12 +19,12 @@ void C64::Clock()
 		m_cpu.Clock();
 }
 
-Bus6502 * C64::GetBus() const
+Bus6500 * C64::GetBus() const
 {
 	return &m_bus;
 }
 
-MOS6502 * C64::GetCPU() const
+MOS6500 * C64::GetCPU() const
 {
 	return &m_cpu;
 }

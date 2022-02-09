@@ -3,7 +3,7 @@
 
 #include "rom.h"
 
-class NES : public Processor
+class NES
 {
 public:
 	NES(SDL_Renderer *);

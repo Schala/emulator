@@ -3,8 +3,8 @@
 NES::NES(SDL_Renderer *renderer):
 	m_cycles(0),
 	m_rom(nullptr),
-	m_bus(Bus6502(0xFFFF)),
-	m_cpu(MOS6502(&m_bus, 0, 0x1FFF)),
+	m_bus(Bus6500(0xFFFF)),
+	m_cpu(MOS6500(&m_bus, 0, 0x1FFF)),
 	m_ppu(PPU2C02(*this, renderer))
 {
 }
@@ -23,7 +23,7 @@ void NES::Clock()
 		m_cpu.Clock();
 }
 
-Bus6502 * NES::GetBus()
+Bus6500 * NES::GetBus()
 {
 	return &m_bus;
 }
@@ -43,13 +43,13 @@ uint8_t NES::ReadByte(uint16_t addr) const
 {
 	// system ram
 	if (addr >= 0 && addr <= 0x1FFF)
-		return m_cpu.Read(addr & 0x7FF);
+		return m_cpu.ReadByte(addr & 0x7FF);
 	// PPU ram
 	else if (addr >= 0x2000 && addr <= 0x3FFF)
-		return m_ppu.CPURead(addr & 7);
+		return m_ppu.CPUReadByte(addr & 7);
 	// rom?
 	else
-		return m_rom->CPURead(addr);
+		return m_rom->CPUReadByte(addr);
 }
 
 void NES::Reset()
@@ -62,11 +62,11 @@ void NES::WriteByte(uint16_t addr, uint8_t data)
 {
 	// system ram
 	if (addr >= 0 && addr <= 0x1FFF)
-		m_cpu.Write(addr & 0x7FF, data);
+		m_cpu.WriteByte(addr & 0x7FF, data);
 	// PPU ram
 	else if (addr >= 0x2000 && addr <= 0x3FFF)
-		m_ppu.CPUWrite(addr & 7, data);
+		m_ppu.WriteByte(addr & 7, data);
 	// rom?
 	else
-		m_rom->CPUWrite(addr, data);
+		m_rom->WriteByte(addr, data);
 }
