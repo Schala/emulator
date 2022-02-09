@@ -83,12 +83,12 @@ const std::array<uint32_t, PPU2C02::PaletteSize> PPU2C02::Palette =
 };
 
 PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
-	Device(nes.GetBus(), 0, 0x3FFF),
+	Processor(nes.GetBus(), 0, 0x3FFF),
 	m_scanline(0),
 	m_cycle(0),
 	m_renderer(renderer),
 	m_nes(nes),
-	m_ppuBus(Bus6502(0x4000)),
+	m_ppuBus(Bus6500(0x4000)),
 	m_nameTbl(
 	{
 		Sprite(32, 32),
@@ -107,6 +107,7 @@ PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(renderer);
 
+	AddRange(&m_ppuBus, 0, 0x3FFF);
 	m_ppuBus.Add(this);
 }
 
@@ -128,41 +129,19 @@ void PPU2C02::Clock()
 	}
 }
 
-uint8_t PPU2C02::CPURead(uint16_t addr) const
+uint8_t PPU2C02::CPUReadByte(uint16_t addr) const
 {
-	uint8_t data = 0;
-
-	switch (addr)
-	{
-		case 0: break; // control
-		case 1: break; // mask
-		case 2: break; // status
-		case 3: break; // OAM address
-		case 4: break; // OAM data
-		case 5: break; // scroll
-		case 6: break; // PPU address
-		case 7: break; // PPU data
-	}
-
-	return data;
+	addr %= 8;
+	return ReadByte(addr, 1);
 }
 
-void PPU2C02::CPUWrite(uint16_t addr, uint8_t data)
+void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 {
-	switch (addr)
-	{
-		case 0: break; // control
-		case 1: break; // mask
-		case 2: break; // status
-		case 3: break; // OAM address
-		case 4: break; // OAM data
-		case 5: break; // scroll
-		case 6: break; // PPU address
-		case 7: break; // PPU data
-	}
+	addr %= 8;
+	WriteByte(addr, data, 1);
 }
 
-Bus6502 * PPU2C02::GetBus()
+Bus6500 * PPU2C02::GetBus()
 {
 	return &m_ppuBus;
 }
@@ -184,25 +163,7 @@ void PPU2C02::NextFrame()
 	SDL_RenderDrawPoint(m_renderer, m_cycle - 1, m_scanline);
 }*/
 
-uint8_t PPU2C02::Read(uint16_t addr) const
-{
-	addr &= 0x3FFF;
-
-	if (addr >= 0 && addr <= 0x1FFF) // pattern
-	else if (addr >= 0x2000 && addr <= 0x3EFF) // nametable
-	else // palette?
-}
-
 SDL_Color & PPU2C02::ReadRAMPaletteColor(uint8_t palette, uint8_t pixel) const
 {
 	return m_ramPalette[Read(0x3F00 + (palette << 2) + pixel)];
-}
-
-void PPU2C02::Write(uint16_t addr, uint8_t data)
-{
-	addr &= 0x3FFF;
-
-	if (addr >= 0 && addr <= 0x1FFF) // pattern
-	else if (addr >= 0x2000 && addr <= 0x3EFF) // nametable
-	else // palette?
 }

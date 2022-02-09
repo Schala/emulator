@@ -1,116 +1,141 @@
 #ifndef _CORE_DEVICES_H
 #define _CORE_DEVICES_H
 
-#include <bit>
-#include <concepts>
+#include <map>
 #include <string_view>
-#include <utility>
-#include <vector>
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
 class Bus;
 
+typedef std::vector<uint8_t>::iterator RAMIterator;
+
+struct AddressMapping
+{
+	bool isOwner;
+	size_t startAddress;
+	size_t endAddress;
+};
+
 // Base class for bus-connected devices
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
 class Device
 {
 public:
-	typedef Bus<AddressType, DataType, EndianType> BusType;
+	// Allocate a new device, given an initial owning bus
+	Device(Bus *);
 
-	// Allocate a new device, given an owning bus
-	Device(BusType *);
-
-	// Allocate a new device, given an owning bus, and one pair of start and end addresses in RAM
-	Device(BusType *, AddressType, AddressType);
+	// Allocate a new device, given an initial owning bus, and one pair of start and end addresses in RAM
+	Device(Bus *, size_t, size_t);
 
 	// Zero out the device's RAM occupation before disposal
 	virtual ~Device();
 
 	// Add an occupied address range in bus RAM
-	void AddRange(AddressType, AddressType);
+	void AddRange(size_t startAddr, size_t endAddr, size_t busIndex = 0, bool owner = true);
 
-	// Read data from RAM address
-	DataType Read(AddressType) const;
+	// Read RAM range
+	std::vector<uint8_t> Read(size_t addr, size_t size, size_t busIndex = 0) const;
 
 	// Read address from RAM address
-	AddressType ReadAddress(AddressType) const;
+	size_t ReadAddress(size_t addr, size_t busIndex = 0) const;
 
-	// Write data to RAM address
-	void Write(AddressType, DataType);
+	// Read byte from RAM address
+	uint8_t ReadByte(size_t addr, size_t busIndex = 0) const;
+
+	uint32_t ReadDWord(size_t addr, size_t busIndex = 0) const;
+
+	uint16_t ReadWord(size_t addr, size_t busIndex = 0) const;
+
+	void Write(size_t addr, const std::vector<uint8_t> &data, size_t busIndex = 0);
 
 	// Write address to RAM
-	void WriteAddress(AddressType, AddressType);
+	void WriteAddress(size_t addr, size_t vector, size_t busIndex = 0);
+
+	// Write data to RAM address
+	void WriteByte(size_t addr, uint8_t data, size_t busIndex = 0);
+
+	void WriteDWord(size_t addr, uint32_t data, size_t busIndex = 0);
+
+	void WriteWord(size_t addr, uint16_t data, size_t busIndex = 0);
 protected:
-	BusType *bus; // Should be a non-owned pointer so we can cast to derivatives
-	std::vector<std::pair<BusType::RAMIterator, BusType::RAMIterator>> addressMap;
+	std::vector<Bus *> buses; // Should be non-owned pointers so we can cast to derivatives
+	std::map<Bus *, std::vector<AddressMapping>> addressMap;
 };
 
-// Central processing unit
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-class CPU : public Device<AddressType, DataType, EndianType>
+class Processor : public Device
 {
 public:
 	// CPU clock operation (execute one instruction)
 	virtual void Clock() = 0;
+};
+
+// Central processing unit
+class CPU : public Processor
+{
+public:
+	CPU(Bus *, size_t, size_t, size_t, size_t, size_t);
 
 	// Disassemble from the specified address for the specified length
-	virtual void Disassemble(AddressType, AddressType) = 0;
-
-	// Fetch and cache a byte from the cached absolute address
-	virtual DataType Fetch() = 0;
+	virtual void Disassemble(size_t, size_t) = 0;
 
 	// Read address from RAM
-	AddressType FetchAddress();
+	virtual size_t FetchAddress() = 0;
 
-	// Read data from last used address
-	DataType ReadFromLastAddress() const;
+	// Fetch and cache a byte from the cached absolute address
+	virtual uint8_t FetchByte() = 0;
 
-	// Read byte from ROM
-	virtual DataType ReadROM() = 0;
+	// Read byte from last used address
+	uint8_t ReadByteFromLastAddress() const;
 
 	// Read address from ROM
-	AddressType ReadROMAddress();
+	virtual size_t ReadROMAddress() = 0;
+
+	// Read byte from ROM
+	uint8_t ReadROMByte();
+
+	uint32_t ReadROMDWord();
+
+	uint16_t ReadROMWord();
 
 	// Reset CPU state
 	virtual void Reset() = 0;
 
-	void SetResetVector(AddressType);
+	// Read address from stack
+	virtual size_t StackReadAddress() = 0;
 
 	// Read data from stack
-	DataType StackRead();
-
-	// Read address from stack
-	AddressType StackReadAddress();
-
-	// Write data to stack
-	void StackWrite(DataType);
+	virtual uint8_t StackReadByte() = 0;
 
 	// Write address to stack
-	void StackWriteAddress(AddressType);
+	virtual void StackWriteAddress(size_t) = 0;
+
+	// Write data to stack
+	virtual void StackWriteByte(uint8_t) = 0;
 
 	// Fetch an address, write to it, and return the address
-	AddressType WriteToFetchedAddress(DataType);
+	size_t WriteByteToFetchedAddress(uint8_t);
 
-	// Write data to last used address
-	void WriteToLastAddress(DataType);
+	// Write byte to last used address
+	void WriteByteToLastAddress(uint8_t);
 protected:
-	std::vector<std::pair<AddressType, std::string_view>> disassembly;
+	size_t lastAbsAddress;
+	size_t lastRelAddress;
+	size_t counter;
+	size_t stackBase;
+	size_t stackInit;
+	size_t stackPtr;
+	size_t resetVector;
+	std::vector<std::pair<size_t, std::string_view>> disassembly;
 };
 
 // Provides read/write access between various devices and the RAM
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
 class Bus
 {
 public:
-	typedef Device<AddressType, DataType, EndianType> DeviceType;
-	typedef std::vector<DataType>::iterator RAMIterator;
-
-	Bus(AddressType);
+	Bus(size_t);
 	virtual ~Bus();
 
 	// Device operations
-	void Add(DeviceType *);
-	void Remove(DeviceType *);
+	void Add(Device *);
+	void Remove(Device *);
 
 	// dump RAM to file
 	//void DumpRAM(size_t);
@@ -118,23 +143,35 @@ public:
 	// Iterator to beginning of RAM, for assigning device RAM iterators
 	inline RAMIterator GetRAMIterator();
 
-	// load data into RAM at offset
-	RAMIterator LoadIntoRAM(const std::vector<uint8_t> &, AddressType);
-
-	// Read data from RAM address
-	DataType Read(AddressType) const;
+	// Read RAM range
+	std::vector<uint8_t> Read(size_t, size_t) const;
 
 	// Read address from RAM address
-	AddressType ReadAddress(AddressType) const;
+	virtual size_t ReadAddress(size_t) const = 0;
 
-	// Write data to RAM address
-	void Write(AddressType, DataType);
+	// Read byte from RAM address
+	uint8_t ReadByte(size_t) const;
+
+	// Read double word from address
+	virtual uint32_t ReadDWord(size_t) const;
+
+	// Read word from address
+	virtual uint16_t ReadWord(size_t) const;
+
+	void Write(size_t, const std::vector<uint8_t> &);
 
 	// Write address to RAM address
-	void WriteAddress(AddressType, AddressType);
+	virtual void WriteAddress(size_t, size_t) = 0;
+
+	// Write data to RAM address
+	void WriteByte(size_t, uint8_t);
+
+	virtual void WriteDWord(size_t, uint32_t);
+
+	virtual void WriteWord(size_t, uint16_t);
 protected:
 	std::vector<uint8_t> ram;
-	std::vector<DeviceType *> devices; // non-owning
+	std::vector<Device *> devices; // non-owning
 };
 
 #endif // _CORE_DEVICES_H

@@ -1,163 +1,224 @@
 #include <algorithm>
-#include <boost/endian/conversion.hpp>
 #include <cstring>
 #include <utility>
 
 #include "devices.h"
 
-using be = boost::endian;
-
 // Device
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Device<AddressType, DataType, EndianType>::Device(Device<AddressType, DataType, EndianType>::BusType *bus):
+Device::Device(Bus *bus):
 	bus(bus)
 {
-	bus->Add(this);
+	buses.push_back(bus);
+	buses[busIndex]->Add(this);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Device<AddressType, DataType, EndianType>::Device(Device<AddressType, DataType, EndianType>::BusType *bus,
-		AddressType startAddr, AddressType endAddr):
+Device::Device(Bus *bus, size_t startAddr, size_t endAddr):
 	bus(bus)
 {
-	AddRange(startAddr, endAddr);
-	bus->Add(this);
+	buses.push_back(bus);
+	AddRange(0, startAddr, endAddr);
+	buses[busIndex]->Add(this);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Device<AddressType, DataType, EndianType>::~Device()
+Device::~Device()
 {
-	// zero out the occupied RAM
-	for (auto &addrRange : addressMap)
-		std::fill(addrRange.first, addrRange.second, 0);
-
-	bus->Remove(this);
+	// zero out the occupied RAM, if owned
+	for (auto &[bus, mappings] : addressMap)
+	{
+		for (auto &mapping : mappings)
+			if (mapping.isOwner)
+				std::fill(buses[busIndex]->GetRAMIterator() + mapping.startAddress,
+					buses[busIndex]->GetRAMIterator() + mapping.endAddress, 0);
+		buses[busIndex]->Remove(this);
+	}
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-void Device<AddressType, DataType, EndianType>::AddRange(AddressType startAddr, AddressType endAddr)
+void Device::AddRange(size_t startAddr, size_t endAddr, size_t busIndex, bool owner)
 {
-	addressMap.push_back(std::make_pair(
-		bus->GetRAMIterator() + startAddr,
-		bus->GetRAMIterator() + (endAddr + 1)
-	));
+	addressMap[buses[busIndex]].push_back({ owner, startAddr, endAddr + 1 });
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-DataType Device<AddressType, DataType, EndianType>::Write(AddressType addr, DataType data)
+std::vector<uint8_t> Device::Read(size_t addr, size_t size, size_t busIndex) const
 {
-	return bus->Write(addr, data);
+	addr %= addressMap[buses[busIndex]].endAddress;
+	return buses[busIndex]->Read(addr, size);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-AddressType Device<AddressType, DataType, EndianType>::WriteAddress(AddressType addr, AddressType outAddr)
+size_t Device::ReadAddress(size_t addr, size_t busIndex) const
 {
-	return bus->WriteAddress(addr, outAddr);
+	addr %= addressMap[buses[busIndex]].endAddress;
+	return buses[busIndex]->ReadAddress(addr);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-DataType Device<AddressType, DataType, EndianType>::Read(AddressType addr)
+uint8_t Device::ReadByte(size_t addr, size_t busIndex) const
 {
-	return bus->Read(addr);
+	addr %= addressMap[buses[busIndex]].endAddress;
+	return buses[busIndex]->ReadByte(addr);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-AddressType Device<AddressType, DataType, EndianType>::ReadAddress(AddressType addr)
+uint32_t Device::ReadDWord(size_t addr, size_t busIndex) const
 {
-	return bus->ReadAddress(addr);
+	addr %= addressMap[buses[busIndex]].endAddress;
+	return buses[busIndex]->ReadDWord(addr);
 }
+
+uint16_t Device::ReadWord(size_t addr, size_t busIndex) const
+{
+	addr %= addressMap[buses[busIndex]].endAddress;
+	return buses[busIndex]->ReadWord(addr);
+}
+
+void Device::Write(size_t addr, const std::vector<uint8_t> &data, size_t busIndex)
+{
+	addr %= addressMap[buses[busIndex]].endAddress;
+	return buses[busIndex]->Write(addr, data);
+}
+
+void Device::WriteAddress(size_t addr, size_t vector, size_t busIndex)
+{
+	addr %= addressMap[buses[busIndex]].endAddress;
+	buses[busIndex]->WriteAddress(addr, vector);
+}
+
+void Device::WriteByte(size_t addr, uint8_t data, size_t busIndex)
+{
+	addr %= addressMap[buses[busIndex]].endAddress;
+	buses[busIndex]->WriteByte(addr, data);
+}
+
+void Device::WriteDWord(size_t addr, uint32_t data, size_t busIndex)
+{
+	addr %= addressMap[buses[busIndex]].endAddress;
+	buses[busIndex]->WriteDWord(addr, data);
+}
+
+void Device::WriteWord(size_t addr, uint16_t data, size_t busIndex)
+{
+	addr %= addressMap[buses[busIndex]].endAddress;
+	buses[busIndex]->WriteWord(addr, data);
+}
+
 
 // CPU
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-AddressType CPU<AddressType, DataType, EndianType>::FetchAddress()
+CPU::CPU(Bus *bus, size_t startAddr, size_t endAddr, size_t resetVector,
+		size_t stackBase, size_t stackInit):
+	Device(bus, startAddr, endAddr),
+	stackBase(stackBase),
+	stackInit(stackInit),
+	stackPtr(stackInit),
+	resetVector(resetVector)
 {
+}
 
+uint8_t CPU::ReadROMByte()
+{
+	return ReadByte(counter++);
+}
+
+uint32_t CPU::ReadROMDWord()
+{
+	uint32_t value = ReadDWord(counter);
+	counter += 4;
+	return value;
+}
+
+uint16_t CPU::ReadROMWord()
+{
+	uint16_t value = ReadWord(counter);
+	counter += 2;
+	return value;
+}
+
+size_t CPU::WriteByteToFetchedAddress(uint8_t data)
+{
+	size_t addr = FetchAddress();
+	WriteByte(addr, data);
+	return addr;
+}
+
+void CPU::WriteByteToLastAddress(uint8_t data)
+{
+	WriteByte(lastAbsAddress, data);
 }
 
 
 // Bus
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Bus<AddressType, DataType, EndianType>::Bus(AddressType ramSize):
-	m_ram(std::vector<uint8_t>(ramSize, 0))
+Bus::Bus(size_t ramSize):
+	ram(std::vector<uint8_t>(ramSize, 0))
 {
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Bus<AddressType, DataType, EndianType>::~Bus()
+Bus::~Bus()
 {
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-void Bus<AddressType, DataType, EndianType>::Add(Device *dev)
+void Bus::Add(Device *dev)
 {
-	m_devices.push_back(dev);
+	devices.push_back(dev);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-void Bus<AddressType, DataType, EndianType>::Remove(Device *dev)
+void Bus::Remove(Device *dev)
 {
-	auto it = std::find_if(m_devices.begin(), m_devices.end(),
+	auto it = std::find_if(devices.begin(), devices.end(),
 		[&](Device *d) { return d == dev; });
-	if (it != m_devices.end())
-		m_devices.erase(it);
+	if (it != devices.end())
+		devices.erase(it);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Bus<AddressType, DataType, EndianType>::RAMIterator Bus<AddressType, DataType, EndianType>::GetRAMIterator()
+RAMIterator Bus::GetRAMIterator()
 {
-	return m_ram.begin();
-}
-
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-Bus<AddressType, DataType, EndianType>::RAMIterator Bus<AddressType, DataType, EndianType>::LoadIntoRAM(
-	const std::vector<uint8_t> &data, AddressType addr)
-{
-	return std::copy(data.begin(), data.end(), m_ram.begin() + addr);
+	return ram.begin();
 }
 
 /*
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-void Bus<AddressType, DataType, EndianType>::DumpRAM(size_t iteration)
+
+void Bus::DumpRAM(size_t iteration)
 {
 }*/
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-DataType Bus<AddressType, DataType, EndianType>::Read(AddressType addr) const
+std::vector<uint8_t> Bus::Read(size_t addr, size_t size) const;
 {
-	DataType value = 0;
+	std::vector<uint8_t> data(size, 0);
 
-	std::memcpy(&value, &bus[addr], sizeof(DatType));
+	std::copy(ram.begin() + addr, ram.begin() + addr + size, data.begin());
 
-	return EndianType == std::endian::little ? value : be::native_to_big(value);
+	return std::move(data);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-DataType Bus<AddressType, DataType, EndianType>::ReadAddress(AddressType addr) const
+uint8_t Bus::ReadByte(size_t addr) const
 {
-	AddressType retAddr = 0;
-
-	std::memcpy(&retAddr, &bus[addr], sizeof(AddressType));
-
-	return EndianType == std::endian::little ? retAddr : be::native_to_big(retAddr);
+	return ram.at(addr);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-void Bus<AddressType, DataType, EndianType>::Write(AddressType addr, DataType data)
+uint32_t Bus::ReadDWord(size_t addr) const
 {
-	if (EndianType != std::endian::native)
-		be::endian_reverse_inplace(data);
-
-	std::memcpy(&bus[addr], &data, sizeof(DataType));
+	return ram.at(addr);
 }
 
-template <std::unsigned_integral AddressType, std::unsigned_integral DataType, std::endian EndianType>
-void Bus<AddressType, DataType, EndianType>::WriteAddress(AddressType addr, AddressType outAddr)
+uint16_t Bus::ReadWord(size_t addr) const
 {
-	if (EndianType != std::endian::native)
-		be::endian_reverse_inplace(outAddr);
+	return ram.at(addr);
+}
 
-	std::memcpy(&bus[addr], &outAddr, sizeof(AddressType));
+void Bus::Write(size_t addr, const std::vector<uint8_t> &data)
+{
+	std::copy(data.begin(), data.end(), ram.begin() + addr);
+}
+
+void Bus::WriteByte(size_t addr, uint8_t data)
+{
+	ram[addr] = data;
+}
+
+void Bus::WriteDWord(size_t addr, uint32_t data)
+{
+	WriteByte(addr, data & 255);
+}
+
+void Bus::WriteWord(size_t addr, uint16_t data)
+{
+	WriteByte(addr, data & 255);
 }

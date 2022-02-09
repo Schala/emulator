@@ -13,8 +13,8 @@ public:
 	virtual bool PPUMapRead(uint16_t, uint32_t &) = 0;
 	virtual bool PPUMapWrite(uint16_t, uint32_t &) = 0;
 protected:
-	uint8_t m_numPRGBanks;
-	uint8_t m_numCHRBanks;
+	uint8_t numPRGBanks;
+	uint8_t numCHRBanks;
 };
 
 #endif // _NES_MAPPERS_H

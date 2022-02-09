@@ -1,50 +1,75 @@
-#ifndef _6502_DEVICES_H
-#define _6502_DEVICES_H
+#ifndef _6500_DEVICES_H
+#define _6500_DEVICES_H
 
 #include <array>
 
 #include "../core/devices.h"
 
-class MOS6502;
+class MOS6500;
 
-typedef uint8_t (MOS6502::*Instruction6502)();
+typedef uint8_t (MOS6500::*Instruction6500)();
+
+class Bus6500 : public Bus
+{
+public:
+	// Read address from RAM address
+	size_t ReadAddress(size_t) const override;
+
+	// Write address to RAM address
+	void WriteAddress(size_t, size_t) override;
+};
 
 // Metadata for the CPU's various operations
-struct Opcode6502
+struct Opcode6500
 {
 	// Constructor needed because otherwise we'll get an array error
-	Opcode6502(uint8_t, Instruction6502, Instruction6502, std::string_view);
+	Opcode6500(uint8_t, Instruction6500, Instruction6500, std::string_view);
 
 	uint8_t Cycles;
-	Instruction6502 AddressMode;
-	Instruction6502 Operation;
+	Instruction6500 AddressMode;
+	Instruction6500 Operation;
 	std::string_view Mnemonic;
 };
 
 // The CPU processes data available via its bus
-class MOS6502 : public CPU<uint16_t, uint8_t>
+class MOS6500 : public CPU
 {
 public:
 	// Allocate a new CPU, given a parent bus, and start and end addresses in RAM
-	MOS6502(BusType *, uint16_t, uint16_t);
+	MOS6500(Bus6500 *, uint16_t, uint16_t);
 
 	// CPU clock operation (execute one instruction)
 	void Clock() override;
 
 	// Disassemble from the specified address for the specified length
-	void Disassemble(uint16_t, uint16_t) override;
+	void Disassemble(size_t, size_t) override;
+
+	// Read address from RAM
+	size_t FetchAddress() override;
 
 	// Fetch and cache a byte from the cached absolute address
-	uint8_t Fetch() override;
+	uint8_t FetchByte() override;
 
 	// Returns a string containing info of the CPU stack
 	std::string FrameInfo() const;
 
-	// Read byte from ROM
-	uint8_t ReadROM() override;
+	// Read address from ROM
+	size_t ReadROMAddress() override;
 
 	// Reset CPU state
 	void Reset() override;
+
+	// Read address from stack
+	size_t StackReadAddress() override;
+
+	// Read data from stack
+	uint8_t StackReadByte() override;
+
+	// Write address to stack
+	void StackWriteAddress(size_t) override;
+
+	// Write data to stack
+	void StackWriteByte(uint8_t) override;
 
 	// Return state register as a byte
 	uint8_t StateByte() const;
@@ -360,39 +385,17 @@ public:
 	// SBC + NOP
 	uint8_t USBC();
 private:
-	static constexpr uint16_t InterruptRequestAddress = 0xFFFE;
-
-	// for some unstable illegal opcodes
-	static constexpr uint8_t MagicValue = 255;
-
-	static constexpr uint16_t NonMaskableInterruptAddress = 0xFFFA;
-
-	// Reset address
-	static constexpr uint16_t ResetAddress = 0xFFFC;
-
-	// Reset vector address
-	static constexpr uint16_t ResetVectorAddress = 0xFFFD;
-
-	// stack offset in RAM
-	static constexpr uint16_t StackBaseAddress = 256;
-
-	// stack pointer initial offset
-	static constexpr uint16_t StackPtrInitAddress = 253;
-
-	static const std::array<Opcode6502, 256> Ops;
+	static const std::array<Opcode6500, 256> Ops;
 
 	uint8_t m_cache; // last read byte
 	uint8_t m_cycles; // remaining cycles for current operation
 	uint8_t m_lastOp;
-	uint8_t m_lastRelAddr;
-	uint16_t m_lastAbsAddr;
 
 	struct Registers
 	{
 		uint8_t a; // accumulator
 		uint8_t x;
 		uint8_t y;
-		uint8_t s; // stack pointer
 
 		struct State
 		{
@@ -406,8 +409,6 @@ private:
 				v : 1, // overflow
 				n : 1; // negative
 		} p;
-
-		uint16_t pc; // program counter
 	} m_regs;
 
 	// Common functionality for branch instructions
@@ -432,4 +433,4 @@ private:
 	void SetNegativeZero(uint16_t);
 };
 
-#endif // _6502_DEVICES_H
+#endif // _6500_DEVICES_H

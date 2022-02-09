@@ -12,7 +12,7 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 	m_nes(nes)
 {
 	std::ifstream romFile(path, std::ios::binary);
-	romFile.read(std::bit_cast<char *>(&m_header), HeaderSize);
+	romFile.read(std::bit_cast<char *>(&m_header), 16);
 
 	if (std::equal(m_header.magic.begin(), m_header.magic.end(), Magic.begin()))
 	{
@@ -26,31 +26,35 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 
 		switch (m_mapperID)
 		{
-			case 0: m_mapper = new NROM(m_header.prgPages, m_header.chrPages); break;
+			case 0:
+				m_mapper = new NROM(m_header.prgPages, m_header.chrPages);
+				Write(0x8000, m_prg);
+				break;
 			default:
 				throw std::runtime_error(fmt::format("Unsupported mapper ID: {}", m_mapperID));
 		}
 	}
 
-	nes.GetPPU()->GetBus()->Add(this);
+	buses.push_back(nes.GetPPU()->GetBus());
+	AddRange(0, 0x3FFF, buses.last(), true);
+	buses.last()->Add(this);
 }
 
 NESROM::~NESROM()
 {
-	m_nes.GetPPU()->GetBus()->Remove(this);
 	if (m_mapper) delete m_mapper;
 }
 
-uint8_t NESROM::CPURead(uint16_t addr) const
+uint8_t NESROM::CPUReadByte(uint16_t addr) const
 {
 	uint32_t mappedAddr = 0;
 
 	if (m_mapper->CPUMapRead(addr, mappedAddr))
-		return m_prg[mappedAddr];
+		return ReadByte(mappedAddr];
 	return 0;
 }
 
-void NESROM::CPUWrite(uint16_t addr, uint8_t data)
+void NESROM::CPUWriteByte(uint16_t addr, uint8_t data)
 {
 	uint32_t mappedAddr = 0;
 
@@ -58,7 +62,7 @@ void NESROM::CPUWrite(uint16_t addr, uint8_t data)
 		m_prg[mappedAddr] = data;
 }
 
-uint8_t NESROM::PPURead(uint16_t addr) const
+uint8_t NESROM::PPUReadByte(uint16_t addr) const
 {
 	uint32_t mappedAddr = 0;
 
@@ -67,7 +71,7 @@ uint8_t NESROM::PPURead(uint16_t addr) const
 	return 0;
 }
 
-void NESROM::PPUWrite(uint16_t addr, uint8_t data)
+void NESROM::PPUWriteByte(uint16_t addr, uint8_t data)
 {
 	uint32_t mappedAddr = 0;
 

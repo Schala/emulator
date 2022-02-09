@@ -9,7 +9,7 @@ bool NROM::CPUMapRead(uint16_t addr, uint32_t &mappedAddr)
 	if (addr >= 0x8000 && addr <= 0xFFFF)
 	{
 		// Mirror the ROM read based on the ROM file offset, pending 16kb or 32kb
-		mappedAddr = addr & (m_numPRGBanks > 1 ? 0x7FFF : 0x3FFF);
+		mappedAddr = addr & (numPRGBanks > 1 ? 0x7FFF : 0x3FFF);
 		return true;
 	}
 
@@ -18,7 +18,7 @@ bool NROM::CPUMapRead(uint16_t addr, uint32_t &mappedAddr)
 
 bool NROM::CPUMapWrite(uint16_t addr, uint32_t &mappedAddr)
 {
-	return CPUMapRead(addr, mappedAddr);
+	return false;
 }
 
 bool NROM::PPUMapRead(uint16_t addr, uint32_t &mappedAddr)

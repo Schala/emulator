@@ -14,19 +14,17 @@ public:
 	~NESROM();
 
 	// Read from CPU bus
-	uint8_t CPURead(uint16_t) const;
+	uint8_t CPUReadByte(uint16_t) const;
 
 	// Write to CPU bus
-	void CPUWrite(uint16_t, uint8_t);
+	void CPUWriteByte(uint16_t, uint8_t);
 
 	// Read from PPU bus
-	uint8_t PPURead(uint16_t) const;
+	uint8_t PPUReadByte(uint16_t) const;
 
 	// Write to PPU bus
-	void PPUWrite(uint16_t, uint8_t);
+	void PPUWriteByte(uint16_t, uint8_t);
 private:
-	static constexpr size_t HeaderSize = 16;
-
 	// File header magic
 	static constexpr std::array<char, 4> Magic = { 'N', 'E', 'S', 26 };
 

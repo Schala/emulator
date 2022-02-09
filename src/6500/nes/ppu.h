@@ -9,7 +9,7 @@
 class NES;
 
 // Picture processor unit for the NES
-class PPU2C02 : public Device
+class PPU2C02 : public Processor
 {
 public:
 	static const std::array<uint32_t, 64> Palette;
@@ -19,15 +19,15 @@ public:
 	~PPU2C02();
 
 	// Advance the clock, which is relentless
-	void Clock();
+	void Clock() override;
 
 	// Read from CPU bus
-	uint8_t CPURead(uint16_t) const;
+	uint8_t CPUReadByte(uint16_t) const;
 
 	// Write to CPU bus
-	void CPUWrite(uint16_t, uint8_t);
+	void CPUWriteByte(uint16_t, uint8_t);
 
-	Bus6502 * GetBus();
+	Bus6500 * GetBus();
 
 	bool IsFrameDone() const;
 
@@ -35,21 +35,9 @@ public:
 
 	//void NoiseTest();
 
-	// Read byte from RAM address
-	uint8_t Read(uint16_t) const;
-
 	// Return the color from the palette in RAM
 	SDL_Color & ReadRAMPaletteColor(uint8_t, uint8_t) const;
-
-	// Write byte to RAM address
-	void Write(uint16_t, uint8_t);
 private:
-	// Ending offset in CPU bus RAM
-	static constexpr uint16_t CPUBusEndAddress = 0x3FFF;
-
-	// Starting offset in the CPU bus RAM
-	static constexpr uint16_t CPUBusStartAddress = 0x2000;
-
 	struct
 	{
 		bool
@@ -60,7 +48,7 @@ private:
 	uint16_t m_cycle; // screen column
 	SDL_Renderer *m_renderer;
 	NES &m_nes;
-	Bus6502 m_ppuBus; // dedicated second bus
+	Bus6500 m_ppuBus; // dedicated second bus
 	std::array<Sprite, 2> m_nameTbl;
 	std::array<Sprite, 2> m_patTbl;
 	Sprite m_ramPalette;

@@ -39,7 +39,7 @@ void NES::LoadROM(const std::filesystem::path &path)
 	m_rom = new NESROM(*this, path);
 }
 
-uint8_t NES::Read(uint16_t addr) const
+uint8_t NES::ReadByte(uint16_t addr) const
 {
 	// system ram
 	if (addr >= 0 && addr <= 0x1FFF)
@@ -58,7 +58,7 @@ void NES::Reset()
 	m_cycles = 0;
 }
 
-void NES::Write(uint16_t addr, uint8_t data)
+void NES::WriteByte(uint16_t addr, uint8_t data)
 {
 	// system ram
 	if (addr >= 0 && addr <= 0x1FFF)
