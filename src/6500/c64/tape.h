@@ -12,8 +12,6 @@ class C64Tape : public Device
 public:
 	C64Tape(C64 &, const std::filesystem::path &);
 private:
-	static constexpr size_t DirEntrySize = 32;
-	static constexpr size_t HeaderSize = 64;
 	static constexpr std::array<char, 4> Magic = { 'C', '6', '4', 'S' };
 
 	struct DirectoryEntry

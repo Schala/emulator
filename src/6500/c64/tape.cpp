@@ -11,7 +11,7 @@ C64Tape::C64Tape(C64 &c64, const std::filesystem::path &path):
 	m_c64(c64)
 {
 	std::ifstream tapeFile(path, std::ios::binary);
-	tapeFile.read(std::bit_cast<char *>(&m_header), HeaderSize);
+	tapeFile.read(std::bit_cast<char *>(&m_header), 64);
 
 	if (std::equal(m_header.sig.begin(), m_header.sig.begin() + 4, Magic.begin()))
 	{
@@ -21,7 +21,7 @@ C64Tape::C64Tape(C64 &c64, const std::filesystem::path &path):
 		{
 			DirectoryEntry entry;
 
-			tapeFile.read(std::bit_cast<char *>(&entry), DirEntrySize);
+			tapeFile.read(std::bit_cast<char *>(&entry), 32);
 			boost::endian::big_to_native_inplace(entry.fileOffset);
 
 			// map the RAM
