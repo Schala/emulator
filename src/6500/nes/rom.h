@@ -14,13 +14,13 @@ public:
 	~NESROM();
 
 	// Read from CPU bus
-	uint8_t CPUReadByte(uint16_t) const;
+	uint8_t CPUReadByte(uint16_t);
 
 	// Write to CPU bus
 	void CPUWriteByte(uint16_t, uint8_t);
 
 	// Read from PPU bus
-	uint8_t PPUReadByte(uint16_t) const;
+	uint8_t PPUReadByte(uint16_t);
 
 	// Write to PPU bus
 	void PPUWriteByte(uint16_t, uint8_t);

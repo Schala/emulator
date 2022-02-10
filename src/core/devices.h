@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string_view>
+#include <vector>
 
 class Bus;
 
@@ -32,29 +33,29 @@ public:
 	void AddRange(size_t startAddr, size_t endAddr, size_t busIndex = 0, bool owner = true);
 
 	// Read RAM range
-	std::vector<uint8_t> Read(size_t addr, size_t size, size_t busIndex = 0) const;
+	std::vector<uint8_t> Read(size_t addr, size_t size, size_t busIndex = 0, size_t mappingIndex = 0);
 
 	// Read address from RAM address
-	size_t ReadAddress(size_t addr, size_t busIndex = 0) const;
+	size_t ReadAddress(size_t addr, size_t busIndex = 0, size_t mappingIndex = 0);
 
 	// Read byte from RAM address
-	uint8_t ReadByte(size_t addr, size_t busIndex = 0) const;
+	uint8_t ReadByte(size_t addr, size_t busIndex = 0, size_t mappingIndex = 0);
 
-	uint32_t ReadDWord(size_t addr, size_t busIndex = 0) const;
+	uint32_t ReadDWord(size_t addr, size_t busIndex = 0, size_t mappingIndex = 0);
 
-	uint16_t ReadWord(size_t addr, size_t busIndex = 0) const;
+	uint16_t ReadWord(size_t addr, size_t busIndex = 0, size_t mappingIndex = 0);
 
-	void Write(size_t addr, const std::vector<uint8_t> &data, size_t busIndex = 0);
+	void Write(size_t addr, const std::vector<uint8_t> &data, size_t busIndex = 0, size_t mappingIndex = 0);
 
 	// Write address to RAM
-	void WriteAddress(size_t addr, size_t vector, size_t busIndex = 0);
+	void WriteAddress(size_t addr, size_t vector, size_t busIndex = 0, size_t mappingIndex = 0);
 
 	// Write data to RAM address
-	void WriteByte(size_t addr, uint8_t data, size_t busIndex = 0);
+	void WriteByte(size_t addr, uint8_t data, size_t busIndex = 0, size_t mappingIndex = 0);
 
-	void WriteDWord(size_t addr, uint32_t data, size_t busIndex = 0);
+	void WriteDWord(size_t addr, uint32_t data, size_t busIndex = 0, size_t mappingIndex = 0);
 
-	void WriteWord(size_t addr, uint16_t data, size_t busIndex = 0);
+	void WriteWord(size_t addr, uint16_t data, size_t busIndex = 0, size_t mappingIndex = 0);
 protected:
 	std::vector<Bus *> buses; // Should be non-owned pointers so we can cast to derivatives
 	std::map<Bus *, std::vector<AddressMapping>> addressMap;
@@ -63,6 +64,12 @@ protected:
 class Processor : public Device
 {
 public:
+	// Allocate a new device, given an initial owning bus
+	Processor(Bus *);
+
+	// Allocate a new device, given an initial owning bus, and one pair of start and end addresses in RAM
+	Processor(Bus *, size_t, size_t);
+
 	// CPU clock operation (execute one instruction)
 	virtual void Clock() = 0;
 };
@@ -83,7 +90,7 @@ public:
 	virtual uint8_t FetchByte() = 0;
 
 	// Read byte from last used address
-	uint8_t ReadByteFromLastAddress() const;
+	uint8_t ReadByteFromLastAddress();
 
 	// Read address from ROM
 	virtual size_t ReadROMAddress() = 0;
@@ -97,6 +104,8 @@ public:
 
 	// Reset CPU state
 	virtual void Reset() = 0;
+
+	void SetCounter(size_t);
 
 	// Read address from stack
 	virtual size_t StackReadAddress() = 0;

@@ -22,7 +22,7 @@ public:
 	void Clock() override;
 
 	// Read from CPU bus
-	uint8_t CPUReadByte(uint16_t) const;
+	uint8_t CPUReadByte(uint16_t);
 
 	// Write to CPU bus
 	void CPUWriteByte(uint16_t, uint8_t);
@@ -35,8 +35,14 @@ public:
 
 	//void NoiseTest();
 
+	// Read from PPU bus
+	uint8_t PPUReadByte(uint16_t);
+
+	// Write to PPU bus
+	void PPUWriteByte(uint16_t, uint8_t);
+
 	// Return the color from the palette in RAM
-	SDL_Color & ReadRAMPaletteColor(uint8_t, uint8_t) const;
+	SDL_Color ReadRAMPaletteColor(uint8_t, uint8_t);
 private:
 	struct
 	{

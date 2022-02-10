@@ -28,6 +28,11 @@ Bus6500 * NES::GetBus()
 	return &m_bus;
 }
 
+MOS6500 * NES::GetCPU()
+{
+	return &m_cpu;
+}
+
 PPU2C02 * NES::GetPPU()
 {
 	return &m_ppu;
@@ -39,7 +44,7 @@ void NES::LoadROM(const std::filesystem::path &path)
 	m_rom = new NESROM(*this, path);
 }
 
-uint8_t NES::ReadByte(uint16_t addr) const
+uint8_t NES::ReadByte(uint16_t addr)
 {
 	// system ram
 	if (addr >= 0 && addr <= 0x1FFF)

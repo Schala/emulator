@@ -1,13 +1,12 @@
 #include <iostream>
 
-#include "6502/nes/nes.h"
+#include "nes.h"
 
 class Emulator : public Engine
 {
 public:
-	Emulator(const char *rom):
-		Engine(PPU2C02::NTSCFrameRate),
-		m_nes(new NES(m_renderer))
+	Emulator(const char *rom): Engine(60.0f, false),
+		m_nes(new NES(nullptr))
 	{
 		m_nes->LoadROM(rom);
 	}
@@ -17,24 +16,28 @@ public:
 		if (m_nes) delete m_nes;
 	}
 protected:
-	void Resized(int w, int h) override
+	/*void Resized(int w, int h) override
 	{
-		SDL_RenderSetScale(m_renderer, w / PPU2C02::ScreenWidth, h / PPU2C02::ScreenHeight);
-	}
+		SDL_RenderSetScale(m_renderer, w / 256, h / 240);
+	}*/
 
 	void Updated(float) override
 	{
-		while (true)
+		/*while (true)
 		{
 			if (!m_nes->GetPPU()->IsFrameDone())
 			{
 				m_nes->Clock();
-				m_nes->GetPPU()->NoiseTest();
+				//m_nes->GetPPU()->NoiseTest();
 			}
 			else break;
 		}
 
-		m_nes->GetPPU()->NextFrame();
+		m_nes->GetPPU()->NextFrame();*/
+
+		m_nes->Clock();
+		if (m_nes->GetCPU()->Cycles() == 0)
+			std::cout << m_nes->GetCPU()->FrameInfo() << '\n';
 	}
 private:
 	NES *m_nes;

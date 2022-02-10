@@ -11,10 +11,10 @@ public:
 	Sprite(size_t, size_t);
 
 	// Retrieve the pixel by index
-	inline SDL_Color & operator[](size_t) const;
+	SDL_Color operator[](size_t) const;
 
 	// Retrieve the pixel at x, y
-	inline SDL_Color & Get(size_t, size_t) const;
+	SDL_Color Get(size_t, size_t) const;
 
 	// Set the pixel at x, y
 	inline void Set(size_t, size_t, SDL_Color);
@@ -29,18 +29,19 @@ class Engine
 public:
 	static constexpr SDL_Color Black = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 
-	Engine(float);
+	Engine(float, bool);
 	virtual ~Engine();
 	void Pause();
 	void Resume();
 	int Start();
 	void Stop();
 protected:
-	float m_fps;
-	float m_delta;
-	float m_timeScale;
-	float m_prevTimeScale;
-	SDL_Renderer *m_renderer;
+	bool hasVisual;
+	float fps;
+	float delta;
+	float timeScale;
+	float prevTimeScale;
+	SDL_Renderer *renderer;
 
 	virtual void Resized(int, int);
 	virtual void Started();

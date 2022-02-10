@@ -4,8 +4,8 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "nes.h"
 #include "nrom.h"
-#include "rom.h"
 
 NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 	Device(nes.GetBus()),
@@ -28,6 +28,7 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 		{
 			case 0:
 				m_mapper = new NROM(m_header.prgPages, m_header.chrPages);
+				AddRange(0x8000, m_header.prgPages > 1 ? 0xFFFF : 0xBFFF);
 				Write(0x8000, m_prg);
 				break;
 			default:
@@ -36,8 +37,8 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 	}
 
 	buses.push_back(nes.GetPPU()->GetBus());
-	AddRange(0, 0x3FFF, buses.last(), true);
-	buses.last()->Add(this);
+	AddRange(0, 0x3FFF, 1, true);
+	buses.back()->Add(this);
 }
 
 NESROM::~NESROM()
@@ -45,12 +46,12 @@ NESROM::~NESROM()
 	if (m_mapper) delete m_mapper;
 }
 
-uint8_t NESROM::CPUReadByte(uint16_t addr) const
+uint8_t NESROM::CPUReadByte(uint16_t addr)
 {
 	uint32_t mappedAddr = 0;
 
 	if (m_mapper->CPUMapRead(addr, mappedAddr))
-		return ReadByte(mappedAddr];
+		return ReadByte(mappedAddr);
 	return 0;
 }
 
@@ -62,7 +63,7 @@ void NESROM::CPUWriteByte(uint16_t addr, uint8_t data)
 		m_prg[mappedAddr] = data;
 }
 
-uint8_t NESROM::PPUReadByte(uint16_t addr) const
+uint8_t NESROM::PPUReadByte(uint16_t addr)
 {
 	uint32_t mappedAddr = 0;
 

@@ -5,7 +5,7 @@
 
 #include "devices.h"
 
-using namespace std::literals:string_view_literals;
+using namespace std::literals::string_view_literals;
 
 static constexpr uint16_t Hi16(uint16_t value)
 {
@@ -14,6 +14,10 @@ static constexpr uint16_t Hi16(uint16_t value)
 
 
 // Bus6500
+
+Bus6500::Bus6500(size_t ramSize): Bus(ramSize)
+{
+}
 
 size_t Bus6500::ReadAddress(size_t addr) const
 {
@@ -30,11 +34,11 @@ void Bus6500::WriteAddress(size_t addr, size_t vector)
 // Opcode6500
 
 Opcode6500::Opcode6500(uint8_t cycles, Instruction6500 addrMode, Instruction6500 op,
-	std::string_view mneumonic):
+	std::string_view mnemonic):
 	Cycles(cycles),
 	AddressMode(addrMode),
 	Operation(op),
-	Mneumonic(std::move(mneumonic))
+	Mnemonic(std::move(mnemonic))
 {
 }
 
@@ -334,12 +338,9 @@ const std::array<Opcode6500, 256> MOS6500::Ops =
 
 MOS6500::MOS6500(Bus6500 *bus, uint16_t startAddr, uint16_t endAddr):
 	CPU(bus, startAddr, endAddr, 0xFFFC, 256, 253),
-	m_cache(0),
-	m_cycles(0),
-	m_lastOp(0),
+	m_lastOp(0)
 {
-	m_regs.a = m_regs.x = m_regs.y = 0;
-	InitializeState();
+	Reset();
 }
 
 void MOS6500::Branch()
@@ -379,6 +380,11 @@ void MOS6500::Clock()
 	m_cycles--;
 }
 
+size_t MOS6500::Cycles() const
+{
+	return m_cycles;
+}
+
 void MOS6500::Disassemble(size_t startAddr, size_t endAddr)
 {
 	disassembly.clear(); // dump any old disassembly
@@ -391,7 +397,7 @@ void MOS6500::Disassemble(size_t startAddr, size_t endAddr)
 
 		const Opcode6500 &op = Ops[ReadByte(addr++)];
 
-		std::string line = op.Mneumonic.data();
+		std::string line = op.Mnemonic.data();
 
 		if (op.AddressMode == &MOS6500::Immediate)
 			line += fmt::format(" #${:02X}", ReadByte(addr++));
@@ -436,22 +442,22 @@ void MOS6500::Disassemble(size_t startAddr, size_t endAddr)
 	}
 }
 
-uint8_t MOS6500::Fetch()
+uint8_t MOS6500::FetchByte()
 {
 	if (Ops[m_lastOp].AddressMode != &MOS6500::Implied)
 		m_cache = ReadByteFromLastAddress();
 	return m_cache;
 }
 
-uint16_t MOS6500::FetchAddress()
+size_t MOS6500::FetchAddress()
 {
-	return Fetch() | (Fetch() << 8);
+	return FetchByte() | (FetchByte() << 8);
 }
 
 std::string MOS6500::FrameInfo() const
 {
-	std::string s = fmt::format("A: {:02X}\tX: {:02X}\tY: {:02X}\n", m_regs.a, m_regs.x, m_regs.y);
-	s += fmt::format("SP: ${:02X}\tPC: ${:04X}\nState: ", stackPtr, counter);
+	std::string s = fmt::format("A: $#{:02X}\tX: $#{:02X}\tY: $#{:02X}\n", m_regs.a, m_regs.x, m_regs.y);
+	s += fmt::format("S: ${:02X}\tPC: ${:04X}\nP: ", stackPtr, counter);
 
 	s += m_regs.p.c ? 'C' : 'x';
 	s += m_regs.p.z ? 'Z' : 'x';
@@ -557,12 +563,6 @@ void MOS6500::StackWriteByte(uint8_t data)
 uint8_t MOS6500::StateByte() const
 {
 	return std::bit_cast<uint8_t>(m_regs.p);
-}
-
-void MOS6500::WriteAddress(size_t addr, size_t vector)
-{
-	WriteByte(addr, vector & 255);
-	WriteByte(addr + 1, (vector & 0xFF00) >> 8);
 }
 
 
@@ -779,10 +779,16 @@ uint8_t MOS6500::BRK()
 	return 0;
 }
 
-uint8_t MOS6500::InterruptRequest()
+uint8_t MOS6500::IRQ()
 {
 	if (!m_regs.p.i)
 		Interrupt(0xFFFE, 7);
+	return 0;
+}
+
+uint8_t MOS6500::NMI()
+{
+	Interrupt(0xFFFA, 8);
 	return 0;
 }
 
@@ -798,12 +804,6 @@ uint8_t MOS6500::RTI()
 	// and the counter
 	counter = StackReadAddress();
 
-	return 0;
-}
-
-uint8_t MOS6500::NonMaskableInterrupt()
-{
-	Interrupt(0xFFFA, 8);
 	return 0;
 }
 
@@ -830,7 +830,7 @@ uint8_t MOS6500::PLP()
 	return 0;
 }
 
-uint8_t MOS6500::PHP()
+uint8_t MOS6500::PHA()
 {
 	StackWriteByte(m_regs.a);
 	return 0;
@@ -852,7 +852,7 @@ uint8_t MOS6500::PHP()
 
 uint8_t MOS6500::ADC()
 {
-	uint16_t tmp = m_regs.a + Fetch() + (m_regs.p.c ? 1 : 0);
+	uint16_t tmp = m_regs.a + FetchByte() + (m_regs.p.c ? 1 : 0);
 
 	SetCarryNegativeZero(tmp);
 	m_regs.p.v = ~((m_regs.a ^ m_cache) & (m_regs.a ^ tmp) & 128);
@@ -863,7 +863,7 @@ uint8_t MOS6500::ADC()
 
 uint8_t MOS6500::DEC()
 {
-	uint8_t tmp = Fetch() - 1;
+	uint8_t tmp = FetchByte() - 1;
 	WriteByteToLastAddress(tmp);
 	SetNegativeZero(m_regs.x);
 
@@ -884,7 +884,7 @@ uint8_t MOS6500::DEY()
 
 uint8_t MOS6500::INC()
 {
-	uint8_t tmp = Fetch() + 1;
+	uint8_t tmp = FetchByte() + 1;
 	WriteByteToLastAddress(tmp);
 	SetNegativeZero(m_regs.x);
 
@@ -905,7 +905,7 @@ uint8_t MOS6500::INY()
 
 uint8_t MOS6500::SBC()
 {
-	uint16_t value = Fetch() ^ 255; // invert the value
+	uint16_t value = FetchByte() ^ 255; // invert the value
 	uint16_t tmp = m_regs.a + value + (m_regs.p.c ? 1 : 0);
 
 	SetCarryNegativeZero(tmp);
@@ -920,7 +920,7 @@ uint8_t MOS6500::SBC()
 
 uint8_t MOS6500::AND()
 {
-	m_regs.a &= Fetch();
+	m_regs.a &= FetchByte();
 	SetNegativeZero(m_regs.a);
 
 	return 1;
@@ -928,14 +928,14 @@ uint8_t MOS6500::AND()
 
 uint8_t MOS6500::ORA()
 {
-	m_regs.a |= Fetch();
+	m_regs.a |= FetchByte();
 	SetNegativeZero(m_regs.a);
 	return 1;
 }
 
 uint8_t MOS6500::ROL()
 {
-	uint16_t tmp = (Fetch() << 1) | (m_regs.p.c ? 1 : 0);
+	uint16_t tmp = (FetchByte() << 1) | (m_regs.p.c ? 1 : 0);
 	SetCarryNegativeZero(tmp);
 	CheckAddressMode(tmp);
 
@@ -944,7 +944,7 @@ uint8_t MOS6500::ROL()
 
 uint8_t MOS6500::ROR()
 {
-	Fetch();
+	FetchByte();
 	uint16_t tmp = (m_cache << 7) | (m_cache >> 1);
 
 	if (m_cache & 1) SEC();
@@ -954,7 +954,7 @@ uint8_t MOS6500::ROR()
 
 uint8_t MOS6500::ASL()
 {
-	uint16_t tmp = Fetch() << 1;
+	uint16_t tmp = FetchByte() << 1;
 	SetCarryNegativeZero(tmp);
 	CheckAddressMode(tmp);
 
@@ -963,7 +963,7 @@ uint8_t MOS6500::ASL()
 
 uint8_t MOS6500::LSR()
 {
-	if (Fetch() & 1) SEC();
+	if (FetchByte() & 1) SEC();
 	uint16_t tmp = m_cache >> 1;
 	SetNegativeZero(tmp);
 	CheckAddressMode(tmp);
@@ -973,7 +973,7 @@ uint8_t MOS6500::LSR()
 
 uint8_t MOS6500::EOR()
 {
-	m_regs.a ^= Fetch();
+	m_regs.a ^= FetchByte();
 	SetNegativeZero(m_regs.a);
 	return 1;
 }
@@ -983,7 +983,7 @@ uint8_t MOS6500::EOR()
 
 uint8_t MOS6500::CMP()
 {
-	uint16_t tmp = m_regs.a - Fetch();
+	uint16_t tmp = m_regs.a - FetchByte();
 
 	if (m_regs.a >= m_cache)
 		SEC();
@@ -994,7 +994,7 @@ uint8_t MOS6500::CMP()
 
 uint8_t MOS6500::CPX()
 {
-	uint16_t tmp = m_regs.x - Fetch();
+	uint16_t tmp = m_regs.x - FetchByte();
 
 	if (m_regs.x >= m_cache)
 		SEC();
@@ -1005,7 +1005,7 @@ uint8_t MOS6500::CPX()
 
 uint8_t MOS6500::CPY()
 {
-	uint16_t tmp = m_regs.y - Fetch();
+	uint16_t tmp = m_regs.y - FetchByte();
 
 	if (m_regs.y >= m_cache)
 		SEC();
@@ -1016,7 +1016,7 @@ uint8_t MOS6500::CPY()
 
 uint8_t MOS6500::BIT()
 {
-	m_regs.p.z = ((m_regs.a & Fetch()) & 255) == 0;
+	m_regs.p.z = ((m_regs.a & FetchByte()) & 255) == 0;
 	m_regs.p.n = m_cache & 128;
 	m_regs.p.v = m_cache & 64;
 	return 0;
@@ -1034,7 +1034,7 @@ uint8_t MOS6500::JMP()
 uint8_t MOS6500::JSR()
 {
 	StackWriteAddress(counter);
-	return Jump();
+	return JMP();
 }
 
 
@@ -1042,21 +1042,21 @@ uint8_t MOS6500::JSR()
 
 uint8_t MOS6500::LDA()
 {
-	m_regs.a = Fetch();
+	m_regs.a = FetchByte();
 	SetNegativeZero(m_regs.a);
 	return 1;
 }
 
 uint8_t MOS6500::LDX()
 {
-	m_regs.x = Fetch();
+	m_regs.x = FetchByte();
 	SetNegativeZero(m_regs.x);
 	return 1;
 }
 
 uint8_t MOS6500::LDY()
 {
-	m_regs.y = Fetch();
+	m_regs.y = FetchByte();
 	SetNegativeZero(m_regs.y);
 	return 1;
 }
@@ -1140,14 +1140,14 @@ uint8_t MOS6500::ANC()
 
 uint8_t MOS6500::ANE()
 {
-	m_regs.a = Magic() & m_regs.x & Fetch();
+	m_regs.a = Magic() & m_regs.x & FetchByte();
 	SetNegativeZero(m_regs.a);
 	return 1;
 }
 
 uint8_t MOS6500::ARR()
 {
-	return AND() + Add() + ROR();
+	return AND() + ADC() + ROR();
 }
 
 uint8_t MOS6500::DCP()
@@ -1179,7 +1179,7 @@ uint8_t MOS6500::LAX()
 
 uint8_t MOS6500::LXA()
 {
-	m_regs.x = m_regs.a = Magic() & Fetch();
+	m_regs.x = m_regs.a = Magic() & FetchByte();
 	SetNegativeZero(m_regs.x);
 	return 1;
 }
@@ -1207,7 +1207,7 @@ uint8_t MOS6500::RLA()
 
 uint8_t MOS6500::RRA()
 {
-	return ROR() + Add();
+	return ROR() + ADC();
 }
 
 uint8_t MOS6500::SAX()
@@ -1218,7 +1218,7 @@ uint8_t MOS6500::SAX()
 
 uint8_t MOS6500::SBX()
 {
-	uint16_t tmp = m_regs.a - Fetch();
+	uint16_t tmp = m_regs.a - FetchByte();
 
 	if (m_regs.a >= m_cache)
 		SEC();

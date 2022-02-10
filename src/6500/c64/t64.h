@@ -1,5 +1,5 @@
-#ifndef _C64_TAPE_H
-#define _C64_TAPE_H
+#ifndef _C64_T64_H
+#define _C64_T64_H
 
 #include <array>
 #include <filesystem>
@@ -22,7 +22,7 @@ private:
 		uint16_t startAddr;
 		uint16_t endAddr; // 0 if snapshot
 		uint16_t _reserved06;
-		uint16_t fileOffset; // big endian
+		uint32_t fileOffset; // big endian
 		uint32_t _reserved0A;
 		std::array<char, 16> name; // padded with space (0x20)
 	};
@@ -41,4 +41,4 @@ private:
 	std::vector<DirectoryEntry> m_entries;
 };
 
-#endif // _C64_TAPE_H
+#endif // _C64_T64_H

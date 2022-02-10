@@ -2,7 +2,7 @@
 
 C64::C64()://SDL_Renderer *renderer)
 	m_cycles(0),
-	m_tape(nullptr),
+	m_rom(nullptr),
 	m_bus(Bus6500(0xFFFF)),
 	m_cpu(MOS6500(&m_bus, 0, 0x3FF)
 {
@@ -10,7 +10,7 @@ C64::C64()://SDL_Renderer *renderer)
 
 C64::~C64()
 {
-	if (m_tape) delete m_tape;
+	if (m_rom) delete m_rom;
 }
 
 void C64::Clock()
@@ -31,6 +31,6 @@ MOS6500 * C64::GetCPU() const
 
 void CPU::LoadTape(const std::filesystem::path &path)
 {
-	if (m_tape) delete m_tape;
-	m_tape = new C64Tape(path);
+	if (m_rom) delete m_rom;
+	m_rom = new C64Tape(path);
 }

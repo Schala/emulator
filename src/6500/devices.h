@@ -12,6 +12,8 @@ typedef uint8_t (MOS6500::*Instruction6500)();
 class Bus6500 : public Bus
 {
 public:
+	Bus6500(size_t);
+
 	// Read address from RAM address
 	size_t ReadAddress(size_t) const override;
 
@@ -40,6 +42,8 @@ public:
 
 	// CPU clock operation (execute one instruction)
 	void Clock() override;
+
+	size_t Cycles() const;
 
 	// Disassemble from the specified address for the specified length
 	void Disassemble(size_t, size_t) override;

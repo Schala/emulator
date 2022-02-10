@@ -10,17 +10,19 @@ public:
 	~NES();
 
 	// Runs NES clocks
-	void Clock() override;
+	void Clock();
 
 	// Retrieves a pointer to the main CPU bus
 	Bus6500 * GetBus();
+
+	MOS6500 * GetCPU();
 
 	PPU2C02 * GetPPU();
 
 	void LoadROM(const std::filesystem::path &);
 
 	// Read byte from RAM address
-	uint8_t ReadByte(uint16_t) const;
+	uint8_t ReadByte(uint16_t);
 
 	// Resets the NES
 	void Reset();

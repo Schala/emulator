@@ -1,4 +1,4 @@
-#include "ppu.h"
+#include "nes.h"
 
 static constexpr SDL_Color ColorFromU32(uint32_t u)
 {
@@ -11,7 +11,7 @@ static constexpr SDL_Color ColorFromU32(uint32_t u)
 	};
 }
 
-const std::array<uint32_t, PPU2C02::PaletteSize> PPU2C02::Palette =
+const std::array<uint32_t, 64> PPU2C02::Palette =
 {
 	0x545454FF,
 	0x1E74FF,
@@ -103,11 +103,14 @@ PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
 {
 	m_flags.frameDone = false;
 
-	// Give the renderer a solid fill colour instead of copying what's underneath
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(renderer);
+	if (renderer)
+	{
+		// Give the renderer a solid fill colour instead of copying what's underneath
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_RenderClear(renderer);
+	}
 
-	AddRange(&m_ppuBus, 0, 0x3FFF);
+	AddRange(0, 0x3FFF, 1);
 	m_ppuBus.Add(this);
 }
 
@@ -117,6 +120,8 @@ PPU2C02::~PPU2C02()
 
 void PPU2C02::Clock()
 {
+	if (!m_renderer) return;
+
 	if (++m_cycle >= 341)
 	{
 		m_cycle = 0;
@@ -129,16 +134,16 @@ void PPU2C02::Clock()
 	}
 }
 
-uint8_t PPU2C02::CPUReadByte(uint16_t addr) const
+uint8_t PPU2C02::CPUReadByte(uint16_t addr)
 {
 	addr %= 8;
-	return ReadByte(addr, 1);
+	return ReadByte(addr);
 }
 
 void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 {
 	addr %= 8;
-	WriteByte(addr, data, 1);
+	WriteByte(addr, data);
 }
 
 Bus6500 * PPU2C02::GetBus()
@@ -163,7 +168,19 @@ void PPU2C02::NextFrame()
 	SDL_RenderDrawPoint(m_renderer, m_cycle - 1, m_scanline);
 }*/
 
-SDL_Color & PPU2C02::ReadRAMPaletteColor(uint8_t palette, uint8_t pixel) const
+uint8_t PPU2C02::PPUReadByte(uint16_t addr)
 {
-	return m_ramPalette[Read(0x3F00 + (palette << 2) + pixel)];
+	addr %= 8;
+	return ReadByte(addr, 1);
+}
+
+void PPU2C02::PPUWriteByte(uint16_t addr, uint8_t data)
+{
+	addr %= 8;
+	WriteByte(addr, data, 1);
+}
+
+SDL_Color PPU2C02::ReadRAMPaletteColor(uint8_t palette, uint8_t pixel)
+{
+	return m_ramPalette[PPUReadByte(0x3F00 + (palette << 2) + pixel)];
 }

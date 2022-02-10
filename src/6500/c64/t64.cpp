@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include "c64.h"
-#include "tape.h"
+#include "t64.h"
 
 C64Tape::C64Tape(C64 &c64, const std::filesystem::path &path):
 	Device(c64.GetBus()),
@@ -52,7 +52,7 @@ C64Tape::C64Tape(C64 &c64, const std::filesystem::path &path):
 				std::vector<uint8_t> data(entry.endAddr - entry.startAddr, 0);
 				tapeFile.seekg(entry.fileOffset);
 				tapeFile.read(std::bit_cast<char *>(&data[0]), data.size());
-				m_bus->LoadIntoRAM(data, entry.startAddr);
+				buses[0]->Write(data, entry.startAddr);
 			}
 		}
 	}

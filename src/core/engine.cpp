@@ -1,5 +1,5 @@
 #include <cmath>
-#include <iostream>
+//#include <iostream>
 
 #include "engine.h"
 
@@ -10,12 +10,12 @@ Sprite::Sprite(size_t w, size_t h):
 {
 }
 
-SDL_Color & Sprite::operator[](size_t index) const
+SDL_Color Sprite::operator[](size_t index) const
 {
 	return m_pixels.at(index);
 }
 
-SDL_Color & Sprite::Get(size_t x, size_t y) const
+SDL_Color Sprite::Get(size_t x, size_t y) const
 {
 	return m_pixels.at((y * m_h) + x);
 }
@@ -28,31 +28,38 @@ void Sprite::Set(size_t x, size_t y, SDL_Color color)
 
 // Engine
 
-Engine::Engine(float fps):
-	m_fps(fps),
-	m_delta(0.0f),
-	m_timeScale(1.0f),
-	m_prevTimeScale(1.0f)
+Engine::Engine(float fps, bool hasVisual):
+	fps(fps),
+	delta(0.0f),
+	timeScale(1.0f),
+	prevTimeScale(1.0f)
 {
 	m_now = m_then = SDL_GetTicks64();
-	SDL_CreateWindowAndRenderer(640, 480, SDL_WINDOW_RESIZABLE, &m_window, &m_renderer);
+
+	if (hasVisual)
+		SDL_CreateWindowAndRenderer(640, 480, SDL_WINDOW_RESIZABLE, &m_window, &renderer);
+	else
+	{
+		renderer = nullptr;
+		m_window = nullptr;
+	}
 }
 
 Engine::~Engine()
 {
-	if (m_renderer) SDL_DestroyRenderer(m_renderer);
+	if (renderer) SDL_DestroyRenderer(renderer);
 	if (m_window) SDL_DestroyWindow(m_window);
 }
 
 void Engine::Pause()
 {
-	m_prevTimeScale = m_timeScale;
-	m_timeScale = 0.0f;
+	prevTimeScale = timeScale;
+	timeScale = 0.0f;
 }
 
 void Engine::Resume()
 {
-	m_timeScale = m_prevTimeScale;
+	timeScale = prevTimeScale;
 }
 
 int Engine::Start()
@@ -118,21 +125,21 @@ void Engine::Update()
 	float newDelta = (m_now - m_then) / 1000.0f;
 
 	// calculate our delta and cap our frame rate
-	if (m_delta > 0.0f)
-		m_delta -= newDelta * m_timeScale;
+	if (delta > 0.0f)
+		delta -= newDelta * timeScale;
 	else
 	{
 		// abs will mitigate negative frame rates, which add to the delta, causing CPU stress
 		// time scale must factor in the whole equation to be valid, ie. if we pause,
 		// delta must = 0
-		m_delta = (std::abs(m_delta) + (1.0f / m_fps) - newDelta) * m_timeScale;
+		delta = (std::abs(delta) + (1.0f / fps) - newDelta) * timeScale;
 
 		// let the user do their thing BEFORE we present
 		// also, keep user updates constrained to frame updates
-		Updated(m_delta);
-		SDL_RenderPresent(m_renderer);
+		Updated(delta);
+		SDL_RenderPresent(renderer);
 
-		std::cout << m_delta << '\n';
+		//std::cout << delta << '\n';
 	}
 }
 
