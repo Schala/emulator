@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 #include "nes.h"
-#include "nrom.h"
+#include "mappers/nrom.h"
 
 NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 	Device(nes.GetBus()),
@@ -36,8 +36,9 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 		}
 	}
 
+	GenerateHash();
 	buses.push_back(nes.GetPPU()->GetBus());
-	AddRange(0, 0x3FFF, 1, true);
+	AddRange(0, 0x3FFF, 1);
 	buses.back()->Add(this);
 }
 
@@ -61,6 +62,22 @@ void NESROM::CPUWriteByte(uint16_t addr, uint8_t data)
 
 	if (m_mapper->CPUMapWrite(addr, mappedAddr))
 		m_prg[mappedAddr] = data;
+}
+
+void NESROM::GenerateHash()
+{
+	m_hash = 0xDEADBEEF;
+
+	for (auto b : m_prg)
+		m_hash = ((m_hash << 1) | ((m_hash & 0x80000000) ? 1 : 0)) ^ b;
+
+	for (auto b : m_chr)
+		m_hash = ((m_hash << 1) | ((m_hash & 0x80000000) ? 1 : 0)) ^ b;
+}
+
+uint32_t NESROM::Hash() const
+{
+	return m_hash;
 }
 
 uint8_t NESROM::PPUReadByte(uint16_t addr)

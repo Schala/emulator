@@ -4,7 +4,7 @@
 #include <array>
 #include <filesystem>
 
-#include "../devices.h"
+#include "../../core/devices.h"
 #include "fwd.h"
 
 class C64RawTape : public Device

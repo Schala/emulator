@@ -1,5 +1,6 @@
 #include <cmath>
-//#include <iostream>
+#include <fmt/core.h>
+#include <stdexcept>
 
 #include "engine.h"
 
@@ -28,21 +29,9 @@ void Sprite::Set(size_t x, size_t y, SDL_Color color)
 
 // Engine
 
-Engine::Engine(float fps, bool hasVisual):
-	fps(fps),
-	delta(0.0f),
-	timeScale(1.0f),
-	prevTimeScale(1.0f)
+Engine::Engine(float rate): EngineCore(rate)
 {
-	m_now = m_then = SDL_GetTicks64();
-
-	if (hasVisual)
-		SDL_CreateWindowAndRenderer(640, 480, SDL_WINDOW_RESIZABLE, &m_window, &renderer);
-	else
-	{
-		renderer = nullptr;
-		m_window = nullptr;
-	}
+	SDL_CreateWindowAndRenderer(640, 480, SDL_WINDOW_RESIZABLE, &m_window, &renderer);
 }
 
 Engine::~Engine()
@@ -51,23 +40,12 @@ Engine::~Engine()
 	if (m_window) SDL_DestroyWindow(m_window);
 }
 
-void Engine::Pause()
-{
-	prevTimeScale = timeScale;
-	timeScale = 0.0f;
-}
-
-void Engine::Resume()
-{
-	timeScale = prevTimeScale;
-}
-
-int Engine::Start()
+void Engine::Start()
 {
 	int rcode = SDL_Init(SDL_INIT_VIDEO);
-	if (rcode != 0) return rcode;
+	if (rcode != 0)
+		throw std::runtime_error(fmt::format("Failed to initialise SDL video, error code {}", rcode));
 
-	float time = 0.0f;
 	Started();
 
 	while (true)
@@ -96,53 +74,21 @@ int Engine::Start()
 		Update();
 	}
 
-	return rcode;
+	Stop();
 }
 
 void Engine::Resized(int, int)
 {
 }
 
-void Engine::Started()
-{
-}
-
 void Engine::Stop()
 {
-	Stopping();
+	CoreStop();
 	SDL_Quit();
-}
-
-void Engine::Stopping()
-{
 }
 
 void Engine::Update()
 {
-	// update time
-	m_then = m_now;
-	m_now = SDL_GetTicks64();
-	float newDelta = (m_now - m_then) / 1000.0f;
-
-	// calculate our delta and cap our frame rate
-	if (delta > 0.0f)
-		delta -= newDelta * timeScale;
-	else
-	{
-		// abs will mitigate negative frame rates, which add to the delta, causing CPU stress
-		// time scale must factor in the whole equation to be valid, ie. if we pause,
-		// delta must = 0
-		delta = (std::abs(delta) + (1.0f / fps) - newDelta) * timeScale;
-
-		// let the user do their thing BEFORE we present
-		// also, keep user updates constrained to frame updates
-		Updated(delta);
-		SDL_RenderPresent(renderer);
-
-		//std::cout << delta << '\n';
-	}
-}
-
-void Engine::Updated(float)
-{
+	CoreUpdate();
+	SDL_RenderPresent(renderer);
 }

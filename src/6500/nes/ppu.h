@@ -4,7 +4,7 @@
 //#include <random>
 
 #include "../../core/engine.h"
-#include "../devices.h"
+#include "../../generic/bus_le16.h"
 
 class NES;
 
@@ -27,7 +27,7 @@ public:
 	// Write to CPU bus
 	void CPUWriteByte(uint16_t, uint8_t);
 
-	Bus6500 * GetBus();
+	BusLE16 * GetBus();
 
 	bool IsFrameDone() const;
 
@@ -54,7 +54,7 @@ private:
 	uint16_t m_cycle; // screen column
 	SDL_Renderer *m_renderer;
 	NES &m_nes;
-	Bus6500 m_ppuBus; // dedicated second bus
+	BusLE16 m_ppuBus; // dedicated second bus
 	std::array<Sprite, 2> m_nameTbl;
 	std::array<Sprite, 2> m_patTbl;
 	Sprite m_ramPalette;

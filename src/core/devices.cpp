@@ -15,7 +15,7 @@ Device::Device(Bus *bus)
 Device::Device(Bus *bus, size_t startAddr, size_t endAddr)
 {
 	buses.push_back(bus);
-	AddRange(0, startAddr, endAddr);
+	AddRange(startAddr, endAddr, 0);
 	buses.back()->Add(this);
 }
 
@@ -39,61 +39,61 @@ void Device::AddRange(size_t startAddr, size_t endAddr, size_t busIndex, bool ow
 
 std::vector<uint8_t> Device::Read(size_t addr, size_t size, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	return buses[busIndex]->Read(addr, size);
 }
 
 size_t Device::ReadAddress(size_t addr, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	return buses[busIndex]->ReadAddress(addr);
 }
 
 uint8_t Device::ReadByte(size_t addr, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	return buses[busIndex]->ReadByte(addr);
 }
 
 uint32_t Device::ReadDWord(size_t addr, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	return buses[busIndex]->ReadDWord(addr);
 }
 
 uint16_t Device::ReadWord(size_t addr, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	return buses[busIndex]->ReadWord(addr);
 }
 
 void Device::Write(size_t addr, const std::vector<uint8_t> &data, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	return buses[busIndex]->Write(addr, data);
 }
 
 void Device::WriteAddress(size_t addr, size_t vector, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	buses[busIndex]->WriteAddress(addr, vector);
 }
 
 void Device::WriteByte(size_t addr, uint8_t data, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	buses[busIndex]->WriteByte(addr, data);
 }
 
 void Device::WriteDWord(size_t addr, uint32_t data, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	buses[busIndex]->WriteDWord(addr, data);
 }
 
 void Device::WriteWord(size_t addr, uint16_t data, size_t busIndex, size_t mappingIndex)
 {
-	addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
+	//addr %= addressMap[buses[busIndex]][mappingIndex].endAddress;
 	buses[busIndex]->WriteWord(addr, data);
 }
 
@@ -114,12 +114,19 @@ Processor::Processor(Bus *bus, size_t startAddr, size_t endAddr): Device(bus, st
 CPU::CPU(Bus *bus, size_t startAddr, size_t endAddr, size_t resetVector,
 		size_t stackBase, size_t stackInit):
 	Processor(bus, startAddr, endAddr),
-	counter(resetVector),
+	lastAbsAddress(0),
+	lastRelAddress(0),
+	counter(0),
 	stackBase(stackBase),
 	stackInit(stackInit),
 	stackPtr(stackInit),
 	resetVector(resetVector)
 {
+}
+
+size_t CPU::ReadAddressFromLastAddress()
+{
+	return ReadAddress(lastAbsAddress);
 }
 
 uint8_t CPU::ReadByteFromLastAddress()
@@ -146,9 +153,14 @@ uint16_t CPU::ReadROMWord()
 	return value;
 }
 
-void CPU::SetCounter(size_t vector)
+uint8_t CPU::StackReadByte()
 {
-	counter = vector;
+	return ReadByte(stackBase + ++stackPtr);
+}
+
+void CPU::StackWriteByte(uint8_t data)
+{
+	WriteByte(stackBase + stackPtr--, data);
 }
 
 size_t CPU::WriteByteToFetchedAddress(uint8_t data)

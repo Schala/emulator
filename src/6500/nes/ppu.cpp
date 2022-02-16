@@ -88,7 +88,7 @@ PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
 	m_cycle(0),
 	m_renderer(renderer),
 	m_nes(nes),
-	m_ppuBus(Bus6500(0x4000)),
+	m_ppuBus(BusLE16(0x4000)),
 	m_nameTbl(
 	{
 		Sprite(32, 32),
@@ -146,7 +146,7 @@ void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 	WriteByte(addr, data);
 }
 
-Bus6500 * PPU2C02::GetBus()
+BusLE16 * PPU2C02::GetBus()
 {
 	return &m_ppuBus;
 }

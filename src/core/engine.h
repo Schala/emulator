@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include <vector>
 
+#include "engine_core.h"
+
 class Sprite
 {
 public:
@@ -24,33 +26,21 @@ private:
 	std::vector<SDL_Color> m_pixels;
 };
 
-class Engine
+class Engine : public EngineCore
 {
 public:
 	static constexpr SDL_Color Black = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 
-	Engine(float, bool);
+	Engine(float);
 	virtual ~Engine();
-	void Pause();
-	void Resume();
-	int Start();
+	void Start();
 	void Stop();
 protected:
-	bool hasVisual;
-	float fps;
-	float delta;
-	float timeScale;
-	float prevTimeScale;
 	SDL_Renderer *renderer;
 
 	virtual void Resized(int, int);
-	virtual void Started();
-	virtual void Stopping();
-	virtual void Updated(float);
 private:
 	SDL_Window *m_window;
-	uint64_t m_now;
-	uint64_t m_then;
 	SDL_Event m_event;
 
 	void Update();

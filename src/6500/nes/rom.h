@@ -1,5 +1,5 @@
-#ifndef _NES_ROM_H
-#define _NES_ROM_H
+#ifndef _NES_MAPPED_ROM_H
+#define _NES_MAPPED_ROM_H
 
 #include <array>
 #include <filesystem>
@@ -18,6 +18,8 @@ public:
 
 	// Write to CPU bus
 	void CPUWriteByte(uint16_t, uint8_t);
+
+	uint32_t Hash() const;
 
 	// Read from PPU bus
 	uint8_t PPUReadByte(uint16_t);
@@ -54,10 +56,13 @@ private:
 		std::array<uint8_t, 6> _reserved9;
 	} m_header;
 
+	uint32_t m_hash;
 	NES &m_nes;
 	NESMapper *m_mapper;
 	std::vector<uint8_t> m_prg; // PRG memory
 	std::vector<uint8_t> m_chr; // CHR memory
+
+	void GenerateHash();
 };
 
-#endif // _NES_ROM_H
+#endif // _NES_MAPPED_ROM_H

@@ -1,7 +1,7 @@
 #ifndef _C64_H
 #define _C64_H
 
-#include "../devices.h"
+#include "../cpu.h"
 
 class C64
 {
@@ -11,14 +11,14 @@ public:
 
 	void Clock();
 
-	Bus6500 * GetBus() const;
+	BusLE16 * GetBus() const;
 	MOS6500 * GetCPU() const;
 
 	void LoadTape(const std::filesystem::path &);
 private:
 	size_t m_cycles;
 	Device *m_rom;
-	Bus6500 m_bus;
+	BusLE16 m_bus;
 	MOS6500 m_cpu;
 };
 

@@ -3,7 +3,7 @@
 NES::NES(SDL_Renderer *renderer):
 	m_cycles(0),
 	m_rom(nullptr),
-	m_bus(Bus6500(0xFFFF)),
+	m_bus(BusLE16(0xFFFF)),
 	m_cpu(MOS6500(&m_bus, 0, 0x1FFF)),
 	m_ppu(PPU2C02(*this, renderer))
 {
@@ -23,7 +23,7 @@ void NES::Clock()
 		m_cpu.Clock();
 }
 
-Bus6500 * NES::GetBus()
+BusLE16 * NES::GetBus()
 {
 	return &m_bus;
 }
@@ -38,10 +38,16 @@ PPU2C02 * NES::GetPPU()
 	return &m_ppu;
 }
 
+NESROM * NES::GetROM()
+{
+	return m_rom;
+}
+
 void NES::LoadROM(const std::filesystem::path &path)
 {
 	if (m_rom) delete m_rom;
 	m_rom = new NESROM(*this, path);
+	m_cpu.Reset();
 }
 
 uint8_t NES::ReadByte(uint16_t addr)

@@ -3,23 +3,11 @@
 
 #include <array>
 
-#include "../core/devices.h"
+#include "../generic/bus_le16.h"
 
 class MOS6500;
 
 typedef uint8_t (MOS6500::*Instruction6500)();
-
-class Bus6500 : public Bus
-{
-public:
-	Bus6500(size_t);
-
-	// Read address from RAM address
-	size_t ReadAddress(size_t) const override;
-
-	// Write address to RAM address
-	void WriteAddress(size_t, size_t) override;
-};
 
 // Metadata for the CPU's various operations
 struct Opcode6500
@@ -38,7 +26,7 @@ class MOS6500 : public CPU
 {
 public:
 	// Allocate a new CPU, given a parent bus, and start and end addresses in RAM
-	MOS6500(Bus6500 *, uint16_t, uint16_t);
+	MOS6500(BusLE16 *, uint16_t, uint16_t);
 
 	// CPU clock operation (execute one instruction)
 	void Clock() override;
@@ -46,7 +34,7 @@ public:
 	size_t Cycles() const;
 
 	// Disassemble from the specified address for the specified length
-	void Disassemble(size_t, size_t) override;
+	Disassembly Disassemble(size_t) override;
 
 	// Read address from RAM
 	size_t FetchAddress() override;
@@ -57,6 +45,8 @@ public:
 	// Returns a string containing info of the CPU stack
 	std::string FrameInfo() const;
 
+	Disassembly & LastDisassembly();
+
 	// Read address from ROM
 	size_t ReadROMAddress() override;
 
@@ -66,14 +56,8 @@ public:
 	// Read address from stack
 	size_t StackReadAddress() override;
 
-	// Read data from stack
-	uint8_t StackReadByte() override;
-
 	// Write address to stack
 	void StackWriteAddress(size_t) override;
-
-	// Write data to stack
-	void StackWriteByte(uint8_t) override;
 
 	// Return state register as a byte
 	uint8_t StateByte() const;
@@ -414,6 +398,8 @@ private:
 				n : 1; // negative
 		} p;
 	} m_regs;
+
+	Disassembly m_lastDisasm;
 
 	// Common functionality for branch instructions
 	void Branch();

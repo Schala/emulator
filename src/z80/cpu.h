@@ -1,5 +1,5 @@
-#ifndef _Z80_DEVICES_H
-#define _Z80_DEVICES_H
+#ifndef _Z80_CPU_H
+#define _Z80_CPU_H
 
 #include <array>
 #include <functional>
@@ -17,54 +17,35 @@ struct Z80Opcode
 	std::string_view Label;
 };
 
-// Disassembly cache
-struct Z80Disassembly
+class Z80 : public CPU
 {
-	uint16_t Address;
-	std::string_view Line;
-};
+public:
+	Z80(BusLE16 *, uint16_t, uint16_t);
 
-class Z80 : public Device
-{
-private:
-	static const std::array<Z80Opcode, 256> BitOps;
-	static const std::map<uint8_t, Z80Opcode> ExtOps;
-	static const std::array<Z80Opcode, 256> IXBitOps;
-	static const std::map<uint8_t, Z80Opcode> IXOps;
-	static const std::array<Z80Opcode, 256> IYBitOps;
-	static const std::map<uint8_t, Z80Opcode> IYOps;
-	static const std::array<Z80Opcode, 256> MainOps;
+	// CPU clock operation (execute one instruction)
+	void Clock() override;
 
-	struct Registers
-	{
-		struct State
-		{
-			bool
-				s : 1, // sign
-				z : 1, // zero
-				_2 : 1,
-				h : 1, // half carry
-				_4 : 1,
-				v : 1, // overflow
-				n : 1, // add/subtract
-				c : 1; // carry
-		} p;
+	// Disassemble from the specified address for the specified length
+	void Disassemble(size_t, size_t) override;
 
-		uint8_t a; // accumulator
-		uint8_t sp; // stack pointer
+	// Read address from RAM
+	size_t FetchAddress() override;
 
-		// general purpse, either 8 bit or paired to be 16 bit
-		uint8_t b, c,
-				d, e,
-				h, l;
+	// Fetch and cache a byte from the cached absolute address
+	uint8_t FetchByte() override;
 
-		uint8_t i; // interrupt page address
-		uint8_t r; // memory refresh
-		uint16_t ix, iy; // index registers
-		uint16_t pc; // counter
-	} m_regs;
+	// Read address from ROM
+	size_t ReadROMAddress() override;
 
-	std::vector<Z80Disassembly> m_disasm;
+	// Reset CPU state
+	void Reset() override;
+
+	// Read address from stack
+	size_t StackReadAddress() override;
+
+	// Write address to stack
+	void StackWriteAddress(size_t) override;
+
 
 	// None of these should be inlined, as we need them to be addressable.
 	// All return the number of additional cycles possibly needed.
@@ -248,6 +229,43 @@ private:
 
 	// --- misc ---
 	uint8_t NOP();
+private:
+	static const std::array<Z80Opcode, 256> BitOps;
+	static const std::map<uint8_t, Z80Opcode> ExtOps;
+	static const std::array<Z80Opcode, 256> IXBitOps;
+	static const std::map<uint8_t, Z80Opcode> IXOps;
+	static const std::array<Z80Opcode, 256> IYBitOps;
+	static const std::map<uint8_t, Z80Opcode> IYOps;
+	static const std::array<Z80Opcode, 256> MainOps;
+
+	uint8_t m_cycles;
+
+	struct Registers
+	{
+		struct State
+		{
+			bool
+				s : 1, // sign
+				z : 1, // zero
+				_2 : 1,
+				h : 1, // half carry
+				_4 : 1,
+				v : 1, // overflow
+				n : 1, // add/subtract
+				c : 1; // carry
+		} p;
+
+		uint8_t a; // accumulator
+
+		// general purpse, either 8 bit or paired to be 16 bit
+		uint8_t b, c,
+				d, e,
+				h, l;
+
+		uint8_t i; // interrupt page address
+		uint8_t r; // memory refresh
+		uint16_t ix, iy; // index registers
+	} m_regs;
 };
 
-#endif // _Z80_DEVICES_H
+#endif // _Z80_CPU_H

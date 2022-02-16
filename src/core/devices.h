@@ -2,7 +2,7 @@
 #define _CORE_DEVICES_H
 
 #include <map>
-#include <string_view>
+#include <string>
 #include <vector>
 
 class Bus;
@@ -74,20 +74,26 @@ public:
 	virtual void Clock() = 0;
 };
 
+typedef std::pair<size_t, std::string> Disassembly;
+typedef std::vector<Disassembly> DisassemblyMap;
+
 // Central processing unit
 class CPU : public Processor
 {
 public:
 	CPU(Bus *, size_t, size_t, size_t, size_t, size_t);
 
-	// Disassemble from the specified address for the specified length
-	virtual void Disassemble(size_t, size_t) = 0;
+	// Disassemble from the specified address
+	virtual Disassembly Disassemble(size_t) = 0;
 
 	// Read address from RAM
 	virtual size_t FetchAddress() = 0;
 
 	// Fetch and cache a byte from the cached absolute address
 	virtual uint8_t FetchByte() = 0;
+
+	// Read address from last used address
+	size_t ReadAddressFromLastAddress();
 
 	// Read byte from last used address
 	uint8_t ReadByteFromLastAddress();
@@ -105,19 +111,17 @@ public:
 	// Reset CPU state
 	virtual void Reset() = 0;
 
-	void SetCounter(size_t);
-
 	// Read address from stack
 	virtual size_t StackReadAddress() = 0;
 
 	// Read data from stack
-	virtual uint8_t StackReadByte() = 0;
+	uint8_t StackReadByte();
 
 	// Write address to stack
 	virtual void StackWriteAddress(size_t) = 0;
 
 	// Write data to stack
-	virtual void StackWriteByte(uint8_t) = 0;
+	void StackWriteByte(uint8_t);
 
 	// Fetch an address, write to it, and return the address
 	size_t WriteByteToFetchedAddress(uint8_t);
@@ -132,7 +136,7 @@ protected:
 	size_t stackInit;
 	size_t stackPtr;
 	size_t resetVector;
-	std::vector<std::pair<size_t, std::string_view>> disassembly;
+	//DisassemblyMap disassembly;
 };
 
 // Provides read/write access between various devices and the RAM

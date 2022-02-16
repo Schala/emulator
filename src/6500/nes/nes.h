@@ -1,6 +1,7 @@
 #ifndef _NES_H
 #define _NES_H
 
+#include "../cpu.h"
 #include "rom.h"
 
 class NES
@@ -13,11 +14,13 @@ public:
 	void Clock();
 
 	// Retrieves a pointer to the main CPU bus
-	Bus6500 * GetBus();
+	BusLE16 * GetBus();
 
 	MOS6500 * GetCPU();
 
 	PPU2C02 * GetPPU();
+
+	NESROM * GetROM();
 
 	void LoadROM(const std::filesystem::path &);
 
@@ -32,7 +35,7 @@ public:
 private:
 	size_t m_cycles;
 	NESROM *m_rom;
-	Bus6500 m_bus;
+	BusLE16 m_bus;
 	MOS6500 m_cpu;
 	PPU2C02 m_ppu;
 };

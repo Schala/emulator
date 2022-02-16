@@ -3,12 +3,7 @@
 
 #include "../core/devices.h"
 
-class Bus65C816 : public Bus
-{
-public:
-};
-
-class WDC65C816 : public Device
+class WDC65C816 : public Processor
 {
 public:
 	WDC65C816(Bus65C816 *, uint16_t, uint16_t);
@@ -35,10 +30,8 @@ protected:
 		uint16_t x; // index
 		uint16_t y; // index
 		uint32_t dp : 24; // direct page
-		uint32_t s : 24; // stack pointer
 		uint32_t db : 24; // data bank
 		uint32_t pb : 24; // program bank
-		uint32_t pc : 24; // counter
 	} m_regs;
 
 	// --- address modes ---

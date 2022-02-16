@@ -1,14 +1,21 @@
 #ifndef _CORE_UTILITY_H
 #define _CORE_UTILITY_H
 
-bool IsBinary(char c)
+#include <cstdint>
+
+constexpr uint16_t Hi16(uint16_t value)
+{
+	return value & 0xFF00;
+}
+
+constexpr bool IsBinary(char c)
 {
 	if (c == '0' || c == '1')
 		return true;
 	return false;
 }
 
-bool IsNewLine(char c)
+constexpr bool IsNewLine(char c)
 {
 	switch (c)
 	{

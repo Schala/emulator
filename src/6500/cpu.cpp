@@ -3,33 +3,10 @@
 #include <stdexcept>
 #include <utility>
 
-#include "devices.h"
+#include "../core/utility.h"
+#include "cpu.h"
 
 using namespace std::literals::string_view_literals;
-
-static constexpr uint16_t Hi16(uint16_t value)
-{
-	return value & 0xFF00;
-}
-
-
-// Bus6500
-
-Bus6500::Bus6500(size_t ramSize): Bus(ramSize)
-{
-}
-
-size_t Bus6500::ReadAddress(size_t addr) const
-{
-	return ReadByte(addr) | (ReadByte(addr + 1) << 8);
-}
-
-void Bus6500::WriteAddress(size_t addr, size_t vector)
-{
-	WriteByte(addr++, vector & 255);
-	WriteByte(addr, Hi16(vector) >> 8);
-}
-
 
 // Opcode6500
 
@@ -336,11 +313,10 @@ const std::array<Opcode6500, 256> MOS6500::Ops =
 	Opcode6500(7, &MOS6500::AbsoluteX, &MOS6500::ISC, "isc"sv)
 };
 
-MOS6500::MOS6500(Bus6500 *bus, uint16_t startAddr, uint16_t endAddr):
+MOS6500::MOS6500(BusLE16 *bus, uint16_t startAddr, uint16_t endAddr):
 	CPU(bus, startAddr, endAddr, 0xFFFC, 256, 253),
 	m_lastOp(0)
 {
-	Reset();
 }
 
 void MOS6500::Branch()
@@ -368,6 +344,8 @@ void MOS6500::Clock()
 {
 	if (m_cycles == 0)
 	{
+		m_lastDisasm = Disassemble(counter);
+
 		// get and increment the counter
 		m_lastOp = ReadROMByte();
 
@@ -385,7 +363,55 @@ size_t MOS6500::Cycles() const
 	return m_cycles;
 }
 
-void MOS6500::Disassemble(size_t startAddr, size_t endAddr)
+Disassembly MOS6500::Disassemble(size_t addr)
+{
+	size_t address = addr;
+	const Opcode6500 &op = Ops[ReadByte(addr++)];
+	std::string line = op.Mnemonic.data();
+
+	if (op.AddressMode == &MOS6500::Immediate)
+		line += fmt::format(" #${:02X}", ReadByte(addr++));
+	else if (op.AddressMode == &MOS6500::ZeroPage)
+		line += fmt::format(" ${:02X}", ReadByte(addr++));
+	else if (op.AddressMode == &MOS6500::ZeroPageX)
+		line += fmt::format(" ${:02X}, x", ReadByte(addr++));
+	else if (op.AddressMode == &MOS6500::ZeroPageY)
+		line += fmt::format(" ${:02X}, y", ReadByte(addr++));
+	else if (op.AddressMode == &MOS6500::IndirectX)
+		line += fmt::format(" (${:02X}, x)", ReadByte(addr++));
+	else if (op.AddressMode == &MOS6500::IndirectY)
+		line += fmt::format(" (${:02X}, y)", ReadByte(addr++));
+	else if (op.AddressMode == &MOS6500::Absolute)
+	{
+		line += fmt::format(" ${:04X}", ReadByte(addr));
+		addr += 2;
+	}
+	else if (op.AddressMode == &MOS6500::AbsoluteX)
+	{
+		line += fmt::format(" ${:04X}, x", ReadByte(addr));
+		addr += 2;
+	}
+	else if (op.AddressMode == &MOS6500::AbsoluteY)
+	{
+		line += fmt::format(" ${:04X}, y", ReadByte(addr));
+		addr += 2;
+	}
+	else if (op.AddressMode == &MOS6500::Indirect)
+	{
+		line += fmt::format(" (${:04X})", ReadByte(addr));
+		addr += 2;
+	}
+	else if (op.AddressMode == &MOS6500::Relative)
+	{
+		uint8_t value = ReadByte(addr++);
+		line += fmt::format(" ${:02X} [${:04X}]", value, addr + static_cast<int8_t>(value));
+	}
+	else ; // 'implied' takes no operands
+
+	return std::make_pair(address, std::move(line));
+}
+
+/*void MOS6500::Disassemble(size_t startAddr, size_t endAddr)
 {
 	disassembly.clear(); // dump any old disassembly
 
@@ -440,7 +466,7 @@ void MOS6500::Disassemble(size_t startAddr, size_t endAddr)
 
 		disassembly.push_back(std::make_pair(address, std::move(line)));
 	}
-}
+}*/
 
 uint8_t MOS6500::FetchByte()
 {
@@ -456,7 +482,9 @@ size_t MOS6500::FetchAddress()
 
 std::string MOS6500::FrameInfo() const
 {
-	std::string s = fmt::format("A: $#{:02X}\tX: $#{:02X}\tY: $#{:02X}\n", m_regs.a, m_regs.x, m_regs.y);
+	std::string s = fmt::format("{:04X}: {}", m_lastDisasm.first, m_lastDisasm.second);
+
+	s += fmt::format("\n\nA: $#{:02X}\tX: $#{:02X}\tY: $#{:02X}\n", m_regs.a, m_regs.x, m_regs.y);
 	s += fmt::format("S: ${:02X}\tPC: ${:04X}\nP: ", stackPtr, counter);
 
 	s += m_regs.p.c ? 'C' : 'x';
@@ -471,8 +499,9 @@ std::string MOS6500::FrameInfo() const
 	s += fmt::format("\n\nLast absolute address: ${:04X}\n", lastAbsAddress);
 	s += fmt::format("Last relative address: ${:02X}\n", lastRelAddress);
 	s += fmt::format("Last fetched byte: {:02X}\n", m_cache);
-	s += fmt::format("Last operation: {}\n", Ops[m_lastOp].Mnemonic);
+	s += fmt::format("Last operation: {} ({:02X})\n", Ops[m_lastOp].Mnemonic, m_lastOp);
 	s += fmt::format("Cycles remaining: {}\n", m_cycles);
+	s += "--------------------------------\n";
 
 	return s;
 }
@@ -504,6 +533,11 @@ void MOS6500::Interrupt(uint16_t newAbsAddr, uint8_t newCycles)
 	m_cycles = newCycles;
 }
 
+Disassembly & MOS6500::LastDisassembly()
+{
+	return m_lastDisasm;
+}
+
 uint8_t MOS6500::Magic() const
 {
 	return m_regs.a | 255;
@@ -516,12 +550,12 @@ size_t MOS6500::ReadROMAddress()
 
 void MOS6500::Reset()
 {
-	m_cache = lastRelAddress = m_regs.a = m_regs.x = m_regs.y = counter = 0;
+	m_cache = lastRelAddress = m_regs.a = m_regs.x = m_regs.y = 0;
 	stackPtr = stackInit;
 	InitializeState();
 
 	lastAbsAddress = resetVector;
-	counter = FetchAddress();
+	counter = ReadAddressFromLastAddress();
 
 	lastAbsAddress = 0;
 	m_cycles = 8;
@@ -544,20 +578,10 @@ size_t MOS6500::StackReadAddress()
 	return StackReadByte() | (StackReadByte() << 8);
 }
 
-uint8_t MOS6500::StackReadByte()
-{
-	return ReadByte(stackBase + ++stackPtr);
-}
-
 void MOS6500::StackWriteAddress(size_t addr)
 {
 	StackWriteByte((addr & 0xFF00) >> 8);
 	StackWriteByte(addr & 255);
-}
-
-void MOS6500::StackWriteByte(uint8_t data)
-{
-	WriteByte(stackBase + stackPtr--, data);
 }
 
 uint8_t MOS6500::StateByte() const

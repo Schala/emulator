@@ -1,13 +1,13 @@
 #ifndef _ATARI_2600_H
 #define _ATARI_2600_H
 
-#include "../device.h"
+#include "../cpu.h"
 
 class Atari2600
 {
 private:
-	Bus6502 m_bus;
-	MOS6502 m_cpu;
+	BusLE16 m_bus;
+	MOS6500 m_cpu;
 };
 
 #endif // _ATARI_2600_H
