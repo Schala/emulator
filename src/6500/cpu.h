@@ -43,7 +43,7 @@ public:
 	uint8_t FetchByte() override;
 
 	// Returns a string containing info of the CPU stack
-	std::string FrameInfo() const;
+	std::string FrameInfo();
 
 	Disassembly & LastDisassembly();
 
@@ -52,6 +52,8 @@ public:
 
 	// Reset CPU state
 	void Reset() override;
+
+	std::array<uint8_t, 256> StackFrame();
 
 	// Read address from stack
 	size_t StackReadAddress() override;

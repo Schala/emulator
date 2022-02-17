@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <bit>
 #include <fmt/core.h> // todo: <format>
 #include <stdexcept>
@@ -322,7 +323,7 @@ MOS6500::MOS6500(BusLE16 *bus, uint16_t startAddr, uint16_t endAddr):
 void MOS6500::Branch()
 {
 	m_cycles++;
-	lastAbsAddress = counter + lastRelAddress;
+	lastAbsAddress = counter + static_cast<int8_t>(lastRelAddress);
 
 	// need an additional cycle if different page
 	if (Hi16(lastAbsAddress) != Hi16(counter))
@@ -480,9 +481,15 @@ size_t MOS6500::FetchAddress()
 	return FetchByte() | (FetchByte() << 8);
 }
 
-std::string MOS6500::FrameInfo() const
+std::string MOS6500::FrameInfo()
 {
-	std::string s = fmt::format("{:04X}: {}", m_lastDisasm.first, m_lastDisasm.second);
+	auto frame = StackFrame();
+
+	std::string s = fmt::format("Offset {:04X}: {}\n", m_lastDisasm.first, m_lastDisasm.second);
+
+	s += "Stack frame:\n";
+	for (uint8_t b : frame)
+		s += fmt::format("{:02X} ", b);
 
 	s += fmt::format("\n\nA: $#{:02X}\tX: $#{:02X}\tY: $#{:02X}\n", m_regs.a, m_regs.x, m_regs.y);
 	s += fmt::format("S: ${:02X}\tPC: ${:04X}\nP: ", stackPtr, counter);
@@ -500,7 +507,7 @@ std::string MOS6500::FrameInfo() const
 	s += fmt::format("Last relative address: ${:02X}\n", lastRelAddress);
 	s += fmt::format("Last fetched byte: {:02X}\n", m_cache);
 	s += fmt::format("Last operation: {} ({:02X})\n", Ops[m_lastOp].Mnemonic, m_lastOp);
-	s += fmt::format("Cycles remaining: {}\n", m_cycles);
+	//s += fmt::format("Cycles remaining: {}\n", m_cycles);
 	s += "--------------------------------\n";
 
 	return s;
@@ -571,6 +578,16 @@ void MOS6500::SetNegativeZero(uint16_t value)
 {
 	m_regs.p.z = (value & 255) == 0;
 	m_regs.p.n = value & 128;
+}
+
+std::array<uint8_t, 256> MOS6500::StackFrame()
+{
+	std::array<uint8_t, 256> frame;
+
+	for (uint16_t i = 0; i < 256; i++)
+		frame[i] = ReadByte(i);
+
+	return std::move(frame);
 }
 
 size_t MOS6500::StackReadAddress()
