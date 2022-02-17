@@ -504,7 +504,7 @@ std::string MOS6500::FrameInfo()
 	s += m_regs.p.n ? 'N' : 'x';
 
 	s += fmt::format("\n\nLast absolute address: ${:04X}\n", lastAbsAddress);
-	s += fmt::format("Last relative address: ${:02X}\n", lastRelAddress);
+	s += fmt::format("Last relative address: ${:02X}\n", static_cast<uint8_t>(lastRelAddress));
 	s += fmt::format("Last fetched byte: {:02X}\n", m_cache);
 	s += fmt::format("Last operation: {} ({:02X})\n", Ops[m_lastOp].Mnemonic, m_lastOp);
 	//s += fmt::format("Cycles remaining: {}\n", m_cycles);
