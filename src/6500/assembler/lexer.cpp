@@ -1,5 +1,6 @@
 #include <cctype>
 #include <charconv>
+#include <cstring>
 #include <map>
 #include <sstream>
 #include <system_error>
@@ -241,9 +242,12 @@ Token6500 Lexer6500::Identifier(bool prefixed)
 	while (Valid6500Identifier(m_state.Next()))
 		ident += std::toupper(m_state.Get());
 
-	auto opIt = Ops.find(ident.c_str());
-	if (opIt != Ops.end())
-		return Simple(opIt->second);
+	for (auto &[k, v] : Ops)
+		if (std::strcmp(ident.c_str(), k) == 0)
+			return Simple(v);
+
+	if (ident == "X") return Simple(Token6500ID::X);
+	if (ident == "Y") return Simple(Token6500ID::Y);
 
 	return MakeToken(Token6500ID::Identifier, std::move(ident));
 }
