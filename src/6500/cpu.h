@@ -1,8 +1,6 @@
 #ifndef _6500_DEVICES_H
 #define _6500_DEVICES_H
 
-#include <array>
-
 #include "../generic/bus_le16.h"
 
 class MOS6500;
@@ -13,12 +11,12 @@ typedef uint8_t (MOS6500::*Instruction6500)();
 struct Opcode6500
 {
 	// Constructor needed because otherwise we'll get an array error
-	Opcode6500(uint8_t, Instruction6500, Instruction6500, std::string_view);
+	Opcode6500(uint8_t, Instruction6500, Instruction6500, const char *);
 
 	uint8_t Cycles;
 	Instruction6500 AddressMode;
 	Instruction6500 Operation;
-	std::string_view Mnemonic;
+	const char *Mnemonic;
 };
 
 // The CPU processes data available via its bus
@@ -375,8 +373,6 @@ public:
 	// SBC + NOP
 	uint8_t USBC();
 private:
-	static const std::array<Opcode6500, 256> Ops;
-
 	uint8_t m_cache; // last read byte
 	uint8_t m_cycles; // remaining cycles for current operation
 	uint8_t m_lastOp;

@@ -108,5 +108,5 @@ void NESCheater::Save(const std::filesystem::path &path) const
 void NESCheater::UpdateInterceptRAM()
 {
 	for (auto [addr, data] : m_intercepts)
-		buses.back()->WriteByte(addr, data);
+		WriteByte(addr, data);
 }

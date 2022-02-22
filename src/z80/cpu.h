@@ -1,20 +1,17 @@
 #ifndef _Z80_CPU_H
 #define _Z80_CPU_H
 
-#include <array>
-#include <functional>
-#include <map>
-#include <string_view>
-
 #include "../core/devices.h"
 
 class Z80;
 
+typedef uint8_t (Z80::*Z80Instruction)();
+
 struct Z80Opcode
 {
 	uint8_t Cycles;
-	std::function<uint8_t(Z80 *)> Operation;
-	std::string_view Label;
+	Z80Instruction Operation;
+	const char *Mnemonic;
 };
 
 class Z80 : public CPU
@@ -26,7 +23,7 @@ public:
 	void Clock() override;
 
 	// Disassemble from the specified address for the specified length
-	void Disassemble(size_t, size_t) override;
+	void Disassemble(size_t) override;
 
 	// Read address from RAM
 	size_t FetchAddress() override;
@@ -228,17 +225,10 @@ public:
 
 
 	// --- misc ---
-	uint8_t NOP();
-private:
-	static const std::array<Z80Opcode, 256> BitOps;
-	static const std::map<uint8_t, Z80Opcode> ExtOps;
-	static const std::array<Z80Opcode, 256> IXBitOps;
-	static const std::map<uint8_t, Z80Opcode> IXOps;
-	static const std::array<Z80Opcode, 256> IYBitOps;
-	static const std::map<uint8_t, Z80Opcode> IYOps;
-	static const std::array<Z80Opcode, 256> MainOps;
 
-	uint8_t m_cycles;
+	uint8_t NOP();
+protected:
+	uint8_t cycles;
 
 	struct Registers
 	{
@@ -258,14 +248,27 @@ private:
 		uint8_t a; // accumulator
 
 		// general purpse, either 8 bit or paired to be 16 bit
-		uint8_t b, c,
-				d, e,
-				h, l;
+		union
+		{
+			struct
+			{
+				uint8_t b, c,
+						d, e,
+						h, l;
+			};
+
+			struct
+			{
+				uint16_t bc,
+						 de,
+						 hl;
+			};
+		};
 
 		uint8_t i; // interrupt page address
 		uint8_t r; // memory refresh
 		uint16_t ix, iy; // index registers
-	} m_regs;
+	} regs;
 };
 
 #endif // _Z80_CPU_H
