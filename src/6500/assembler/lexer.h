@@ -21,11 +21,14 @@ enum class Token6500ID
 	Value,
 
 	Identifier,
-	Integer,
-	String,
+	IntegerLiteral,
+	StringLiteral,
 
 	X,
 	Y,
+
+	Byte,
+	Text,
 
 	ADC,
 	AND,

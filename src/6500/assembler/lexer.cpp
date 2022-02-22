@@ -168,7 +168,7 @@ Token6500 Lexer6500::Binary()
 	if (result.ec == std::errc::result_out_of_range)
 		return Error("Max value exceeded");
 
-	return MakeToken(Token6500ID::Integer, n);
+	return MakeToken(Token6500ID::IntegerLiteral, n);
 }
 
 Token6500 Lexer6500::Decimal()
@@ -184,7 +184,7 @@ Token6500 Lexer6500::Decimal()
 	if (result.ec == std::errc::result_out_of_range)
 		return Error("Max value exceeded");
 
-	return MakeToken(Token6500ID::Integer, n);
+	return MakeToken(Token6500ID::IntegerLiteral, n);
 }
 
 template <class ...Args>
@@ -232,7 +232,7 @@ Token6500 Lexer6500::Hex()
 	if (result.ec == std::errc::result_out_of_range)
 		return Error("Max value exceeded");
 
-	return MakeToken(Token6500ID::Integer, n);
+	return MakeToken(Token6500ID::IntegerLiteral, n);
 }
 
 Token6500 Lexer6500::Identifier(bool prefixed)
@@ -246,6 +246,13 @@ Token6500 Lexer6500::Identifier(bool prefixed)
 		if (std::strcmp(ident.c_str(), k) == 0)
 			return Simple(v);
 
+	// meta commands
+	if (ident == "BY" || ident == "BYTE" || ident == "DB")
+		return Simple(Token6500ID::Byte);
+	if (ident == "AZ" || ident == "ASCIIZ" || ident == "TX")
+		return Simple(Token6500ID::Text);
+
+	// registers
 	if (ident == "X") return Simple(Token6500ID::X);
 	if (ident == "Y") return Simple(Token6500ID::Y);
 
@@ -338,7 +345,7 @@ Token6500 Lexer6500::String()
 		text += m_state.Get();
 	m_state.Advance();
 
-	return MakeToken(Token6500ID::String, text);
+	return MakeToken(Token6500ID::StringLiteral, text);
 }
 
 const char * TokenIDString(Token6500ID id)
