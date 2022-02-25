@@ -2,9 +2,7 @@
 #include <charconv>
 #include <cstring>
 #include <map>
-#include <sstream>
 #include <system_error>
-#include <utility>
 
 #include "lexer.h"
 
@@ -49,7 +47,6 @@ static const std::map<const char *, Token6500ID> Ops =
 	{ "PHP", Token6500ID::PHP },
 	{ "PLA", Token6500ID::PLA },
 	{ "PLP", Token6500ID::PLP },
-	{ "RLA", Token6500ID::RLA },
 	{ "ROL", Token6500ID::ROL },
 	{ "ROR", Token6500ID::ROR },
 	{ "RTI", Token6500ID::RTI },
@@ -83,6 +80,9 @@ static const char *TokenStrings[] {
 	"identifier",
 	"integer",
 	"string",
+
+	"BYTE",
+	"ASCIIZ",
 
 	"X",
 	"Y",
@@ -159,7 +159,7 @@ Token6500 Lexer6500::Binary()
 	while (m_state.IsBinary())
 		m_state.Next();
 
-	if (std::isalpha(m_state.Get()) || std::isdigit(m_state.Get()) || m_state.Get() == '_')
+	if (std::isalnum(m_state.Get()) || m_state.Get() == '_')
 		return Error("Binary literal holds invalid characters");
 
 	uint16_t n;
@@ -187,23 +187,11 @@ Token6500 Lexer6500::Decimal()
 	return MakeToken(Token6500ID::IntegerLiteral, n);
 }
 
-template <class ...Args>
-Token6500 Lexer6500::Error(Args &&...args)
-{
-	std::string code(m_lastState.Ptr(), m_state.Column() - m_lastState.Column());
-	std::ostringstream msg;
-	(msg << ... << std::forward<Args>(args)) << '\n'
-		<< '(' << m_state.Line() << ", " << m_state.Column() << "): " << code;
-
-	m_state.Advance();
-
-	return MakeToken(Token6500ID::Error, msg.str());
-}
-
 Token6500 Lexer6500::Expect(char expected, Token6500ID id)
 {
 	if (m_state.Next() == expected) return Simple(id);
-	else return Error("Unexpected character: '", m_state.Get(), '\'');
+	else
+		return Error("Expected '", expected, "', got '", m_state.Get(), '\'');
 }
 
 Token6500 Lexer6500::Follow(char expected, Token6500ID ifYes, Token6500ID ifNo)
@@ -348,7 +336,7 @@ Token6500 Lexer6500::String()
 	return MakeToken(Token6500ID::StringLiteral, text);
 }
 
-const char * TokenIDString(Token6500ID id)
+const char * Token6500IDString(Token6500ID id)
 {
 	return TokenStrings[static_cast<size_t>(id)];
 }
