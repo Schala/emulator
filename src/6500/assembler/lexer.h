@@ -9,7 +9,7 @@
 #include <variant>
 
 #include "../../core/lexer.h"
-#include "../../generic/scanner.h"
+#include "../../core/scanner.h"
 
 enum class Token6500ID
 {
@@ -117,6 +117,7 @@ public:
 private:
 	Scanner m_lastState;
 	Scanner m_state;
+	uint16_t m_lastOffset;
 
 	Token6500 Binary();
 	Token6500 Decimal();

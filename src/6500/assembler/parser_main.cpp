@@ -21,8 +21,14 @@ int main(int argc, char **argv)
 
 	Assembler6500 parser(src.c_str());
 	parser.Parse();
+	parser.ResolveSymbols();
 
-	for (auto &t : parser.m_ast)
+	for (auto &[k, v] : parser.m_syms)
+	{
+		std::cout << k << ": " << v << '\n';
+	}
+
+	/*for (auto &t : parser.m_ast)
 	{
 		std::cout << std::setw(4) << t.Line << ", " << std::setw(3) <<
 			t.Column << ":\t" << Token6500IDString(t.ID);
@@ -32,16 +38,16 @@ int main(int argc, char **argv)
 			case Token6500ID::Error:
 			case Token6500ID::Identifier:
 			case Token6500ID::StringLiteral:
-				std::cout << '(' << std::get<std::string>(t.Value) << ')';
+				std::cout << '(' << std::get<std::string>(t.Value.value()) << ')';
 				break;
 			case Token6500ID::IntegerLiteral:
-				std::cout << '(' << std::get<uint16_t>(t.Value) << ')';
+				std::cout << '(' << std::get<uint16_t>(t.Value.value()) << ')';
 				break;
 			default: ;
 		}
 
 		std::cout << '\n';
-	}
+	}*/
 
 	return 0;
 }

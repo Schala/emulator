@@ -189,7 +189,7 @@ Token6500 Lexer6500::Decimal()
 
 Token6500 Lexer6500::Expect(char expected, Token6500ID id)
 {
-	if (m_state.Next() == expected) return Simple(id);
+	if (m_state.Get() == expected) return Simple(id);
 	else
 		return Error("Expected '", expected, "', got '", m_state.Get(), '\'');
 }
@@ -255,7 +255,7 @@ void Lexer6500::LineComment()
 
 Token6500 Lexer6500::MakeToken(Token6500ID id, Token6500Value value) const
 {
-	return { id, m_state.Line(), m_state.Column(), std::move(value) };
+	return { id, m_state.Line(), m_state.Column(), m_state.Line(), std::move(value) };
 }
 
 Token6500 Lexer6500::NextToken()

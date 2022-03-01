@@ -9,6 +9,7 @@ struct Token
 	TID ID;
 	size_t Line;
 	size_t Column;
+	size_t Offset;
 	TValue Value;
 };
 
