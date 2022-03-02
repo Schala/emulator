@@ -18,6 +18,7 @@ enum class Token6500ID
 
 	Colon,
 	Comma,
+	Equal,
 	Offset,
 	ParenthesisLeft,
 	ParenthesisRight,
@@ -27,6 +28,7 @@ enum class Token6500ID
 	IntegerLiteral,
 	StringLiteral,
 
+	A,
 	X,
 	Y,
 
@@ -126,7 +128,6 @@ private:
 	void LineComment();
 	Token6500 MakeToken(Token6500ID id, Token6500Value value = nullptr) const;
 	Token6500 Octal();
-	Token6500 Offset();
 	Token6500 Simple(Token6500ID);
 	Token6500 String();
 };

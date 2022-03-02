@@ -72,7 +72,8 @@ static const char *TokenStrings[] {
 
 	":",
 	",",
-	"*=",
+	"="
+	"*",
 	"(",
 	")",
 	"#",
@@ -85,6 +86,7 @@ static const char *TokenStrings[] {
 	"INCLUDE",
 	"ASCIIZ",
 
+	"A",
 	"X",
 	"Y",
 
@@ -232,10 +234,23 @@ Token6500 Lexer6500::Identifier(bool prefixed)
 	// meta commands
 	if (ident == "BY" || ident == "BYTE" || ident == "DB")
 		return Simple(Token6500ID::Byte);
+	if (ident == "INCLUDE")
+		return Simple(Token6500ID::Include);
 	if (ident == "AZ" || ident == "ASCIIZ" || ident == "TX")
 		return Simple(Token6500ID::Text);
 
+	// discardables, treat as line comments
+	if (ident == "NAM" || ident == "FORML" || ident == "SUBTTL")
+	{
+		LineComment();
+		return NextToken();
+	}
+
+	// synonyms
+	if (ident == "ORG") return Simple(Token6500ID::Offset);
+
 	// registers
+	if (ident == "A") return Simple(Token6500ID::A);
 	if (ident == "X") return Simple(Token6500ID::X);
 	if (ident == "Y") return Simple(Token6500ID::Y);
 
@@ -266,9 +281,13 @@ Token6500 Lexer6500::NextToken()
 		case '%': return Binary();
 		case ':': return Simple(Token6500ID::Colon);
 		case ',': return Simple(Token6500ID::Comma);
+		case '=': return Simple(Token6500ID::Equal);
 		case '$': return Hex();
 		case '.': return Identifier(true);
-		case ';': LineComment(); return NextToken();
+		case ';':
+			LineComment();
+			return NextToken();
+		case '*': return Simple(Token6500ID::Offset);
 		case '@':
 		case '0':
 			return Octal();
@@ -300,13 +319,6 @@ Token6500 Lexer6500::Octal()
 		return Error("Max value exceeded");
 
 	return MakeToken(Token6500ID::IntegerLiteral, n);
-}
-
-Token6500 Lexer6500::Offset()
-{
-	if (m_state.Next() == '=')
-		return Simple(Token6500ID::Offset);
-	return Error("Expected '=' for offset, got '", m_state.Get(), '\'');
 }
 
 std::string SanitizeString(std::string text)
