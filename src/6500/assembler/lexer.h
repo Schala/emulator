@@ -31,6 +31,7 @@ enum class Token6500ID
 	Y,
 
 	Byte,
+	Include,
 	Text,
 
 	ADC,
@@ -117,15 +118,14 @@ public:
 private:
 	Scanner m_lastState;
 	Scanner m_state;
-	uint16_t m_lastOffset;
 
 	Token6500 Binary();
 	Token6500 Decimal();
-	Token6500 Follow(char, Token6500ID, Token6500ID);
 	Token6500 Hex();
 	Token6500 Identifier(bool);
 	void LineComment();
 	Token6500 MakeToken(Token6500ID id, Token6500Value value = nullptr) const;
+	Token6500 Octal();
 	Token6500 Offset();
 	Token6500 Simple(Token6500ID);
 	Token6500 String();

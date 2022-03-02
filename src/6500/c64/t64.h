@@ -12,8 +12,6 @@ class C64Tape : public Device
 public:
 	C64Tape(C64 &, const std::filesystem::path &);
 private:
-	static constexpr std::array<char, 4> Magic = { 'C', '6', '4', 'S' };
-
 	struct DirectoryEntry
 	{
 		uint8_t c64sFileType; // 0 = free (usually), 1 = normal, 3 = uncompressed mem snapshot,

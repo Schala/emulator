@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <array>
+#include <bit>
+#include <fstream>
 #include <utility>
 
 #include "assembler.h"
@@ -284,6 +288,77 @@ uint16_t Assembler6500::FindLabelOffset(const std::string &label) const
 	return 0;
 }
 
+/*void Assembler6500::FormatNES(const std::filesystem::path &path, bool pal) const
+{
+	if (m_gen.empty()) return;
+
+	struct
+	{
+		std::array<char, 4> magic;
+		uint8_t prgPages; // ROM data
+		uint8_t chrPages; // graphics data
+
+		struct MapperInfo
+		{
+			uint16_t
+				mirrorVertical : 1,
+				batteryBackedRAM : 1,
+				trainer : 1,
+				fourScreenVRAMLayout : 1,
+				typeLo: 4,
+				vsSystemCart : 1,
+				reserved : 3,
+				typeHi: 4;
+		} mapperInfo;
+
+		uint8_t ramPages;
+		bool isPAL;
+		std::array<uint8_t, 6> _reserved09;
+	} header;
+
+	header.magic = { 'N', 'E', 'S', 26 };
+	header.mapperInfo.typeLo = header.mapperInfo.typeHi = 0;
+	header.isPAL = pal;
+	std::fill(header._reserved09.begin(), header._reserved09.end(), 0);
+
+	std::ofstream nesRom(path, std::ios::binary);
+
+	nesRom.write(std::bit_cast<const char *>(&header), 16);
+	nesRom.write(std::bit_cast<const char *>(&m_gen[0]), m_gen.size());
+}*/
+
+/*void Assembler6500::FormatT64(const std::filesystem::path &path, const std::string &name) const
+{
+	if (m_gen.empty()) return;
+
+	static constexpr std::array<char, 4> Magic = { 'C', '6', '4', 'S' };
+
+	struct DirectoryEntry
+	{
+		uint8_t c64sFileType; // 0 = free (usually), 1 = normal, 3 = uncompressed mem snapshot,
+							  // 2-255 = mem snapshots
+		uint8_t fileType; // 0x82 = PRG, 0x81 = SEQ, etc.
+		uint16_t startAddr;
+		uint16_t endAddr; // 0 if snapshot
+		uint16_t _reserved06;
+		uint32_t fileOffset; // big endian
+		uint32_t _reserved0A;
+		std::array<char, 16> name; // padded with space (0x20)
+	};
+
+	struct
+	{
+		std::array<char, 32> sig;
+		uint16_t version;
+		uint16_t maxDirEntries;
+		uint16_t usedEntries;
+		uint16_t _reserved26;
+		std::array<char, 24> name; // padded with space (0x20)
+	} header;
+
+
+}*/
+
 void Assembler6500::Parse()
 {
 	do
@@ -471,5 +546,7 @@ void Assembler6500::Statement(Token6500 token)
 			m_ast.push_back(std::move(token));
 			Expression(m_lex.NextToken());
 			break;
+		default:
+			m_ast.push_back(m_lex.Error("Unexpected token: ", Token6500IDString(token.ID)));
 	}
 }

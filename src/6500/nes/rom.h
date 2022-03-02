@@ -27,14 +27,11 @@ public:
 	// Write to PPU bus
 	void PPUWriteByte(uint16_t, uint8_t);
 private:
-	// File header magic
-	static constexpr std::array<char, 4> Magic = { 'N', 'E', 'S', 26 };
-
 	uint8_t m_mapperID;
 
 	struct Header
 	{
-		std::array<char, 4> magic; // must be equal to Magic
+		std::array<char, 4> magic; // must be equal to Magic (in .cpp file)
 		uint8_t prgPages; // ROM data
 		uint8_t chrPages; // graphics data
 
@@ -53,7 +50,7 @@ private:
 
 		uint8_t ramPages;
 		bool isPAL;
-		std::array<uint8_t, 6> _reserved9;
+		std::array<uint8_t, 6> _reserved09;
 	} m_header;
 
 	uint32_t m_hash;

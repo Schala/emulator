@@ -6,6 +6,8 @@
 #include "c64.h"
 #include "t64.h"
 
+static constexpr std::array<char, 4> Magic = { 'C', '6', '4', 'S' };
+
 C64Tape::C64Tape(C64 &c64, const std::filesystem::path &path):
 	Device(c64.GetBus()),
 	m_c64(c64)

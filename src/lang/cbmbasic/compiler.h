@@ -2,69 +2,23 @@
 #define _CBMBASIC_COMPILER_H
 
 #include <cstdint>
-#include <filesystem>
-#include <string>
-#include <string_view>
-#include <variant>
+#include <list>
+#include <map>
+#include <ostream>
+#include <vector>
 
-enum class CBMBASICToken : uint8_t
-{
-	Invalid,
-	EndOfFile,
-	And, // AND
-	Def, // DEF
-	Dim, // DIM
-	Divide, // /
-	Else, // ELSE
-	Equal, // =
-	Float, // 1.23
-	Fn, // FN
-	For, // FOR
-	GoSub, // GOSUB
-	GoTo, // GOTO
-	GreaterEqual, // >=
-	GreaterThan, // >
-	Identifier,
-	If, // IF
-	Integer, // 123
-	LessEqual, // <=
-	LessThan, // <
-	Let, // LET
-	Minus, // -
-	Multiply, // *
-	Next, // NEXT
-	Not, // NOT
-	On, // ON
-	Or, // OR
-	Plus, // +
-	Return, // RETURN
-	Step, // STEP
-	String, // ""
-	Then, // THEN
-	To // TO
-};
+#include "lexer.h"
 
-struct CBMBASICVariable
-{
-	std::string_view Name;
-	std::variant<std::string, uint16_t> Value;
-};
-
-class CBMBASICState
+class CBMBASICCompiler
 {
 public:
-	CBMBASICState();
-	void OpenSourceFile(const std::filesystem::path &);
-private:
-	CBMBASICToken m_lastToken;
-	char m_lastChar;
-	uint16_t m_val;
-	float m_dec;
-	std::string::iterator m_it;
-	std::string m_src;
-	std::string m_lastIdentifier;
+	CBMBASICCompiler(const char *);
 
-	CBMBASICToken NextToken();
+private:
+	CBMBASICLexer m_lex;
+	std::list<CBMBASICToken> m_ast;
+	std::vector<uint8_t> m_gen;
+	std::map<std::string, CBMBASICTokenValue> m_vars;
 };
 
 #endif // _CBMBASIC_COMPILER_H

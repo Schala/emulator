@@ -7,6 +7,8 @@
 #include "nes.h"
 #include "mappers/nrom.h"
 
+static constexpr std::array<char, 4> Magic = { 'N', 'E', 'S', 26 };
+
 NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 	Device(nes.GetBus()),
 	m_nes(nes)

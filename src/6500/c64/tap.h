@@ -13,9 +13,6 @@ public:
 	C64RawTape(C64 &, const std::filesystem::path &);
 	double Pulse();
 private:
-	static constexpr std::array<char, 12> Magic =
-		{ 'C', '6', '4', '-', 'T', 'A', 'P', 'E', '-', 'R', 'A', 'W' };
-
 	struct Header
 	{
 		std::array<char, 12> sig;

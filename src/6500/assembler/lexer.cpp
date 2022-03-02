@@ -82,6 +82,7 @@ static const char *TokenStrings[] {
 	"string",
 
 	"BYTE",
+	"INCLUDE",
 	"ASCIIZ",
 
 	"X",
@@ -194,12 +195,6 @@ Token6500 Lexer6500::Expect(char expected, Token6500ID id)
 		return Error("Expected '", expected, "', got '", m_state.Get(), '\'');
 }
 
-Token6500 Lexer6500::Follow(char expected, Token6500ID ifYes, Token6500ID ifNo)
-{
-	if (m_state.Next() == expected) return Simple(ifYes);
-	else return Simple(ifNo);
-}
-
 bool Lexer6500::HasMore() const
 {
 	return m_state.HasMore();
@@ -274,6 +269,9 @@ Token6500 Lexer6500::NextToken()
 		case '$': return Hex();
 		case '.': return Identifier(true);
 		case ';': LineComment(); return NextToken();
+		case '@':
+		case '0':
+			return Octal();
 		case '(': return Simple(Token6500ID::ParenthesisLeft);
 		case ')': return Simple(Token6500ID::ParenthesisRight);
 		case '"': return String();
@@ -283,6 +281,25 @@ Token6500 Lexer6500::NextToken()
 			if (std::isdigit(c)) return Decimal();
 			return Error("Unexpected character: '", c, '\'');
 	}
+}
+
+Token6500 Lexer6500::Octal()
+{
+	m_lastState.Advance(); // eat '@' or '0'
+
+	while (m_state.IsOctal())
+		m_state.Next();
+
+	if (std::isalnum(m_state.Get()) || m_state.Get() == '_')
+		return Error("Binary literal holds invalid characters");
+
+	uint16_t n;
+	auto result = std::from_chars(m_lastState.Ptr(), m_state.Ptr(), n, 8);
+
+	if (result.ec == std::errc::result_out_of_range)
+		return Error("Max value exceeded");
+
+	return MakeToken(Token6500ID::IntegerLiteral, n);
 }
 
 Token6500 Lexer6500::Offset()
@@ -311,8 +328,10 @@ std::string SanitizeString(std::string text)
 				{
 					text.insert(i, "\\x");
 					i += 2;
-					text.insert(i++, 1, (text[i] & 240) >> 4);
-					text.insert(i++, 1, text[i] & 15);
+					text.insert(i, 1, (text[i] & 240) >> 4);
+					i++;
+					text.insert(i, 1, text[i] & 15);
+					i++;
 				}
 		}
 

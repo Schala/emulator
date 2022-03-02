@@ -5,10 +5,12 @@
 #include "c64.h"
 #include "tap.h"
 
+static constexpr std::array<char, 12> Magic =
+		{ 'C', '6', '4', '-', 'T', 'A', 'P', 'E', '-', 'R', 'A', 'W' };
+
 C64RawTape::C64RawTape(C64 &c64, const std::filesystem::path &path):
 	Device(c64.GetBus()),
-	m_c64(c64),
-	m_lastPulse(0.0)
+	m_c64(c64)
 {
 	std::ifstream tapeFile(path, std::ios::binary);
 	tapeFile.read(std::bit_cast<char *>(&m_header), 20);

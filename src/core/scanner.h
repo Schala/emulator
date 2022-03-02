@@ -62,6 +62,11 @@ public:
 		}
 	}
 
+	inline bool IsOctal() const
+	{
+		return *m_ptr >= '0' && *m_ptr <= '7';
+	}
+
 	inline size_t Line() const
 	{
 		return m_line;
