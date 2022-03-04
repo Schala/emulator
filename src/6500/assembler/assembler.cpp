@@ -1,552 +1,93 @@
-#include <algorithm>
-#include <array>
-#include <bit>
-#include <fstream>
-#include <utility>
+#include <cctype>
+#include <cstring>
 
 #include "assembler.h"
 #include "../../core/utility.h"
 
-Assembler6500::Assembler6500(const char *source):
-	m_lex(Lexer6500(source))
+static const std::vector<const char *> RESERVED =
+{
+	// instructions
+	"ADC", "AND", "ASL",
+	"BCC", "BCS", "BEQ", "BIT", "BMI", "BNE", "BPL", "BRK", "BVC", "BVS",
+	"CLC", "CLD", "CLI", "CLV", "CMP", "CPX", "CPY",
+	"DEC", "DEX", "DEY",
+	"EOR",
+	"INC", "INX", "INY",
+	"JMP", "JSR",
+	"LDA", "LDX", "LDY", "LSR",
+	"NOP",
+	"ORA",
+	"PHA", "PHP", "PLA", "PLP",
+	"ROL", "ROR", "RTI", "RTS",
+	"SBC", "SEC", "SED", "SEI", "STA", "STX", "STY",
+	"TAX", "TAY", "TSX", "TXA", "TXS", "TYA",
+
+	// registers
+	"A", "X", "Y",
+
+	// directives
+	"BY", "BYT", "BYTE", "DB",
+	"ASCII", "ASCIIZ", "AZ", "TX",
+	"INCLUDE",
+	"ORG",
+	"WORD"
+};
+
+static constexpr bool ValidIdentifier(char c)
+{
+	return std::isalnum(c) || c == '_';
+}
+
+Assembler6500::Assembler6500(std::istream &s):
+	m_state(s)
 {
 }
 
-Assembler6500::~Assembler6500()
+std::string Assembler6500::GetText() const
+{
+	return m_state.GetAll();
+}
+
+void Assembler6500::ParseDirectives()
+{
+
+}
+
+void Assembler6500::ParseLabels()
 {
 }
 
-/*void Assembler6500::CodeGen(std::ostream &logOut)
+void Assembler6500::Preprocess()
 {
-	auto it = m_ast.begin();
+	StripComments();
+	ParseLabels();
+	ParseDirectives();
+}
 
-	while (it != m_ast.end())
+void Assembler6500::StripComments()
+{
+	Scanner newState;
+
+	for (size_t i = 0; i < m_state.LineCount(); i++)
 	{
-		switch (it->ID)
+		std::string line = *(m_state.LineIterator());
+
+		size_t pos = line.find_first_of(';');
+
+		if (pos != std::string::npos)
+			line = line.substr(0, pos);
+
+		// if whole line was not a comment, empty, or whitespace
+		if (line.empty() || IsBlankLine(line))
 		{
-			case Token6500ID::Error:
-				logOut << std::get<std::string>(it->Value) << '\n';
-				it++;
-				break;
-
-			case Token6500ID::Offset:
-				it += 2;
-				break;
-
-			case Token6500ID::Byte:
-				it++;
-				while (it->ID == Token6500ID::IntegerLiteral)
-				{
-					EmitByte(static_cast<uint8_t>(std::get<uint16_t>(it->Value)));
-					it++;
-				}
-				break;
-
-			case Token6500ID::Text:
-				it++
-				for (char c : std::get<std::string>(it->Value))
-					EmitByte(static_cast<uint8_t>(c));
-				it++;
-				break;
-
-			case Token6500ID::BCC:
-				EmitByte(144);
-				it++;
-				break;
-
-			case Token6500ID::BCS:
-				EmitByte(176);
-				it++;
-				break;
-
-			case Token6500ID::BEQ:
-				EmitByte(240);
-				it++;
-				break;
-
-			case Token6500ID::BMI:
-				EmitByte(48);
-				it++;
-				break;
-
-			case Token6500ID::BNE:
-				EmitByte(208);
-				it++;
-				break;
-
-			case Token6500ID::BPL:
-				EmitByte(16);
-				it++;
-				break;
-
-			case Token6500ID::BRK:
-				EmitByte(0);
-				it++;
-				break;
-
-			case Token6500ID::BVC:
-				EmitByte(80);
-				it++;
-				break;
-
-			case Token6500ID::BVS:
-				EmitByte(112);
-				it++;
-				break;
-
-			case Token6500ID::CLC:
-				EmitByte(24);
-				it++;
-				break;
-
-			case Token6500ID::CLD:
-				EmitByte(216);
-				it++;
-				break;
-
-			case Token6500ID::CLI:
-				EmitByte(88);
-				it++;
-				break;
-
-			case Token6500ID::CLV:
-				EmitByte(184);
-				it++;
-				break;
-
-			case Token6500ID::DEX:
-				EmitByte(202);
-				it++;
-				break;
-
-			case Token6500ID::DEY:
-				EmitByte(136);
-				it++;
-				break;
-
-			case Token6500ID::INX:
-				EmitByte(232);
-				it++;
-				break;
-
-			case Token6500ID::INY:
-				EmitByte(200);
-				it++;
-				break;
-
-			case Token6500ID::PHA:
-				EmitByte(72);
-				it++;
-				break;
-
-			case Token6500ID::PHP:
-				EmitByte(8);
-				it++;
-				break;
-
-			case Token6500ID::PLA:
-				EmitByte(104);
-				it++;
-				break;
-
-			case Token6500ID::PLP:
-				EmitByte(40);
-				it++;
-				break;
-
-			case Token6500ID::SEC:
-				EmitByte(56);
-				it++;
-				break;
-
-			case Token6500ID::SED:
-				EmitByte(248);
-				it++;
-				break;
-
-			case Token6500ID::SEI:
-				EmitByte(120);
-				it++;
-				break;
-
-			case Token6500ID::TAX:
-				EmitByte(170);
-				it++;
-				break;
-
-			case Token6500ID::TAY:
-				EmitByte(168);
-				it++;
-				break;
-
-			case Token6500ID::TSX:
-				EmitByte(186);
-				it++;
-				break;
-
-			case Token6500ID::TXA:
-				EmitByte(138);
-				it++;
-				break;
-
-			case Token6500ID::TXS:
-				EmitByte(154);
-				it++;
-				break;
-
-			case Token6500ID::TYA:
-				EmitByte(152);
-				it++;
-				break;
-
-			default:
-				logOut << it->Line << ',' << it->Column << ": Unsupported syntax or illegal opcode\n";
-				it++;
-		}
-	}
-}*/
-
-void Assembler6500::EmitByte(uint8_t data)
-{
-	m_gen.push_back(data);
-}
-
-void Assembler6500::EmitWord(uint16_t data)
-{
-	EmitByte(data & 255);
-	EmitByte(Hi16(data) >> 8);
-}
-
-void Assembler6500::Expression(Token6500 token)
-{
-	static bool inParen = false;
-
-	switch (token.ID)
-	{
-		case Token6500ID::ParenthesisLeft:
-			m_ast.push_back(std::move(token));
-			inParen = true;
-			Expression(m_lex.NextToken());
-			break;
-
-		case Token6500ID::ParenthesisRight:
-			if (!inParen)
-			{
-				m_ast.push_back(m_lex.Error("Unexpected closing parenthesis"));
-				return;
-			}
-
-			if (m_ast.back().ID == Token6500ID::ParenthesisLeft)
-			{
-				m_ast.push_back(m_lex.Error("Empty indirect expression"));
-				return;
-			}
-
-			m_ast.push_back(std::move(token));
-			inParen = false;
-			break;
-
-		case Token6500ID::Value:
-			m_ast.push_back(std::move(token));
-			token = m_lex.NextToken();
-			if (token.ID == Token6500ID::IntegerLiteral || token.ID == Token6500ID::Identifier)
-				m_ast.push_back(std::move(token));
-			else
-				m_ast.push_back(m_lex.Error("Expected integer literal or identifier, got: ",
-					Token6500IDString(token.ID)));
-
-			if (inParen) Expression(m_lex.NextToken());
-			break;
-
-		case Token6500ID::Identifier:
-		case Token6500ID::IntegerLiteral:
-		case Token6500ID::X:
-		case Token6500ID::Y:
-			m_ast.push_back(std::move(token));
-			if (inParen) Expression(m_lex.NextToken());
-			break;
-
-		default:
-			m_ast.push_back(m_lex.Error("Expected expression, got: ", Token6500IDString(token.ID)));
-	}
-}
-
-uint16_t Assembler6500::FindLabelOffset(const std::string &label) const
-{
-	auto it = m_ast.cbegin();
-
-	while (it != m_ast.cend())
-	{
-		if (it->ID == Token6500ID::Identifier)
-		{
-			auto ident = it++;
-			if (it->ID == Token6500ID::Colon)
-				return it->Offset;
-		}
-	}
-
-	return 0;
-}
-
-/*void Assembler6500::FormatNES(const std::filesystem::path &path, bool pal) const
-{
-	if (m_gen.empty()) return;
-
-	struct
-	{
-		std::array<char, 4> magic;
-		uint8_t prgPages; // ROM data
-		uint8_t chrPages; // graphics data
-
-		struct MapperInfo
-		{
-			uint16_t
-				mirrorVertical : 1,
-				batteryBackedRAM : 1,
-				trainer : 1,
-				fourScreenVRAMLayout : 1,
-				typeLo: 4,
-				vsSystemCart : 1,
-				reserved : 3,
-				typeHi: 4;
-		} mapperInfo;
-
-		uint8_t ramPages;
-		bool isPAL;
-		std::array<uint8_t, 6> _reserved09;
-	} header;
-
-	header.magic = { 'N', 'E', 'S', 26 };
-	header.mapperInfo.typeLo = header.mapperInfo.typeHi = 0;
-	header.isPAL = pal;
-	std::fill(header._reserved09.begin(), header._reserved09.end(), 0);
-
-	std::ofstream nesRom(path, std::ios::binary);
-
-	nesRom.write(std::bit_cast<const char *>(&header), 16);
-	nesRom.write(std::bit_cast<const char *>(&m_gen[0]), m_gen.size());
-}*/
-
-/*void Assembler6500::FormatT64(const std::filesystem::path &path, const std::string &name) const
-{
-	if (m_gen.empty()) return;
-
-	static constexpr std::array<char, 4> Magic = { 'C', '6', '4', 'S' };
-
-	struct DirectoryEntry
-	{
-		uint8_t c64sFileType; // 0 = free (usually), 1 = normal, 3 = uncompressed mem snapshot,
-							  // 2-255 = mem snapshots
-		uint8_t fileType; // 0x82 = PRG, 0x81 = SEQ, etc.
-		uint16_t startAddr;
-		uint16_t endAddr; // 0 if snapshot
-		uint16_t _reserved06;
-		uint32_t fileOffset; // big endian
-		uint32_t _reserved0A;
-		std::array<char, 16> name; // padded with space (0x20)
-	};
-
-	struct
-	{
-		std::array<char, 32> sig;
-		uint16_t version;
-		uint16_t maxDirEntries;
-		uint16_t usedEntries;
-		uint16_t _reserved26;
-		std::array<char, 24> name; // padded with space (0x20)
-	} header;
-
-
-}*/
-
-void Assembler6500::Parse()
-{
-	do
-	{
-		Statement(m_lex.NextToken());
-	} while (m_lex.HasMore());
-}
-
-void Assembler6500::ResolveSymbols()
-{
-	auto it = m_ast.begin();
-	uint16_t globalOffset = 0;
-	uint16_t relOffset = 0;
-
-	while (it != m_ast.end())
-	{
-		switch (it->ID)
-		{
-			case Token6500ID::Identifier:
-			{
-				it->Offset = globalOffset + relOffset;
-				relOffset++;
-				auto ident = it++;
-				if (it->ID == Token6500ID::Colon)
-					m_syms[std::get<std::string>(ident->Value)] = globalOffset + relOffset;
-				break;
-			}
-
-			case Token6500ID::Offset:
-				it->Offset = globalOffset + relOffset;
-				relOffset++;
-				it++;
-				switch (it->ID)
-				{
-					case Token6500ID::IntegerLiteral:
-						globalOffset = std::get<uint16_t>(it->Value);
-						break;
-
-					case Token6500ID::Identifier:
-						if (m_syms.contains(std::get<std::string>(it->Value)))
-							globalOffset = m_syms[std::get<std::string>(it->Value)];
-						else
-							globalOffset = FindLabelOffset(std::get<std::string>(it->Value));
-
-					default: ;
-				}
-				relOffset = 0;
-				break;
-
-			default: ;
+			m_state.NextLine();
+			continue;
 		}
 
-		it->Offset = globalOffset + relOffset;
-		relOffset++;
-		it++;
+		newState.AddLine(line);
+		m_state.NextLine();
 	}
-}
 
-void Assembler6500::Statement(Token6500 token)
-{
-	switch (token.ID)
-	{
-		case Token6500ID::EndOfInput:
-			break;
-
-		case Token6500ID::Error:
-			m_ast.push_back(std::move(token));
-			break;
-
-		// offset ::= '*=' integer literal | identifier
-		case Token6500ID::Offset:
-			m_ast.push_back(std::move(token));
-			token = m_lex.NextToken();
-			switch (token.ID)
-			{
-				case Token6500ID::IntegerLiteral:
-					m_ast.push_back(std::move(token));
-					break;
-				case Token6500ID::Identifier:
-					m_ast.push_back(std::move(token));
-					break;
-				default:
-					m_lex.Error("Offset specified without a valid value");
-					m_ast.push_back(std::move(token));
-			}
-			break;
-
-		case Token6500ID::Identifier:
-			m_ast.push_back(std::move(token));
-			m_ast.push_back(m_lex.Expect(':', Token6500ID::Colon));
-			break;
-
-		// byte ::= ['.'] ('BY' | 'BYTE' | 'DB')
-		case Token6500ID::Byte:
-			m_ast.push_back(std::move(token));
-			token = m_lex.NextToken();
-			if (token.ID == Token6500ID::IntegerLiteral || token.ID == Token6500ID::Identifier)
-			{
-				while (token.ID == Token6500ID::IntegerLiteral || token.ID == Token6500ID::Identifier)
-				{
-					m_ast.push_back(std::move(token));
-
-					token = m_lex.Expect(',', Token6500ID::Comma);
-					if (token.ID == Token6500ID::Error)
-						break;
-
-					token = m_lex.NextToken();
-				}
-			}
-			else
-				m_ast.push_back(m_lex.Error("Expected byte literal or identifier, got: ",
-					Token6500IDString(token.ID)));
-			break;
-
-		// text ::= ['.'] ('ASCIIZ', 'AZ', 'TX') string literal
-		case Token6500ID::Text:
-			m_ast.push_back(std::move(token));
-			token = m_lex.NextToken();
-			if (token.ID == Token6500ID::StringLiteral)
-				m_ast.push_back(std::move(token));
-			else
-				m_ast.push_back(m_lex.Error("Expected string literal, got: ", Token6500IDString(token.ID)));
-			break;
-
-		// implied instructions
-		case Token6500ID::BRK:
-		case Token6500ID::CLC:
-		case Token6500ID::CLD:
-		case Token6500ID::CLI:
-		case Token6500ID::CLV:
-		case Token6500ID::DEX:
-		case Token6500ID::DEY:
-		case Token6500ID::INX:
-		case Token6500ID::INY:
-		case Token6500ID::PHA:
-		case Token6500ID::PHP:
-		case Token6500ID::PLA:
-		case Token6500ID::PLP:
-		case Token6500ID::RTI:
-		case Token6500ID::RTS:
-		case Token6500ID::SEC:
-		case Token6500ID::SED:
-		case Token6500ID::SEI:
-		case Token6500ID::TAX:
-		case Token6500ID::TAY:
-		case Token6500ID::TSX:
-		case Token6500ID::TXA:
-		case Token6500ID::TXS:
-		case Token6500ID::TYA:
-			m_ast.push_back(std::move(token));
-			break;
-
-		// instructions with operands
-		case Token6500ID::ADC:
-		case Token6500ID::AND:
-		case Token6500ID::ASL:
-		case Token6500ID::BCC:
-		case Token6500ID::BCS:
-		case Token6500ID::BEQ:
-		case Token6500ID::BIT:
-		case Token6500ID::BMI:
-		case Token6500ID::BNE:
-		case Token6500ID::BPL:
-		case Token6500ID::BVC:
-		case Token6500ID::BVS:
-		case Token6500ID::CMP:
-		case Token6500ID::CPX:
-		case Token6500ID::CPY:
-		case Token6500ID::DEC:
-		case Token6500ID::EOR:
-		case Token6500ID::INC:
-		case Token6500ID::JMP:
-		case Token6500ID::JSR:
-		case Token6500ID::LDA:
-		case Token6500ID::LDX:
-		case Token6500ID::LDY:
-		case Token6500ID::LSR:
-		case Token6500ID::ORA:
-		case Token6500ID::ROL:
-		case Token6500ID::ROR:
-		case Token6500ID::SBC:
-		case Token6500ID::STA:
-		case Token6500ID::STX:
-		case Token6500ID::STY:
-			m_ast.push_back(std::move(token));
-			Expression(m_lex.NextToken());
-			break;
-		default:
-			m_ast.push_back(m_lex.Error("Unexpected token: ", Token6500IDString(token.ID)));
-	}
+	newState.Rewind();
+	m_state = std::move(newState);
 }
