@@ -16,6 +16,9 @@ int main(int argc, char **argv)
 	Assembler6500 as(srcFile);
 	as.Preprocess();
 
+	std::ofstream outFile("preprocessed.s");
+	outFile << as.GetText();
+
 	for (auto &[id, offs] : as.m_labels)
 		std::cout << std::setw(4) << std::hex << std::uppercase << offs << ": " << id << '\n';
 
