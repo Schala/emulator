@@ -57,7 +57,7 @@ void Assembler6500::ParseDirectives()
 void Assembler6500::ParseLabels()
 {
 	Scanner newState;
-	const std::regex pattern("^\\.?([A-Za-z_][A-Za-z0-9_]*)\\:?");
+	const std::regex pattern("^\\.?([A-Za-z_][A-Za-z0-9_]*)\\:?(.*)");
 	size_t offset = 0;
 
 	// collect labels with their offsets
@@ -66,7 +66,7 @@ void Assembler6500::ParseLabels()
 		std::string line = *(m_state.LineIterator());
 		std::smatch matches;
 
-		if (std::regex_match(line, matches, pattern))
+		if (std::regex_search(line, matches, pattern))
 		{
 			for (const char *s : RESERVED)
 				if (matches[1] == s)
@@ -78,6 +78,10 @@ void Assembler6500::ParseLabels()
 				}
 
 			m_labels[matches[1]] = static_cast<uint16_t>(offset);
+
+			if (matches.size() > 2)
+				offset++;
+
 			m_state.NextLine();
 		}
 		else
