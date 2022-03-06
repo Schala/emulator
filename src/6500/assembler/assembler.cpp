@@ -1,5 +1,6 @@
 #include <cctype>
 #include <cstring>
+#include <regex>
 
 #include "assembler.h"
 #include "../../core/utility.h"
@@ -55,6 +56,36 @@ void Assembler6500::ParseDirectives()
 
 void Assembler6500::ParseLabels()
 {
+	Scanner newState;
+	const std::regex pattern("^\\s?\\.?([A-Za-z_][A-Za-z0-9_]*)\\:?");
+
+	for (size_t i = 0; i < m_state.LineCount(); i++)
+	{
+		std::string line = *(m_state.LineIterator());
+		std::smatch matches;
+
+		if (std::regex_match(line, matches, pattern))
+		{
+			for (const char *s : RESERVED)
+				if (matches[1] == s)
+				{
+					newState.AddLine(line);
+					m_state.NextLine();
+					continue;
+				}
+
+			m_labels[matches[1]] = static_cast<uint16_t>(i);
+			m_state.NextLine();
+		}
+		else
+		{
+			newState.AddLine(line);
+			m_state.NextLine();
+		}
+	}
+
+	newState.Rewind();
+	m_state = std::move(newState);
 }
 
 void Assembler6500::Preprocess()
@@ -73,19 +104,17 @@ void Assembler6500::StripComments()
 		std::string line = *(m_state.LineIterator());
 
 		size_t pos = line.find_first_of(';');
-
 		if (pos != std::string::npos)
 			line = line.substr(0, pos);
 
 		// if whole line was not a comment, empty, or whitespace
 		if (line.empty() || IsBlankLine(line))
-		{
 			m_state.NextLine();
-			continue;
+		else
+		{
+			newState.AddLine(line);
+			m_state.NextLine();
 		}
-
-		newState.AddLine(line);
-		m_state.NextLine();
 	}
 
 	newState.Rewind();
