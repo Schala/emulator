@@ -34,7 +34,7 @@ public:
 	void WriteByte(uint16_t, uint8_t);
 private:
 	size_t m_cycles;
-	NESROM *m_rom;
+	std::unique_ptr<NESROM> m_rom;
 	BusLE16 m_bus;
 	MOS6500 m_cpu;
 	PPU2C02 m_ppu;

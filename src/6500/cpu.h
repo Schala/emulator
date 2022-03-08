@@ -59,9 +59,6 @@ public:
 	// Write address to stack
 	void StackWriteAddress(size_t) override;
 
-	// Return state register as a byte
-	uint8_t StateByte() const;
-
 	// None of these should be inlined, as we need them to be addressable.
 	// All return the number of additional cycles possibly needed.
 
@@ -383,18 +380,23 @@ private:
 		uint8_t x;
 		uint8_t y;
 
-		struct State
+		union
 		{
-			bool
-				c : 1, // carry
-				z : 1, // zero
-				i : 1, // no interrupts
-				d : 1, // decimal mode
-				b : 1, // break
-				u : 1, // unused
-				v : 1, // overflow
-				n : 1; // negative
-		} p;
+			struct
+			{
+				bool
+					c : 1, // carry
+					z : 1, // zero
+					i : 1, // no interrupts
+					d : 1, // decimal mode
+					b : 1, // break
+					u : 1, // unused
+					v : 1, // overflow
+					n : 1; // negative
+			} p;
+
+			uint8_t state;
+		};
 	} m_regs;
 
 	Disassembly m_lastDisasm;

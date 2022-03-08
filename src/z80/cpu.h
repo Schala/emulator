@@ -9,7 +9,11 @@ typedef uint8_t (Z80::*Z80Instruction)();
 
 struct Z80Opcode
 {
+	// Constructor needed because otherwise we'll get an array error
+	Z80Opcode(uint8_t, Z80Instruction, Z80Instruction, const char *);
+
 	uint8_t Cycles;
+	Z80Instruction AddressMode;
 	Z80Instruction Operation;
 	const char *Mnemonic;
 };
@@ -46,6 +50,29 @@ public:
 
 	// None of these should be inlined, as we need them to be addressable.
 	// All return the number of additional cycles possibly needed.
+
+	// --- address modes ---
+
+	uint8_t Bit();
+
+	uint8_t Extended();
+
+	uint8_t ExtendedImmediate();
+
+	uint8_t Immediate();
+
+	uint8_t Implied();
+
+	uint8_t Indexed();
+
+	uint8_t Register();
+
+	uint8_t RegisterIndirect();
+
+	uint8_t Relative();
+
+	uint8_t ZeroPage();
+
 
 	// --- arithmetic ---
 
@@ -146,8 +173,6 @@ public:
 	// decrement and jump if not zero
 	uint8_t DJNZ();
 
-	uint8_t GoTo();
-
 	uint8_t JP();
 
 	uint8_t JR();
@@ -229,6 +254,8 @@ public:
 	uint8_t NOP();
 protected:
 	uint8_t cycles;
+	uint8_t lastOp;
+	uint16_t cache;
 
 	struct Registers
 	{

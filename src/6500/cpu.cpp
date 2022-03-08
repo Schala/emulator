@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <array>
-#include <bit>
 #include <fmt/core.h> // todo: <format>
 #include <stdexcept>
 #include <utility>
@@ -8,9 +7,7 @@
 #include "../core/utility.h"
 #include "cpu.h"
 
-using namespace std::literals::string_view_literals;
-
-static const std::array<Opcode6500, 256> Ops =
+static const std::array<Opcode6500, 256> OPS =
 {
 	// 0x
 	Opcode6500(7, &MOS6500::Implied, &MOS6500::BRK, "brk"),
@@ -336,7 +333,7 @@ void MOS6500::Branch()
 
 void MOS6500::CheckAddressMode(uint16_t value)
 {
-	if (Ops[m_lastOp].AddressMode == &MOS6500::Implied)
+	if (OPS[m_lastOp].AddressMode == &MOS6500::Implied)
 		m_regs.a = value & 255;
 	else
 		WriteByteToLastAddress(value & 255);
@@ -352,9 +349,9 @@ void MOS6500::Clock()
 		m_lastOp = ReadROMByte();
 
 		// set cycles, see if any additional cycles are needed
-		m_cycles = Ops[m_lastOp].Cycles;
-		m_cycles += (this->*Ops[m_lastOp].AddressMode)();
-		m_cycles += (this->*Ops[m_lastOp].Operation)();
+		m_cycles = OPS[m_lastOp].Cycles;
+		m_cycles += OPS[m_lastOp].AddressMode();
+		m_cycles += OPS[m_lastOp].Operation();
 	}
 
 	m_cycles--;
@@ -368,7 +365,7 @@ size_t MOS6500::Cycles() const
 Disassembly MOS6500::Disassemble(size_t addr)
 {
 	size_t address = addr;
-	const Opcode6500 &op = Ops[ReadByte(addr++)];
+	const Opcode6500 &op = OPS[ReadByte(addr++)];
 	std::string line = op.Mnemonic.data();
 
 	if (op.AddressMode == &MOS6500::Immediate)
@@ -423,7 +420,7 @@ Disassembly MOS6500::Disassemble(size_t addr)
 	{
 		size_t address = addr;
 
-		const Opcode6500 &op = Ops[ReadByte(addr++)];
+		const Opcode6500 &op = OPS[ReadByte(addr++)];
 
 		std::string line = op.Mnemonic.data();
 
@@ -472,7 +469,7 @@ Disassembly MOS6500::Disassemble(size_t addr)
 
 uint8_t MOS6500::FetchByte()
 {
-	if (Ops[m_lastOp].AddressMode != &MOS6500::Implied)
+	if (OPS[m_lastOp].AddressMode != &MOS6500::Implied)
 		m_cache = ReadByteFromLastAddress();
 	return m_cache;
 }
@@ -507,7 +504,7 @@ std::string MOS6500::FrameInfo()
 	s += fmt::format("\n\nLast absolute address: ${:04X}\n", lastAbsAddress);
 	s += fmt::format("Last relative address: ${:02X}\n", static_cast<uint8_t>(lastRelAddress));
 	s += fmt::format("Last fetched byte: {:02X}\n", m_cache);
-	s += fmt::format("Last operation: {} ({:02X})\n", Ops[m_lastOp].Mnemonic, m_lastOp);
+	s += fmt::format("Last operation: {} ({:02X})\n", OPS[m_lastOp].Mnemonic, m_lastOp);
 	//s += fmt::format("Cycles remaining: {}\n", m_cycles);
 	s += "--------------------------------\n";
 
@@ -532,7 +529,7 @@ void MOS6500::Interrupt(uint16_t newAbsAddr, uint8_t newCycles)
 	// set and write state register to stack too
 	m_regs.p.b = false;
 	m_regs.p.i = m_regs.p.u = true;
-	StackWriteByte(StateByte());
+	StackWriteByte(m_regs.state);
 
 	// get a new counter
 	lastAbsAddress = newAbsAddr;
@@ -600,11 +597,6 @@ void MOS6500::StackWriteAddress(size_t addr)
 {
 	StackWriteByte((addr & 0xFF00) >> 8);
 	StackWriteByte(addr & 255);
-}
-
-uint8_t MOS6500::StateByte() const
-{
-	return std::bit_cast<uint8_t>(m_regs.p);
 }
 
 
@@ -813,7 +805,7 @@ uint8_t MOS6500::BRK()
 	StackWriteAddress(++counter);
 
 	m_regs.p.b = true;
-	StackWriteByte(StateByte());
+	StackWriteByte(m_regs.state);
 	m_regs.p.b = false;
 
 	counter = ReadAddress(0xFFFE);
@@ -836,10 +828,8 @@ uint8_t MOS6500::NMI()
 
 uint8_t MOS6500::RTI()
 {
-	uint8_t bits = StackReadByte();
-
 	// restore state
-	m_regs.p = std::bit_cast<MOS6500::Registers::State>(bits);
+	m_regs.state = StackReadByte();
 	m_regs.p.b &= ~m_regs.p.b;
 	m_regs.p.u &= ~m_regs.p.u;
 
@@ -882,7 +872,7 @@ uint8_t MOS6500::PHP()
 {
 	m_regs.p.b = true;
 	m_regs.p.u = true;
-	StackWriteByte(StateByte());
+	StackWriteByte(m_regs.state);
 	m_regs.p.b = false;
 	m_regs.p.u = false;
 
@@ -1230,12 +1220,12 @@ uint8_t MOS6500::NOP()
 {
 	switch (m_lastOp)
 	{
-		case 0x1C:
-		case 0x3C:
-		case 0x5C:
-		case 0x7C:
-		case 0xDC:
-		case 0xFC:
+		case 28:
+		case 60:
+		case 92:
+		case 124:
+		case 220:
+		case 252:
 			return 1;
 		default:
 			return 0;

@@ -51,7 +51,8 @@ std::string Assembler6500::GetText() const
 
 void Assembler6500::ParseDirectives()
 {
-
+	const std::regex
+		byte_decl("^\\.?([Bb][Yy][Tt]?[Ee]?|[Dd][Bb])((\\$|\\%)?([A-Fa-f0-9]+)(,[A-Fa-f0-9]+)
 }
 
 void Assembler6500::ParseLabels()
@@ -114,8 +115,8 @@ void Assembler6500::ParseLabels()
 void Assembler6500::Preprocess()
 {
 	StripComments();
-	ParseLabels();
 	ParseDirectives();
+	ParseLabels();
 }
 
 void Assembler6500::StripComments()
