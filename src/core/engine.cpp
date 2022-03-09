@@ -16,6 +16,18 @@ SDL_Color Sprite::operator[](size_t index) const
 	return m_pixels.at(index);
 }
 
+void Sprite::Draw(SDL_Renderer *renderer, int x, int y) const
+{
+	for (size_t row = 0; row < m_h; row++)
+		for (size_t col = 0; col < m_w; col++)
+		{
+			SDL_Color c = m_pixels.at((row * m_w) + col);
+
+			SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+			SDL_RenderDrawPoint(renderer, x + col, y + row);
+		}
+}
+
 SDL_Color Sprite::Get(size_t x, size_t y) const
 {
 	return m_pixels.at((y * m_h) + x);

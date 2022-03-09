@@ -1,7 +1,11 @@
 #include <algorithm>
 
-#include "../../core/utility.h"
 #include "nes.h"
+
+static constexpr uint16_t Hi16(uint16_t value)
+{
+	return value & 0xFF00;
+}
 
 static constexpr SDL_Color ColorFromU32(uint32_t u)
 {
@@ -155,19 +159,20 @@ uint8_t PPU2C02::CPUReadByte(uint16_t addr)
 	switch (addr)
 	{
 		case 2:
-			data = (m_status.reg & 0xE0) | (m_cache & 31);
-			m_status.verticalBlank = false;
-			m_flags.addrLatch = false;
+			data = (m_status.reg & 224) | (m_cache & 31);
+			m_status.p.verticalBlank = false;
+			m_flags.addressLatch = false;
 			break;
 		case 7:
 			data = m_cache;
 			m_cache = PPUReadByte(m_lastAddr);
-			if (m_lastAddr > 0x3F00) data = m_cache;
+			if (m_lastAddr > 16128) data = m_cache;
 			m_lastAddr++;
 			break;
 		default: ;
 	}
 
+	UpdateRegisters();
 	return data;
 }
 
@@ -180,15 +185,15 @@ void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 		case 0: m_ctrl.reg = data; break;
 		case 1: m_mask.reg = data; break;
 		case 6:
-			if (m_flags.addrLatch)
+			if (m_flags.addressLatch)
 			{
 				m_lastAddr = Hi16(m_lastAddr) | data;
-				m_flags.addrLatch = true;
+				m_flags.addressLatch = true;
 			}
 			else
 			{
 				m_lastAddr = (m_lastAddr & 255) | (data << 8);
-				m_flags.addrLatch = false;
+				m_flags.addressLatch = false;
 			}
 
 			break;
@@ -198,6 +203,8 @@ void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 			break;
 		default: ;
 	}
+
+	UpdateRegisters();
 }
 
 BusLE16 * PPU2C02::GetBus()
@@ -205,7 +212,7 @@ BusLE16 * PPU2C02::GetBus()
 	return &m_ppuBus;
 }
 
-Sprite & PPU2C02::GetSprite(uint8_t i, uint8_t palette)
+Sprite & PPU2C02::GetPatternTable(uint8_t i, uint8_t palette)
 {
 	for (uint16_t y = 0; y < 16; y++)
 		for (uint16_t x = 0; x < 16; x++)
@@ -249,7 +256,7 @@ void PPU2C02::NextFrame()
 
 /*void PPU2C02::NoiseTest()
 {
-	SDL_Color c = ColorFromU32(Palette[m_rng(m_mt) ? 63 : 48]);
+	SDL_Color c = ColorFromU32(PALETTE[m_rng(m_mt) ? 63 : 48]);
 	SDL_SetRenderDrawColor(m_renderer, c.r, c.g, c.b, c.a);
 	SDL_RenderDrawPoint(m_renderer, m_cycle - 1, m_scanline);
 }*/
@@ -261,7 +268,7 @@ uint8_t PPU2C02::PPUReadByte(uint16_t addr)
 	if (addr >= 0 && addr <= 8191)
 		// MSB + remaining bits
 		data = m_patTbl[((addr & 4096) >> 12) * 64 + (addr & 4095)];
-	else if (addr > 0x3F00 && addr <= 16383)
+	else if (addr > 16128 && addr <= 16383)
 	{
 		addr %= 31;
 		if (addr == 16) addr = 0;
@@ -279,7 +286,7 @@ void PPU2C02::PPUWriteByte(uint16_t addr, uint8_t data)
 	if (addr >= 0 && addr <= 8191)
 		// MSB + remaining bits
 		m_patTbl[((addr & 4096) >> 12) * 64 + (addr & 4095)] = data;
-	else if (addr > 0x3F00 && addr <= 16383)
+	else if (addr > 16128 && addr <= 16383)
 	{
 		addr %= 31;
 		if (addr == 16) addr = 0;
@@ -293,5 +300,13 @@ void PPU2C02::PPUWriteByte(uint16_t addr, uint8_t data)
 SDL_Color PPU2C02::ReadRAMPaletteColor(uint8_t palette, uint8_t pixel)
 {
 	// Palettes are 4 bytes, so we need to multiply ID by 4
-	return m_ramPalette[PPUReadByte(0x3F00 + (palette << 2) + pixel)];
+	return m_ramPalette[PPUReadByte(16128 + (palette << 2) + pixel)];
 }
+
+void PPU2C02::UpdateRegisters()
+{
+	m_nes.WriteByte(8192, m_ctrl.reg);
+	m_nes.WriteByte(8193, m_mask.reg);
+	m_nes.WriteByte(8194, m_status.reg);
+}
+

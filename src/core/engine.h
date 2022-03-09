@@ -15,11 +15,13 @@ public:
 	// Retrieve the pixel by index
 	SDL_Color operator[](size_t) const;
 
+	void Draw(SDL_Renderer *, int, int) const;
+
 	// Retrieve the pixel at x, y
 	SDL_Color Get(size_t, size_t) const;
 
 	// Set the pixel at x, y
-	inline void Set(size_t, size_t, SDL_Color);
+	void Set(size_t, size_t, SDL_Color);
 private:
 	size_t m_h;
 	size_t m_w;

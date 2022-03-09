@@ -55,7 +55,7 @@ private:
 
 	uint32_t m_hash;
 	NES &m_nes;
-	NESMapper *m_mapper;
+	std::unique_ptr<NESMapper> m_mapper;
 	std::vector<uint8_t> m_prg; // PRG memory
 	std::vector<uint8_t> m_chr; // CHR memory
 

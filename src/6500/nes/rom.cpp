@@ -29,9 +29,9 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 		switch (m_mapperID)
 		{
 			case 0:
-				m_mapper = new NROM(m_header.prgPages, m_header.chrPages);
-				AddRange(0x8000, m_header.prgPages > 1 ? 0xFFFF : 0xBFFF);
-				Write(0x8000, m_prg);
+				m_mapper.reset(new NROM(m_header.prgPages, m_header.chrPages));
+				AddRange(32768, m_header.prgPages > 1 ? 65535 : 49151);
+				Write(32768, m_prg);
 				break;
 			default:
 				throw std::runtime_error(fmt::format("Unsupported mapper ID: {}", m_mapperID));
@@ -40,13 +40,12 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 
 	GenerateHash();
 	buses.push_back(nes.GetPPU()->GetBus());
-	AddRange(0, 0x3FFF, 1);
+	AddRange(0, 16383, 1);
 	buses.back()->Add(this);
 }
 
 NESROM::~NESROM()
 {
-	if (m_mapper) delete m_mapper;
 }
 
 uint8_t NESROM::CPUReadByte(uint16_t addr)

@@ -4,10 +4,14 @@
 #include <stdexcept>
 #include <utility>
 
-#include "../core/utility.h"
 #include "cpu.h"
 
-static const std::array<Opcode6500, 256> OPS =
+static constexpr uint16_t Hi16(uint16_t value)
+{
+	return value & 0xFF00;
+}
+
+const std::array<Opcode6500, 256> MOS6500::OPS =
 {
 	// 0x
 	Opcode6500(7, &MOS6500::Implied, &MOS6500::BRK, "brk"),
@@ -350,8 +354,10 @@ void MOS6500::Clock()
 
 		// set cycles, see if any additional cycles are needed
 		m_cycles = OPS[m_lastOp].Cycles;
-		m_cycles += OPS[m_lastOp].AddressMode();
-		m_cycles += OPS[m_lastOp].Operation();
+		uint8_t extra1 = (this->*OPS[m_lastOp].AddressMode)();
+		uint8_t extra2 = (this->*OPS[m_lastOp].Operation)();
+
+		m_cycles += extra1 & extra2;
 	}
 
 	m_cycles--;
@@ -366,7 +372,7 @@ Disassembly MOS6500::Disassemble(size_t addr)
 {
 	size_t address = addr;
 	const Opcode6500 &op = OPS[ReadByte(addr++)];
-	std::string line = op.Mnemonic.data();
+	std::string line = op.Mnemonic;
 
 	if (op.AddressMode == &MOS6500::Immediate)
 		line += fmt::format(" #${:02X}", ReadByte(addr++));
@@ -382,22 +388,22 @@ Disassembly MOS6500::Disassemble(size_t addr)
 		line += fmt::format(" (${:02X}, y)", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::Absolute)
 	{
-		line += fmt::format(" ${:04X}", ReadByte(addr));
+		line += fmt::format(" ${:04X}", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::AbsoluteX)
 	{
-		line += fmt::format(" ${:04X}, x", ReadByte(addr));
+		line += fmt::format(" ${:04X}, x", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::AbsoluteY)
 	{
-		line += fmt::format(" ${:04X}, y", ReadByte(addr));
+		line += fmt::format(" ${:04X}, y", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::Indirect)
 	{
-		line += fmt::format(" (${:04X})", ReadByte(addr));
+		line += fmt::format(" (${:04X})", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::Relative)
@@ -513,11 +519,7 @@ std::string MOS6500::FrameInfo()
 
 void MOS6500::InitializeState()
 {
-	CLC();
-	CLD();
-	CLI();
-	CLV();
-	m_regs.p.z = m_regs.p.b = m_regs.p.n = false;
+	m_regs.state = 0;
 	m_regs.p.u = true;
 }
 
@@ -622,7 +624,7 @@ uint8_t MOS6500::AbsoluteY()
 
 uint8_t MOS6500::Immediate()
 {
-	lastAbsAddress = ++counter;
+	lastAbsAddress = counter++;
 	return 0;
 }
 
@@ -1160,7 +1162,7 @@ uint8_t MOS6500::TYA()
 
 uint8_t MOS6500::ALR()
 {
-	return AND() + LSR();
+	return AND() & LSR();
 }
 
 uint8_t MOS6500::ANC()
@@ -1179,17 +1181,17 @@ uint8_t MOS6500::ANE()
 
 uint8_t MOS6500::ARR()
 {
-	return AND() + ADC() + ROR();
+	return AND() & ADC() & ROR();
 }
 
 uint8_t MOS6500::DCP()
 {
-	return DEC() + CMP();
+	return DEC() & CMP();
 }
 
 uint8_t MOS6500::ISC()
 {
-	return INC() + SBC();
+	return INC() & SBC();
 }
 
 uint8_t MOS6500::JAM()
@@ -1201,12 +1203,12 @@ uint8_t MOS6500::JAM()
 
 uint8_t MOS6500::LAS()
 {
-	return LDA() + TSX();
+	return LDA() & TSX();
 }
 
 uint8_t MOS6500::LAX()
 {
-	return LDA() + LDX();
+	return LDA() & LDX();
 }
 
 uint8_t MOS6500::LXA()
@@ -1234,12 +1236,12 @@ uint8_t MOS6500::NOP()
 
 uint8_t MOS6500::RLA()
 {
-	return ROL() + AND();
+	return ROL() & AND();
 }
 
 uint8_t MOS6500::RRA()
 {
-	return ROR() + ADC();
+	return ROR() & ADC();
 }
 
 uint8_t MOS6500::SAX()
@@ -1284,12 +1286,12 @@ uint8_t MOS6500::SHY()
 
 uint8_t MOS6500::SLO()
 {
-	return ASL() + ORA();
+	return ASL() & ORA();
 }
 
 uint8_t MOS6500::SRE()
 {
-	return LSR() + EOR();
+	return LSR() & EOR();
 }
 
 uint8_t MOS6500::TAS()
@@ -1300,5 +1302,5 @@ uint8_t MOS6500::TAS()
 
 uint8_t MOS6500::USBC()
 {
-	return SBC() + NOP();
+	return SBC() & NOP();
 }

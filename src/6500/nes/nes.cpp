@@ -3,15 +3,14 @@
 NES::NES(SDL_Renderer *renderer):
 	m_cycles(0),
 	m_rom(nullptr),
-	m_bus(BusLE16(0xFFFF)),
-	m_cpu(MOS6500(&m_bus, 0, 0x1FFF)),
+	m_bus(BusLE16(65536)),
+	m_cpu(MOS6500(&m_bus, 0, 4095)),
 	m_ppu(PPU2C02(*this, renderer))
 {
 }
 
 NES::~NES()
 {
-	if (m_rom) delete m_rom;
 }
 
 void NES::Clock()
@@ -40,23 +39,22 @@ PPU2C02 * NES::GetPPU()
 
 NESROM * NES::GetROM()
 {
-	return m_rom;
+	return m_rom.get();
 }
 
 void NES::LoadROM(const std::filesystem::path &path)
 {
-	if (m_rom) delete m_rom;
-	m_rom = new NESROM(*this, path);
-	m_cpu.Reset();
+	m_rom.reset(new NESROM(*this, path));
+	Reset();
 }
 
 uint8_t NES::ReadByte(uint16_t addr)
 {
 	// system ram
-	if (addr >= 0 && addr <= 0x1FFF)
-		return m_cpu.ReadByte(addr & 0x7FF);
+	if (addr >= 0 && addr <= 4095)
+		return m_cpu.ReadByte(addr & 2047);
 	// PPU ram
-	else if (addr >= 0x2000 && addr <= 0x3FFF)
+	else if (addr >= 8192 && addr <= 16383)
 		return m_ppu.CPUReadByte(addr & 7);
 	// rom?
 	else
@@ -72,10 +70,10 @@ void NES::Reset()
 void NES::WriteByte(uint16_t addr, uint8_t data)
 {
 	// system ram
-	if (addr >= 0 && addr <= 0x1FFF)
-		m_cpu.WriteByte(addr & 0x7FF, data);
+	if (addr >= 0 && addr <= 4095)
+		m_cpu.WriteByte(addr & 2047, data);
 	// PPU ram
-	else if (addr >= 0x2000 && addr <= 0x3FFF)
+	else if (addr >= 8192 && addr <= 16383)
 		m_ppu.WriteByte(addr & 7, data);
 	// rom?
 	else

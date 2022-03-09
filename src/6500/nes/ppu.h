@@ -30,7 +30,7 @@ public:
 	BusLE16 * GetBus();
 
 	// Get the 16x16 pattern table as a sprite
-	Sprite & GetSprite(uint8_t, uint8_t);
+	Sprite & GetPatternTable(uint8_t, uint8_t);
 
 	bool IsFrameDone() const;
 
@@ -46,12 +46,15 @@ public:
 
 	// Return the color from the palette in RAM
 	SDL_Color ReadRAMPaletteColor(uint8_t, uint8_t);
+
+	// Update PPU registers
+	void UpdateRegisters();
 private:
 	struct
 	{
 		bool
 			frameDone : 1,
-			addrLatch : 1; // fetching PPU address register takes 2 cycles
+			addressLatch : 1; // fetching PPU address register takes 2 cycles
 	} m_flags;
 
 	union

@@ -114,7 +114,7 @@ Processor::Processor(Bus *bus, size_t startAddr, size_t endAddr): Device(bus, st
 CPU::CPU(Bus *bus, size_t startAddr, size_t endAddr, size_t resetVector,
 		size_t stackBase, size_t stackInit):
 	Processor(bus, startAddr, endAddr),
-	lastAbsAddress(0),
+	lastAbsAddress(resetVector),
 	lastRelAddress(0),
 	counter(0),
 	stackBase(stackBase),

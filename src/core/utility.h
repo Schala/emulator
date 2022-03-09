@@ -10,7 +10,7 @@ constexpr uint16_t Hi16(uint16_t value)
 	return value & 0xFF00;
 }
 
-bool IsBlankLine(std::string &s)
+/*bool IsBlankLine(std::string &s)
 {
 	bool blank = true;
 
@@ -22,6 +22,6 @@ bool IsBlankLine(std::string &s)
 		}
 
 	return blank;
-}
+}*/
 
 #endif // _EMU_UTILITY_H

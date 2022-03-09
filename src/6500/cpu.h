@@ -22,6 +22,7 @@ struct Opcode6500
 // The CPU processes data available via its bus
 class MOS6500 : public CPU
 {
+	static const std::array<Opcode6500, 256> OPS;
 public:
 	// Allocate a new CPU, given a parent bus, and start and end addresses in RAM
 	MOS6500(BusLE16 *, uint16_t, uint16_t);
