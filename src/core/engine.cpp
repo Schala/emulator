@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <fmt/core.h>
 #include <stdexcept>
@@ -7,13 +8,18 @@
 Sprite::Sprite(size_t w, size_t h):
 	m_h(h),
 	m_w(w),
-	m_pixels(std::vector<SDL_Color>(w * h, Engine::Black))
+	m_pixels(std::vector<SDL_Color>(w * h, Engine::BLACK))
 {
 }
 
 SDL_Color Sprite::operator[](size_t index) const
 {
 	return m_pixels.at(index);
+}
+
+void Sprite::Clear()
+{
+	std::fill(m_pixels.begin(), m_pixels.end(), Engine::BLACK);
 }
 
 void Sprite::Draw(SDL_Renderer *renderer, int x, int y) const
@@ -36,6 +42,11 @@ SDL_Color Sprite::Get(size_t x, size_t y) const
 void Sprite::Set(size_t x, size_t y, SDL_Color color)
 {
 	m_pixels[(y * m_h) + x] = color;
+}
+
+void Sprite::Set(const std::vector<SDL_Color> pixels)
+{
+	m_pixels = pixels;
 }
 
 

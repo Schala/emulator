@@ -64,6 +64,7 @@ uint8_t NES::ReadByte(uint16_t addr)
 void NES::Reset()
 {
 	m_cpu.Reset();
+	m_ppu.Reset();
 	m_cycles = 0;
 }
 
@@ -74,8 +75,7 @@ void NES::WriteByte(uint16_t addr, uint8_t data)
 		m_cpu.WriteByte(addr & 2047, data);
 	// PPU ram
 	else if (addr >= 8192 && addr <= 16383)
-		m_ppu.WriteByte(addr & 7, data);
-	// rom?
-	else
-		m_rom->WriteByte(addr, data);
+		m_ppu.CPUWriteByte(addr & 7, data);
+	else // rom?
+		m_rom->CPUWriteByte(addr, data);
 }

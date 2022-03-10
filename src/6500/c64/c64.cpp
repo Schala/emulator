@@ -3,14 +3,13 @@
 C64::C64()://SDL_Renderer *renderer)
 	m_cycles(0),
 	m_rom(nullptr),
-	m_bus(Bus6500(0xFFFF)),
-	m_cpu(MOS6500(&m_bus, 0, 0x3FF)
+	m_bus(Bus6500(65536)),
+	m_cpu(MOS6500(&m_bus, 0, 1023)
 {
 }
 
 C64::~C64()
 {
-	if (m_rom) delete m_rom;
 }
 
 void C64::Clock()
@@ -31,6 +30,5 @@ MOS6500 * C64::GetCPU() const
 
 void CPU::LoadTape(const std::filesystem::path &path)
 {
-	if (m_rom) delete m_rom;
-	m_rom = new C64Tape(path);
+	m_rom.reset(new C64Tape(path));
 }

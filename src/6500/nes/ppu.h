@@ -27,6 +27,8 @@ public:
 	// Write to CPU bus
 	void CPUWriteByte(uint16_t, uint8_t);
 
+	std::string FrameInfo();
+
 	BusLE16 * GetBus();
 
 	// Get the 16x16 pattern table as a sprite
@@ -43,6 +45,8 @@ public:
 
 	// Write to PPU bus
 	void PPUWriteByte(uint16_t, uint8_t);
+
+	void Reset();
 
 	// Return the color from the palette in RAM
 	SDL_Color ReadRAMPaletteColor(uint8_t, uint8_t);
@@ -121,12 +125,8 @@ private:
 	SDL_Renderer *m_renderer;
 	NES &m_nes;
 	BusLE16 m_ppuBus; // dedicated second bus
-	std::array<uint8_t, 32> m_palTbl;
-	std::array<uint8_t, 2048> m_nameTbl;
-	std::array<uint8_t, 4096> m_patTbl;
 	std::array<Sprite, 2> m_sprNameTbl;
 	std::array<Sprite, 2> m_sprPatTbl;
-	Sprite m_ramPalette;
 
 	// noise test
 	/*std::mt19937 m_mt;

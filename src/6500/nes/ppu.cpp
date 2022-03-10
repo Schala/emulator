@@ -1,4 +1,4 @@
-#include <algorithm>
+#include <fmt/core.h> // todo: <format>
 
 #include "nes.h"
 
@@ -18,83 +18,79 @@ static constexpr SDL_Color ColorFromU32(uint32_t u)
 	};
 }
 
-static const std::array<uint32_t, 64> PALETTE =
+static const std::array<SDL_Color, 64> PALETTE =
 {
-	0x545454FF,
-	0x1E74FF,
-	0x81090FF,
-	0x300088FF,
-	0x440064FF,
-	0x5C0030FF,
-	0x540400FF,
-	0x3C1800FF,
-	0x202A00FF,
-	0x83A00FF,
-	0x4000FF,
-	0x3C00FF,
-	0x323CFF,
-	255,
-	255,
-	255,
+	ColorFromU32(0x545454FF),
+	ColorFromU32(0x1E74FF),
+	ColorFromU32(0x81090FF),
+	ColorFromU32(0x300088FF),
+	ColorFromU32(0x440064FF),
+	ColorFromU32(0x5C0030FF),
+	ColorFromU32(0x540400FF),
+	ColorFromU32(0x3C1800FF),
+	ColorFromU32(0x202A00FF),
+	ColorFromU32(0x83A00FF),
+	ColorFromU32(0x4000FF),
+	ColorFromU32(0x3C00FF),
+	ColorFromU32(0x323CFF),
+	ColorFromU32(255),
+	ColorFromU32(255),
+	ColorFromU32(255),
 
-	0x989698FF,
-	0x84CC4FF,
-	0x3032ECFF,
-	0x5C1EE4FF,
-	0x8814B0FF,
-	0xA01464FF,
-	0x982220FF,
-	0x783C00FF,
-	0x545A00FF,
-	0x287200FF,
-	0x87C00FF,
-	0x7628FF,
-	0x6678FF,
-	255,
-	255,
-	255,
+	ColorFromU32(0x989698FF),
+	ColorFromU32(0x84CC4FF),
+	ColorFromU32(0x3032ECFF),
+	ColorFromU32(0x5C1EE4FF),
+	ColorFromU32(0x8814B0FF),
+	ColorFromU32(0xA01464FF),
+	ColorFromU32(0x982220FF),
+	ColorFromU32(0x783C00FF),
+	ColorFromU32(0x545A00FF),
+	ColorFromU32(0x287200FF),
+	ColorFromU32(0x87C00FF),
+	ColorFromU32(0x7628FF),
+	ColorFromU32(0x6678FF),
+	ColorFromU32(255),
+	ColorFromU32(255),
+	ColorFromU32(255),
 
-	0xECEEECFF,
-	0x4C9AECFF,
-	0x787CECFF,
-	0xB062ECFF,
-	0xE454ECFF,
-	0xEC58B4FF,
-	0xEC6A64FF,
-	0xD48820FF,
-	0xA0AA00FF,
-	0x74C400FF,
-	0x4CD020FF,
-	0x38CC6CFF,
-	0x38B4CCFF,
-	0x383838FF,
-	255,
-	255,
+	ColorFromU32(0xECEEECFF),
+	ColorFromU32(0x4C9AECFF),
+	ColorFromU32(0x787CECFF),
+	ColorFromU32(0xB062ECFF),
+	ColorFromU32(0xE454ECFF),
+	ColorFromU32(0xEC58B4FF),
+	ColorFromU32(0xEC6A64FF),
+	ColorFromU32(0xD48820FF),
+	ColorFromU32(0xA0AA00FF),
+	ColorFromU32(0x74C400FF),
+	ColorFromU32(0x4CD020FF),
+	ColorFromU32(0x38CC6CFF),
+	ColorFromU32(0x38B4CCFF),
+	ColorFromU32(0x383838FF),
+	ColorFromU32(255),
+	ColorFromU32(255),
 
-	0xECEEECFF,
-	0xA8CCECFF,
-	0xBCBCECFF,
-	0xD4B2ECFF,
-	0xECAEECFF,
-	0xECAED4FF,
-	0xECB4B0FF,
-	0xE4C490FF,
-	0xCCD278FF,
-	0xB4DE78FF,
-	0xA8E290FF,
-	0x98E2B4FF,
-	0xA0D6E4FF,
-	0xA0A2A0FF,
-	255,
-	255
+	ColorFromU32(0xECEEECFF),
+	ColorFromU32(0xA8CCECFF),
+	ColorFromU32(0xBCBCECFF),
+	ColorFromU32(0xD4B2ECFF),
+	ColorFromU32(0xECAEECFF),
+	ColorFromU32(0xECAED4FF),
+	ColorFromU32(0xECB4B0FF),
+	ColorFromU32(0xE4C490FF),
+	ColorFromU32(0xCCD278FF),
+	ColorFromU32(0xB4DE78FF),
+	ColorFromU32(0xA8E290FF),
+	ColorFromU32(0x98E2B4FF),
+	ColorFromU32(0xA0D6E4FF),
+	ColorFromU32(0xA0A2A0FF),
+	ColorFromU32(255),
+	ColorFromU32(255)
 };
 
 PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
-	Processor(nes.GetBus(), 0, 16383),
-	m_cache(0),
-	m_lastAddr(0),
-	m_scanline(0),
-	m_cycle(0),
+	Processor(nes.GetBus(), 8192, 16383),
 	m_renderer(renderer),
 	m_nes(nes),
 	m_ppuBus(BusLE16(16384)),
@@ -107,19 +103,8 @@ PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
 	{
 		Sprite(128, 128),
 		Sprite(128, 128)
-	}),
-	m_ramPalette(Sprite(16, 4))
+	})
 {
-	m_flags.frameDone = false;
-
-	m_status.reg = 0;
-	m_mask.reg = 0;
-	m_ctrl.reg = 0;
-
-	std::fill(m_palTbl.begin(), m_palTbl.end(), 0);
-	std::fill(m_nameTbl.begin(), m_nameTbl.end(), 0);
-	std::fill(m_patTbl.begin(), m_patTbl.end(), 0);
-
 	if (renderer)
 	{
 		// Give the renderer a solid fill colour instead of copying what's underneath
@@ -129,6 +114,7 @@ PPU2C02::PPU2C02(NES &nes, SDL_Renderer *renderer):
 
 	AddRange(0, 16383, 1);
 	m_ppuBus.Add(this);
+	buses.push_back(&m_ppuBus);
 }
 
 PPU2C02::~PPU2C02()
@@ -159,6 +145,7 @@ uint8_t PPU2C02::CPUReadByte(uint16_t addr)
 	switch (addr)
 	{
 		case 2:
+			//m_status.p.verticalBlank = true;
 			data = (m_status.reg & 224) | (m_cache & 31);
 			m_status.p.verticalBlank = false;
 			m_flags.addressLatch = false;
@@ -207,6 +194,41 @@ void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 	UpdateRegisters();
 }
 
+std::string PPU2C02::FrameInfo()
+{
+	//SDL_Color c = PALETTE[(m_scanline, m_cycle);
+	std::string s = fmt::format("X, Y: {},{}\n", m_scanline, m_cycle);// (#{:06X})\n", m_scanline, m_cycle, (c.r << 16) | (c.g << 8) | c.b);
+
+	s += fmt::format("Last address: ${:04X}\n", m_lastAddr);
+	s += fmt::format("Last buffered byte: $#{:02X}\n\n", m_cache);
+
+	s += "Control flags:\n";
+	if (m_ctrl.p.nameTableX) s += "\t- name table X\n";
+	if (m_ctrl.p.nameTableY) s += "\t- name table Y\n";
+	if (m_ctrl.p.increment) s += "\t- increment\n";
+	if (m_ctrl.p.patternFG) s += "\t- sprite pattern\n";
+	if (m_ctrl.p.patternBG) s += "\t- background pattern\n";
+	if (m_ctrl.p.spriteSize) s += "\t- sprite size\n";
+	if (m_ctrl.p.nmi) s += "\t- non-maskable interrupts\n";
+
+	s += "\nMask flags:\n";
+	if (m_mask.p.grayscale) s += "\t- grayscale\n";
+	if (m_mask.p.renderBGLeft) s += "\t- render background left\n";
+	if (m_mask.p.renderFGLeft) s += "\t- render sprite left\n";
+	if (m_mask.p.renderBG) s += "\t- render background\n";
+	if (m_mask.p.renderFG) s += "\t- render sprites\n";
+	if (m_mask.p.enhanceRed) s += "\t- enhance red\n";
+	if (m_mask.p.enhanceGreen) s += "\t- enhance green\n";
+	if (m_mask.p.enhanceBlue) s += "\t- enhance blue\n";
+
+	s += "\nStatus flags:\n";
+	if (m_status.p.spriteOverflow) s += "\t- sprite overflow\n";
+	if (m_status.p.sprite0Hit) s += "\t- sprite zero hit\n";
+	if (m_status.p.verticalBlank) s += "\t- vartical blank\n";
+
+	return std::move(s);
+}
+
 BusLE16 * PPU2C02::GetBus()
 {
 	return &m_ppuBus;
@@ -236,12 +258,12 @@ Sprite & PPU2C02::GetPatternTable(uint8_t i, uint8_t palette)
 					msb >>= 1;
 
 					// LSB refers to rightmost pixel, so subtract column from 7, since we're drawing from top-left.
-					m_sprPatTbl[i].Set(x * 8 + (7 - col), y * 8 + row, ReadRAMPaletteColor(palette, pixel));
+					m_sprPatTbl.at(i).Set(x * 8 + (7 - col), y * 8 + row, ReadRAMPaletteColor(palette, pixel));
 				}
 			}
 		}
 
-	return m_sprPatTbl[i];
+	return m_sprPatTbl.at(i);
 }
 
 bool PPU2C02::IsFrameDone() const
@@ -263,11 +285,9 @@ void PPU2C02::NextFrame()
 
 uint8_t PPU2C02::PPUReadByte(uint16_t addr)
 {
-	uint8_t data = 0;
-
 	if (addr >= 0 && addr <= 8191)
 		// MSB + remaining bits
-		data = m_patTbl[((addr & 4096) >> 12) * 64 + (addr & 4095)];
+		ReadByte(((addr & 4095) >> 12) * 64 + (addr & 4095), 1);
 	else if (addr > 16128 && addr <= 16383)
 	{
 		addr %= 31;
@@ -275,17 +295,17 @@ uint8_t PPU2C02::PPUReadByte(uint16_t addr)
 		if (addr == 20) addr = 4;
 		if (addr == 24) addr = 8;
 		if (addr == 28) addr = 12;
-		data = m_palTbl[addr];
+		ReadByte(addr, 1);
 	}
 
-	return data;
+	return 0;
 }
 
 void PPU2C02::PPUWriteByte(uint16_t addr, uint8_t data)
 {
 	if (addr >= 0 && addr <= 8191)
 		// MSB + remaining bits
-		m_patTbl[((addr & 4096) >> 12) * 64 + (addr & 4095)] = data;
+		WriteByte(((addr & 4095) >> 12) * 64 + (addr & 4095), data, 1);
 	else if (addr > 16128 && addr <= 16383)
 	{
 		addr %= 31;
@@ -293,20 +313,33 @@ void PPU2C02::PPUWriteByte(uint16_t addr, uint8_t data)
 		if (addr == 20) addr = 4;
 		if (addr == 24) addr = 8;
 		if (addr == 28) addr = 12;
-		m_palTbl[addr] = data;
+		WriteByte(addr, data, 1);
 	}
 }
 
 SDL_Color PPU2C02::ReadRAMPaletteColor(uint8_t palette, uint8_t pixel)
 {
 	// Palettes are 4 bytes, so we need to multiply ID by 4
-	return m_ramPalette[PPUReadByte(16128 + (palette << 2) + pixel)];
+	return PALETTE.at(PPUReadByte(16128 + (palette << 2) + pixel) & 63);
+}
+
+void PPU2C02::Reset()
+{
+	m_flags.frameDone = false;
+	m_flags.addressLatch = false;
+	m_status.reg = 0;
+	m_mask.reg = 0;
+	m_ctrl.reg = 0;
+	m_cache = 0;
+	m_lastAddr = 0;
+	m_scanline = 0;
+	m_cycle = 0;
 }
 
 void PPU2C02::UpdateRegisters()
 {
-	m_nes.WriteByte(8192, m_ctrl.reg);
-	m_nes.WriteByte(8193, m_mask.reg);
-	m_nes.WriteByte(8194, m_status.reg);
+	WriteByte(8192, m_ctrl.reg);
+	WriteByte(8193, m_mask.reg);
+	WriteByte(8194, m_status.reg);
 }
 

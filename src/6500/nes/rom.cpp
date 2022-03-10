@@ -21,7 +21,7 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 		m_prg.resize(m_header.prgPages * 16384);
 		romFile.read(std::bit_cast<char *>(m_prg.data()), m_prg.size());
 
-		m_chr.resize(m_header.chrPages * 8192);
+		m_chr.resize(m_header.chrPages > 0 ? (m_header.chrPages * 8192) : 8192);
 		romFile.read(std::bit_cast<char *>(m_chr.data()), m_chr.size());
 
 		m_mapperID = (m_header.mapperInfo.typeHi << 4) | m_header.mapperInfo.typeLo;
@@ -32,6 +32,10 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 				m_mapper.reset(new NROM(m_header.prgPages, m_header.chrPages));
 				AddRange(32768, m_header.prgPages > 1 ? 65535 : 49151);
 				Write(32768, m_prg);
+
+				// set the reset vector if PRG is only 16k, mirroring it
+				if (m_header.prgPages == 1)
+					WriteAddress(65532, (m_prg.at(16382) | (m_prg.at(16383) << 8)) & 16383);
 				break;
 			default:
 				throw std::runtime_error(fmt::format("Unsupported mapper ID: {}", m_mapperID));
@@ -40,8 +44,9 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 
 	GenerateHash();
 	buses.push_back(nes.GetPPU()->GetBus());
-	AddRange(0, 16383, 1);
+	AddRange(0, 8191, 1);
 	buses.back()->Add(this);
+	Write(0, m_chr, 1);
 }
 
 NESROM::~NESROM()
@@ -54,6 +59,7 @@ uint8_t NESROM::CPUReadByte(uint16_t addr)
 
 	if (m_mapper->CPUMapRead(addr, mappedAddr))
 		return ReadByte(mappedAddr);
+
 	return 0;
 }
 
@@ -62,17 +68,17 @@ void NESROM::CPUWriteByte(uint16_t addr, uint8_t data)
 	uint32_t mappedAddr = 0;
 
 	if (m_mapper->CPUMapWrite(addr, mappedAddr))
-		m_prg[mappedAddr] = data;
+		WriteByte(mappedAddr, data);
 }
 
 void NESROM::GenerateHash()
 {
 	m_hash = 0xDEADBEEF;
 
-	for (auto b : m_prg)
+	for (uint8_t b : m_prg)
 		m_hash = ((m_hash << 1) | ((m_hash & 0x80000000) ? 1 : 0)) ^ b;
 
-	for (auto b : m_chr)
+	for (uint8_t b : m_chr)
 		m_hash = ((m_hash << 1) | ((m_hash & 0x80000000) ? 1 : 0)) ^ b;
 }
 
@@ -81,12 +87,33 @@ uint32_t NESROM::Hash() const
 	return m_hash;
 }
 
+std::string NESROM::Info()
+{
+	std::string s = fmt::format("PRG pages: {}\n", m_header.prgPages);
+
+	s += fmt::format("CHR pages: {}\n", m_header.chrPages);
+	s += fmt::format("RAM pages: {}\n", m_header.ramPages);
+	s += fmt::format("Mapper ID: {}\n", m_mapperID);
+	s += fmt::format("Hash: {:08X}\n", m_hash);
+	s += fmt::format("PAL: {}\n\n", m_header.isPAL ? "yes" : "no");
+
+	s += "Mapper attributes:\n";
+	if (m_header.mapperInfo.mirrorVertical) s += "\t- vertical mirroring\n";
+	if (m_header.mapperInfo.batteryBackedRAM) s += "\t- battery-backed RAM\n";
+	if (m_header.mapperInfo.trainer) s += "\t- trainer\n";
+	if (m_header.mapperInfo.fourScreenVRAMLayout) s += "\t- 4-screen VRAM layout\n";
+	if (m_header.mapperInfo.vsSystemCart) s += "\t- VS system cartridge\n";
+
+	return std::move(s);
+}
+
 uint8_t NESROM::PPUReadByte(uint16_t addr)
 {
 	uint32_t mappedAddr = 0;
 
 	if (m_mapper->PPUMapRead(addr, mappedAddr))
-		return m_chr[mappedAddr];
+		return ReadByte(mappedAddr, 1);
+
 	return 0;
 }
 
@@ -95,5 +122,5 @@ void NESROM::PPUWriteByte(uint16_t addr, uint8_t data)
 	uint32_t mappedAddr = 0;
 
 	if (m_mapper->PPUMapWrite(addr, mappedAddr))
-		m_chr[mappedAddr] = data;
+		WriteByte(mappedAddr, data, 1);
 }

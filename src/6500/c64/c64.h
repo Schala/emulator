@@ -1,6 +1,8 @@
 #ifndef _C64_H
 #define _C64_H
 
+#include <memory>
+
 #include "../cpu.h"
 
 class C64
@@ -17,7 +19,7 @@ public:
 	void LoadTape(const std::filesystem::path &);
 private:
 	size_t m_cycles;
-	Device *m_rom;
+	std::unique_ptr<Device> m_rom;
 	BusLE16 m_bus;
 	MOS6500 m_cpu;
 };

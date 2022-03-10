@@ -39,11 +39,15 @@ int main(int argc, char **argv)
 		std::cin.getline(&input[0], 2, '\n');
 		switch (std::toupper(input[0]))
 		{
+			case 'I':
+				std::cout << nes.GetROM()->Info() << '\n';
+				break;
 			case 'P':
 				(++npal) %= 8;
-				nes.GetPPU()->GetPatternTable(0, npal).Draw(renderer, 10, 10);
-				nes.GetPPU()->GetPatternTable(1, npal).Draw(renderer, 10, 50);
+				nes.GetPPU()->GetPatternTable(0, npal).Draw(renderer, 0, 0);
+				nes.GetPPU()->GetPatternTable(1, npal).Draw(renderer, 0, 64);
 				SDL_RenderPresent(renderer);
+				std::cout << nes.GetPPU()->FrameInfo() << '\n';
 				break;
 			case 'Q':
 				SDL_DestroyRenderer(renderer);

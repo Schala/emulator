@@ -15,6 +15,9 @@ public:
 	// Retrieve the pixel by index
 	SDL_Color operator[](size_t) const;
 
+	// Clears all pixels to black
+	void Clear();
+
 	void Draw(SDL_Renderer *, int, int) const;
 
 	// Retrieve the pixel at x, y
@@ -22,6 +25,9 @@ public:
 
 	// Set the pixel at x, y
 	void Set(size_t, size_t, SDL_Color);
+
+	// Set all pixels
+	void Set(const std::vector<SDL_Color>);
 private:
 	size_t m_h;
 	size_t m_w;
@@ -31,7 +37,7 @@ private:
 class Engine : public EngineCore
 {
 public:
-	static constexpr SDL_Color Black = { 0, 0, 0, SDL_ALPHA_OPAQUE };
+	static constexpr SDL_Color BLACK = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 
 	Engine(float);
 	virtual ~Engine();

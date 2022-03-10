@@ -21,6 +21,8 @@ public:
 
 	uint32_t Hash() const;
 
+	std::string Info();
+
 	// Read from PPU bus
 	uint8_t PPUReadByte(uint16_t);
 

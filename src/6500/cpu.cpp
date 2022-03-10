@@ -8,7 +8,7 @@
 
 static constexpr uint16_t Hi16(uint16_t value)
 {
-	return value & 0xFF00;
+	return value & 65280;
 }
 
 const std::array<Opcode6500, 256> MOS6500::OPS =
@@ -317,7 +317,7 @@ Opcode6500::Opcode6500(uint8_t cycles, Instruction6500 addrMode, Instruction6500
 // MOS6500
 
 MOS6500::MOS6500(BusLE16 *bus, uint16_t startAddr, uint16_t endAddr):
-	CPU(bus, startAddr, endAddr, 0xFFFC, 256, 253),
+	CPU(bus, startAddr, endAddr, 65532, 256, 253),
 	m_lastOp(0)
 {
 }
@@ -514,7 +514,7 @@ std::string MOS6500::FrameInfo()
 	//s += fmt::format("Cycles remaining: {}\n", m_cycles);
 	s += "--------------------------------\n";
 
-	return s;
+	return std::move(s);
 }
 
 void MOS6500::InitializeState()
@@ -597,7 +597,7 @@ size_t MOS6500::StackReadAddress()
 
 void MOS6500::StackWriteAddress(size_t addr)
 {
-	StackWriteByte((addr & 0xFF00) >> 8);
+	StackWriteByte(Hi16(addr) >> 8);
 	StackWriteByte(addr & 255);
 }
 
@@ -671,7 +671,7 @@ uint8_t MOS6500::Relative()
 
 	// check for signed bit
 	if (lastRelAddress & 128)
-		lastRelAddress |= 0xFF00;
+		lastRelAddress |= 65280;
 
 	return 0;
 }
@@ -810,7 +810,7 @@ uint8_t MOS6500::BRK()
 	StackWriteByte(m_regs.state);
 	m_regs.p.b = false;
 
-	counter = ReadAddress(0xFFFE);
+	counter = ReadAddress(65534);
 
 	return 0;
 }
@@ -818,13 +818,13 @@ uint8_t MOS6500::BRK()
 uint8_t MOS6500::IRQ()
 {
 	if (!m_regs.p.i)
-		Interrupt(0xFFFE, 7);
+		Interrupt(65534, 7);
 	return 0;
 }
 
 uint8_t MOS6500::NMI()
 {
-	Interrupt(0xFFFA, 8);
+	Interrupt(65530, 8);
 	return 0;
 }
 
