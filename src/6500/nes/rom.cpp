@@ -32,10 +32,7 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 				m_mapper.reset(new NROM(m_header.prgPages, m_header.chrPages));
 				AddRange(32768, m_header.prgPages > 1 ? 65535 : 49151);
 				Write(32768, m_prg);
-
-				// set the reset vector if PRG is only 16k, mirroring it
-				if (m_header.prgPages == 1)
-					WriteAddress(65532, (m_prg.at(16380) | (m_prg.at(16381) << 8) & 49151));
+				if (m_header.prgPages == 1) Write(49152, m_prg);
 				break;
 			default:
 				throw std::runtime_error(fmt::format("Unsupported mapper ID: {}", m_mapperID));

@@ -349,6 +349,9 @@ void MOS6500::Clock()
 	{
 		m_lastDisasm = Disassemble(counter);
 
+		// Always set unused flag
+		m_regs.p.u = true;
+
 		// get and increment the counter
 		m_lastOp = ReadROMByte();
 
@@ -358,6 +361,9 @@ void MOS6500::Clock()
 		uint8_t extra2 = (this->*OPS[m_lastOp].Operation)();
 
 		m_cycles += extra1 & extra2;
+
+		// Always set unused flag
+		m_regs.p.u = true;
 	}
 
 	m_cycles--;

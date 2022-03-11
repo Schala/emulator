@@ -174,13 +174,13 @@ void PPU2C02::CPUWriteByte(uint16_t addr, uint8_t data)
 		case 6:
 			if (m_flags.addressLatch)
 			{
-				m_lastAddr = Hi16(m_lastAddr) | data;
-				m_flags.addressLatch = true;
+				m_lastAddr = (m_lastAddr & 255) | (data << 8);
+				m_flags.addressLatch = false;
 			}
 			else
 			{
-				m_lastAddr = (m_lastAddr & 255) | (data << 8);
-				m_flags.addressLatch = false;
+				m_lastAddr = Hi16(m_lastAddr) | data;
+				m_flags.addressLatch = true;
 			}
 
 			break;
