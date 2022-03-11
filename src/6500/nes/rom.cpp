@@ -18,6 +18,8 @@ NESROM::NESROM(NES &nes, const std::filesystem::path &path):
 
 	if (std::equal(m_header.magic.begin(), m_header.magic.end(), Magic.begin()))
 	{
+		if (m_header.mapperInfo.trainer) romFile.seekg(512, std::ios::cur);
+
 		m_prg.resize(m_header.prgPages * 16384);
 		romFile.read(std::bit_cast<char *>(m_prg.data()), m_prg.size());
 
