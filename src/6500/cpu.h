@@ -19,6 +19,7 @@ struct Opcode6500
 	const char *Mnemonic;
 };
 
+
 // The CPU processes data available via its bus
 class MOS6500 : public CPU
 {
