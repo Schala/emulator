@@ -1,22 +1,21 @@
-#ifndef _CORE_ENGINE_CORE_H
-#define _CORE_ENGINE_CORE_H
+#pragma once
 
 #include <chrono>
 
 // Non-graphical functionality of our engine
-class EngineCore
+class CEngineCore
 {
 public:
-	EngineCore(float);
+	CEngineCore(float);
 	void CoreStart();
-	void CoreStop();
+	void Stop();
 	void Pause();
 	void Resume();
 protected:
-	float rate;
-	float delta;
-	float timeScale;
-	float prevTimeScale;
+	float m_rate;
+	float m_delta;
+	float m_timeScale;
+	float m_prevTimeScale;
 
 	void CoreUpdate();
 	virtual void Started();
@@ -26,5 +25,3 @@ private:
 	std::chrono::system_clock::time_point m_now;
 	std::chrono::system_clock::time_point m_then;
 };
-
-#endif // _CORE_ENGINE_CORE_H

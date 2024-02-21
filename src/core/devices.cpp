@@ -6,11 +6,13 @@
 
 // Device
 
-Device::Device(Bus *bus)
+template <std::endian Endian, size_t Bits>
+Device<Endian, Bits>::Device(Bus *bus)
 {
-	buses.push_back(bus);
-	buses.back()->Add(this);
+	bus->Add(this);
+	m_buses.push_back(bus);
 }
+
 
 Device::Device(Bus *bus, size_t startAddr, size_t endAddr)
 {

@@ -1,16 +1,18 @@
-#ifndef _CORE_ENGINE_H
-#define _CORE_ENGINE_H
+#pragma once
 
 #include <SDL2/SDL.h>
 #include <vector>
 
 #include "engine_core.h"
 
-class Sprite
+typedef std::vector<SDL_Color> TPixels;
+
+
+class CSprite
 {
 public:
 	// Constructs the sprite, given a width and height
-	Sprite(size_t, size_t);
+	CSprite(size_t, size_t);
 
 	// Retrieve the pixel by index
 	SDL_Color operator[](size_t) const;
@@ -27,31 +29,30 @@ public:
 	void Set(size_t, size_t, SDL_Color);
 
 	// Set all pixels
-	void Set(const std::vector<SDL_Color>);
+	void Set(const TPixels &);
 private:
 	size_t m_h;
 	size_t m_w;
-	std::vector<SDL_Color> m_pixels;
+	TPixels m_pixels;
 };
 
-class Engine : public EngineCore
+
+class CEngine : public CEngineCore
 {
 public:
-	static constexpr SDL_Color BLACK = { 0, 0, 0, SDL_ALPHA_OPAQUE };
+	static constexpr SDL_Color Black = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 
-	Engine(float);
-	virtual ~Engine();
+	CEngine(float);
+	virtual ~CEngine();
 	void Start();
 	void Stop();
 protected:
-	SDL_Renderer *renderer;
+	SDL_Renderer *m_rend;
 
 	virtual void Resized(int, int);
 private:
-	SDL_Window *m_window;
-	SDL_Event m_event;
+	SDL_Window *m_win;
+	SDL_Event m_evt;
 
 	void Update();
 };
-
-#endif // _CORE_ENGINE_H

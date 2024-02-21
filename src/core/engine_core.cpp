@@ -3,28 +3,30 @@
 
 #include "engine_core.h"
 
-EngineCore::EngineCore(float rate):
-	rate(rate),
-	delta(0.0f),
-	timeScale(1.0f),
-	prevTimeScale(1.0f),
-	m_now(std::chrono::system_clock::now()),
-	m_then(m_now)
+CEngineCore::CEngineCore(float rate):
+	m_rate(rate),
+	m_delta(0.0f),
+	m_timeScale(1.0f),
+	m_prevTimeScale(1.0f)
 {
+	m_then = m_now = std::chrono::system_clock::now();
 }
 
-void EngineCore::Pause()
+
+void CEngineCore::Pause()
 {
-	prevTimeScale = timeScale;
-	timeScale = 0.0f;
+	m_prevTimeScale = m_timeScale;
+	m_timeScale = 0.0f;
 }
 
-void EngineCore::Resume()
+
+void CEngineCore::Resume()
 {
-	timeScale = prevTimeScale;
+	m_timeScale = m_prevTimeScale;
 }
 
-void EngineCore::CoreStart()
+
+void CEngineCore::CoreStart()
 {
 	Started();
 
@@ -34,43 +36,48 @@ void EngineCore::CoreStart()
 	CoreStop();
 }
 
-void EngineCore::Started()
+
+void CEngineCore::Started()
 {
 }
 
-void EngineCore::CoreStop()
+
+void CEngineCore::CoreStop()
 {
 	Stopping();
 }
 
-void EngineCore::Stopping()
+
+void CEngineCore::Stopping()
 {
 }
 
-void EngineCore::CoreUpdate()
+
+void CEngineCore::CoreUpdate()
 {
 	// update time
 	m_then = m_now;
 	m_now = std::chrono::system_clock::now();
-	std::chrono::duration<float> newDelta = (m_now - m_then);// / 1000.0f;
+	std::chrono::duration<float> delta = m_now - m_then;// / 1000.0f;
 
 	//std::cout << delta << '\n';
 
 	// calculate our delta and cap our frame rate
-	if (delta > 0.0f)
-		delta -= newDelta.count() * timeScale;
+	if (m_delta > 0.0f)
+		m_delta -= delta.count() * m_timeScale;
 	else
 	{
 		// abs will mitigate negative frame rates, which add to the delta, causing CPU stress
 		// time scale must factor in the whole equation to be valid, ie. if we pause,
 		// delta must = 0
-		delta = (std::abs(delta) + (1.0f / rate) - newDelta.count()) * timeScale;
+		m_delta = (std::abs(m_delta) + (1.0f / rate) - delta.count()) * m_timeScale;
 
 		// keep user updates constrained to rate
-		Updated(delta);
+		Updated(m_delta);
 	}
 }
 
-void EngineCore::Updated(float)
+
+void CEngineCore::Updated(float)
 {
 }
