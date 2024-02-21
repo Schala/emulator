@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <array>
-#include <fmt/core.h> // todo: <format>
+#include <format>
 #include <stdexcept>
 #include <utility>
 
@@ -381,41 +381,41 @@ Disassembly MOS6500::Disassemble(size_t addr)
 	std::string line = op.Mnemonic;
 
 	if (op.AddressMode == &MOS6500::Immediate)
-		line += fmt::format(" #${:02X}", ReadByte(addr++));
+		line += std::format(" #${:02X}", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::ZeroPage)
-		line += fmt::format(" ${:02X}", ReadByte(addr++));
+		line += std::format(" ${:02X}", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::ZeroPageX)
-		line += fmt::format(" ${:02X}, x", ReadByte(addr++));
+		line += std::format(" ${:02X}, x", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::ZeroPageY)
-		line += fmt::format(" ${:02X}, y", ReadByte(addr++));
+		line += std::format(" ${:02X}, y", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::IndirectX)
-		line += fmt::format(" (${:02X}, x)", ReadByte(addr++));
+		line += std::format(" (${:02X}, x)", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::IndirectY)
-		line += fmt::format(" (${:02X}, y)", ReadByte(addr++));
+		line += std::format(" (${:02X}, y)", ReadByte(addr++));
 	else if (op.AddressMode == &MOS6500::Absolute)
 	{
-		line += fmt::format(" ${:04X}", ReadAddress(addr));
+		line += std::format(" ${:04X}", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::AbsoluteX)
 	{
-		line += fmt::format(" ${:04X}, x", ReadAddress(addr));
+		line += std::format(" ${:04X}, x", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::AbsoluteY)
 	{
-		line += fmt::format(" ${:04X}, y", ReadAddress(addr));
+		line += std::format(" ${:04X}, y", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::Indirect)
 	{
-		line += fmt::format(" (${:04X})", ReadAddress(addr));
+		line += std::format(" (${:04X})", ReadAddress(addr));
 		addr += 2;
 	}
 	else if (op.AddressMode == &MOS6500::Relative)
 	{
 		uint8_t value = ReadByte(addr++);
-		line += fmt::format(" ${:02X} [${:04X}]", value, addr + static_cast<int8_t>(value));
+		line += std::format(" ${:02X} [${:04X}]", value, addr + static_cast<int8_t>(value));
 	}
 	else ; // 'implied' takes no operands
 
@@ -437,41 +437,41 @@ Disassembly MOS6500::Disassemble(size_t addr)
 		std::string line = op.Mnemonic.data();
 
 		if (op.AddressMode == &MOS6500::Immediate)
-			line += fmt::format(" #${:02X}", ReadByte(addr++));
+			line += std::format(" #${:02X}", ReadByte(addr++));
 		else if (op.AddressMode == &MOS6500::ZeroPage)
-			line += fmt::format(" ${:02X}", ReadByte(addr++));
+			line += std::format(" ${:02X}", ReadByte(addr++));
 		else if (op.AddressMode == &MOS6500::ZeroPageX)
-			line += fmt::format(" ${:02X}, x", ReadByte(addr++));
+			line += std::format(" ${:02X}, x", ReadByte(addr++));
 		else if (op.AddressMode == &MOS6500::ZeroPageY)
-			line += fmt::format(" ${:02X}, y", ReadByte(addr++));
+			line += std::format(" ${:02X}, y", ReadByte(addr++));
 		else if (op.AddressMode == &MOS6500::IndirectX)
-			line += fmt::format(" (${:02X}, x)", ReadByte(addr++));
+			line += std::format(" (${:02X}, x)", ReadByte(addr++));
 		else if (op.AddressMode == &MOS6500::IndirectY)
-			line += fmt::format(" (${:02X}, y)", ReadByte(addr++));
+			line += std::format(" (${:02X}, y)", ReadByte(addr++));
 		else if (op.AddressMode == &MOS6500::Absolute)
 		{
-			line += fmt::format(" ${:04X}", ReadByte(addr));
+			line += std::format(" ${:04X}", ReadByte(addr));
 			addr += 2;
 		}
 		else if (op.AddressMode == &MOS6500::AbsoluteX)
 		{
-			line += fmt::format(" ${:04X}, x", ReadByte(addr));
+			line += std::format(" ${:04X}, x", ReadByte(addr));
 			addr += 2;
 		}
 		else if (op.AddressMode == &MOS6500::AbsoluteY)
 		{
-			line += fmt::format(" ${:04X}, y", ReadByte(addr));
+			line += std::format(" ${:04X}, y", ReadByte(addr));
 			addr += 2;
 		}
 		else if (op.AddressMode == &MOS6500::Indirect)
 		{
-			line += fmt::format(" (${:04X})", ReadByte(addr));
+			line += std::format(" (${:04X})", ReadByte(addr));
 			addr += 2;
 		}
 		else if (op.AddressMode == &MOS6500::Relative)
 		{
 			uint8_t value = ReadByte(addr++);
-			line += fmt::format(" ${:02X} [${:04X}]", value, addr + static_cast<int8_t>(value));
+			line += std::format(" ${:02X} [${:04X}]", value, addr + static_cast<int8_t>(value));
 		}
 		else continue; // 'implied' takes no operands
 
@@ -495,14 +495,14 @@ std::string MOS6500::FrameInfo()
 {
 	auto frame = StackFrame();
 
-	std::string s = fmt::format("Offset {:04X}: {}\n", m_lastDisasm.first, m_lastDisasm.second);
+	std::string s = std::format("Offset {:04X}: {}\n", m_lastDisasm.first, m_lastDisasm.second);
 
 	s += "Stack frame:\n";
 	for (uint8_t b : frame)
-		s += fmt::format("{:02X} ", b);
+		s += std::format("{:02X} ", b);
 
-	s += fmt::format("\n\nA: $#{:02X}\tX: $#{:02X}\tY: $#{:02X}\n", m_regs.a, m_regs.x, m_regs.y);
-	s += fmt::format("S: ${:02X}\tPC: ${:04X}\nP: ", stackPtr, counter);
+	s += std::format("\n\nA: $#{:02X}\tX: $#{:02X}\tY: $#{:02X}\n", m_regs.a, m_regs.x, m_regs.y);
+	s += std::format("S: ${:02X}\tPC: ${:04X}\nP: ", stackPtr, counter);
 
 	s += m_regs.p.c ? 'C' : 'x';
 	s += m_regs.p.z ? 'Z' : 'x';
@@ -513,11 +513,11 @@ std::string MOS6500::FrameInfo()
 	s += m_regs.p.v ? 'V' : 'x';
 	s += m_regs.p.n ? 'N' : 'x';
 
-	s += fmt::format("\n\nLast absolute address: ${:04X}\n", lastAbsAddress);
-	s += fmt::format("Last relative address: ${:02X}\n", static_cast<uint8_t>(lastRelAddress));
-	s += fmt::format("Last fetched byte: {:02X}\n", m_cache);
-	s += fmt::format("Last operation: {} ({:02X})\n", OPS[m_lastOp].Mnemonic, m_lastOp);
-	//s += fmt::format("Cycles remaining: {}\n", m_cycles);
+	s += std::format("\n\nLast absolute address: ${:04X}\n", lastAbsAddress);
+	s += std::format("Last relative address: ${:02X}\n", static_cast<uint8_t>(lastRelAddress));
+	s += std::format("Last fetched byte: {:02X}\n", m_cache);
+	s += std::format("Last operation: {} ({:02X})\n", OPS[m_lastOp].Mnemonic, m_lastOp);
+	//s += std::format("Cycles remaining: {}\n", m_cycles);
 	s += "--------------------------------\n";
 
 	return std::move(s);
@@ -1203,7 +1203,7 @@ uint8_t MOS6500::ISC()
 uint8_t MOS6500::JAM()
 {
 	WriteByteToLastAddress(255);
-	throw std::runtime_error(fmt::format("JAM encountered:\n\n{}\n", FrameInfo()));
+	throw std::runtime_error(std::format("JAM encountered:\n\n{}\n", FrameInfo()));
 	return 0;
 }
 

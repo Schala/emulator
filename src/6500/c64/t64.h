@@ -5,7 +5,8 @@
 #include <filesystem>
 
 #include "../../core/devices.h"
-#include "fwd.h"
+
+class C64;
 
 class C64Tape : public Device
 {
